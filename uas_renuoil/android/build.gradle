@@ -5,6 +5,11 @@ allprojects {
     }
 }
 
+plugins {
+    id 'com.android.application' version '8.2.1' apply false
+    id 'com.android.library' version '8.2.1' apply false
+}
+
 rootProject.buildDir = "../build"
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
