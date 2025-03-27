@@ -23,11 +23,21 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _obscureText = true;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
 
   void _togglePasswordVisibility() {
     setState(() {
       _obscureText = !_obscureText;
     });
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -75,6 +85,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   buildTextField(Icons.email, "savetheworld@gmail.com", false),
                   const SizedBox(height: 20),
                   buildPasswordField(),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      "Forgot Password",
+                      style: TextStyle(color: Color(0xFF1F3958)),
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   Align(
                     alignment: Alignment.centerRight,
