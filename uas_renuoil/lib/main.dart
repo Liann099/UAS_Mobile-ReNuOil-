@@ -6,6 +6,10 @@ import 'package:flutter_application_1/home.dart';
 import 'package:flutter_application_1/settings/accessibility.dart';
 import 'package:flutter_application_1/settings/history.dart';
 import 'package:flutter_application_1/settings/login_security.dart';
+import 'package:flutter_application_1/settings/notification.dart';
+import 'package:flutter_application_1/settings/payment_payouts.dart';
+import 'package:flutter_application_1/settings/personal_info.dart';
+import 'package:flutter_application_1/settings/privacy_sharing.dart';
 import 'package:flutter_application_1/signup.dart';
 import 'package:flutter_application_1/support/feedback_form.dart';
 
@@ -16,7 +20,6 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -27,9 +30,13 @@ class MyApp extends StatelessWidget {
         '/': (context) => LoginScreen(),
         '/home': (context) => HomePage(),
         '/signup': (context) => SignUpScreen(),
+        '/personal-info': (context) => PersonalInfoScreen(),
         '/login-security': (context) => LoginSecurityScreen(),
+        '/privacy-sharing': (context) => PrivacySharingScreen(),
+        '/payment-payouts': (context) => PaymentsPayoutsScreen(),
         '/accessibility': (context) => AccessibilityScreen(),
         '/history': (context) => HistoryScreen(),
+        '/notification': (context) => NotificationsScreen(),
         '/feedback-form': (context) => FeedbackScreen(),
         '/terms-of-service': (context) => TermsOfServiceScreen(),
         '/privacy-policy': (context) => PrivacyPolicyScreen(),
