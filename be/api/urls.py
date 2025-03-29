@@ -9,5 +9,7 @@ router = DefaultRouter()
 urlpatterns = [
     path('', include(router.urls)),
     path('auth/user/', UserDetailView.as_view(), name='user-detail'),
+    path('auth/profile/', UserProfileView.as_view(), name='user-profile'),
+
 
 ]

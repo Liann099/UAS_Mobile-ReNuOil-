@@ -1,6 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.base_user import BaseUserManager
+import random
+import string
+
+
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, username, password=None, **extra_fields):
@@ -23,7 +27,7 @@ class CustomUserManager(BaseUserManager):
             raise ValueError('Superuser must have is_superuser=True.')
         
         return self.create_user(email, username, password, **extra_fields)
-    
+ 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=30, unique=True)
@@ -32,22 +36,60 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(auto_now_add=True)
-    
+
     # Custom fields
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
-    
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
-    
+
     objects = CustomUserManager()
-    
+
     def __str__(self):
         return self.email
-    
-    def get_full_name(self):
-        return f"{self.first_name} {self.last_name}"
-    
-    def get_short_name(self):
-        return self.first_name
-    
+
+def generate_profile_id():
+    return ''.join(random.choices(string.digits, k=8))
+
+class UserProfile(models.Model):
+    GENDER_CHOICES = [
+        ('girl', 'Girl'),
+        ('boy', 'Boy'),
+    ]
+
+    COUNTRY_CHOICES = [
+        ('indonesia', 'Indonesia'),
+        ('singapore', 'Singapore'),
+    ]
+
+    ROLE_CHOICES = [
+        ('buyer', 'Buyer'),
+        ('seller', 'Seller'),
+    ]
+
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='profile')
+    profile_id = models.CharField(max_length=8, unique=True, default=generate_profile_id)  # ID unik tambahan
+    bio = models.TextField(blank=True)
+    profile_id = models.CharField(max_length=8, unique=True)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
+
+    # Address Fields
+    country = models.CharField(max_length=20, choices=COUNTRY_CHOICES, blank=True, null=True)
+    city = models.CharField(max_length=50, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    zip_code = models.CharField(max_length=10, blank=True, null=True)
+
+    # Buyer or Seller
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, blank=True, null=True)
+
+    # Personal Information
+    legal_name = models.CharField(max_length=100, blank=True, null=True)
+    preferred_first_name = models.CharField(max_length=100, blank=True, null=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    emergency_contact = models.CharField(max_length=20, blank=True, null=True)
+
+    def __str__(self):
+        return f"Profile of {self.user.email}"
