@@ -9,6 +9,7 @@ class Assets {
   static const String imagesAa = 'assets/images/aa.png';
   static const String imagesApple = 'assets/images/apple.png';
   static const String imagesBg = 'assets/images/bg.png';
+  static const String imagesContactCenter = 'assets/images/contact_center.png';
   static const String imagesFb = 'assets/images/fb.png';
   static const String imagesGoogle = 'assets/images/google.png';
   static const String imagesMascot = 'assets/images/mascot.png';

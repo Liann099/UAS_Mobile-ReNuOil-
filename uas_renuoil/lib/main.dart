@@ -4,6 +4,7 @@ import 'package:flutter_application_1/legal/terms_of_service.dart';
 import 'package:flutter_application_1/login.dart';
 import 'package:flutter_application_1/home.dart';
 import 'package:flutter_application_1/settings/accessibility.dart';
+import 'package:flutter_application_1/settings/create_profile.dart';
 import 'package:flutter_application_1/settings/history.dart';
 import 'package:flutter_application_1/settings/login_security.dart';
 import 'package:flutter_application_1/settings/notification.dart';
@@ -14,6 +15,7 @@ import 'package:flutter_application_1/settings/profile.dart';
 import 'package:flutter_application_1/settings/translation.dart';
 import 'package:flutter_application_1/signup.dart';
 import 'package:flutter_application_1/support/feedback_form.dart';
+import 'package:flutter_application_1/support/help_center.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,7 +29,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: 'Poppins'),
-      initialRoute: '/terms-of-service',
+      initialRoute: '/help-center',
       routes: {
         '/': (context) => LoginScreen(),
         '/home': (context) => HomePage(),
@@ -44,6 +46,9 @@ class MyApp extends StatelessWidget {
         '/feedback-form': (context) => FeedbackScreen(),
         '/terms-of-service': (context) => TermsOfServiceScreen(),
         '/privacy-policy': (context) => PrivacyPolicyScreen(),
+        '/create-profile': (context) => CreateProfileScreen(),
+        '/help-center': (context) => HelpCenterScreen(),
+
       },
     );
   }
