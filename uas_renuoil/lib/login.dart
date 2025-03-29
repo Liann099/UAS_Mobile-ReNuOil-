@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 void main() {
   runApp(const MyApp());
@@ -33,67 +31,6 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       _obscureText = !_obscureText;
     });
-  }
-
-  Future<void> _login() async {
-    setState(() {
-      _isLoading = true;
-    });
-    print('ini udh masuk');
-    final url = Uri.parse('http://10.10.154.134:8000/auth/jwt/create/');
-
-    try {
-      print('ini yg email ${_emailController.text}');
-      print('ini yg email ${_passwordController.text}');
-
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': _emailController.text,
-          'password': _passwordController.text,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        // Successful login
-        final responseData = jsonDecode(response.body);
-        final accessToken = responseData['access'];
-        final refreshToken = responseData['refresh'];
-
-        // Here you can store the tokens (using shared_preferences or secure_storage)
-        // and navigate to the home screen
-        print('Login successful! Access Token: $accessToken');
-
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login successful!')),
-        );
-
-        // Navigate to home screen (replace with your navigation logic)
-        // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomeScreen()));
-      } else {
-        // Failed login
-        final errorData = jsonDecode(response.body);
-        String errorMessage = 'Login failed';
-        if (errorData.containsKey('detail')) {
-          errorMessage = errorData['detail'];
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
-        );
-      }
-    } catch (e) {
-      // Network or server error
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
   }
 
   @override
@@ -131,9 +68,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Colors.white,
                       shadows: [
                         Shadow(
-                          color: Colors.grey,
-                          offset: Offset(2, 2),
-                          blurRadius: 12,
+                          color: Colors.grey, // Shadow color
+                          offset: Offset(2, 2), // Shadow offset (x, y)
+                          blurRadius: 12, // Blur radius
                         ),
                       ],
                     ),
@@ -145,42 +82,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     textAlign: TextAlign.left,
                   ),
                   const SizedBox(height: 100),
-                  TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.email, color: Colors.white),
-                      hintText: "savetheworld@gmail.com",
-                      hintStyle: const TextStyle(color: Colors.white70),
-                      filled: true,
-                      fillColor: Colors.black45,
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide.none),
-                    ),
-                  ),
+                  buildTextField(Icons.email, "savetheworld@gmail.com", false),
                   const SizedBox(height: 20),
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: _obscureText,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.lock, color: Colors.white),
-                      hintText: "Password",
-                      hintStyle: const TextStyle(color: Colors.white70),
-                      filled: true,
-                      fillColor: Colors.black45,
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide.none),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscureText ? Icons.visibility_off : Icons.visibility,
-                          color: Colors.white,
-                        ),
-                        onPressed: _togglePasswordVisibility,
-                      ),
+                  buildPasswordField(),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      "Forgot Password",
+                      style: TextStyle(color: Color(0xFF1F3958)),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -202,24 +112,104 @@ class _LoginScreenState extends State<LoginScreen> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30)),
                       ),
-                      onPressed: _login,
+                      onPressed: () {},
                       child: const Text(
                         "Log in",
                         style: TextStyle(
-                          color: Color(0xFF775873),
-                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF775873), // Hex color #775873
+                          fontWeight: FontWeight.w900, // Bold text
                           fontSize: 18,
                         ),
                       ),
                     ),
                   ),
-                  // Rest of your existing UI...
+                  const SizedBox(height: 20),
+                  const Center(
+                    child: Text("Or login with",
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      buildSocialIcon("assets/images/fb.png"),
+                      const SizedBox(width: 10),
+                      buildSocialIcon("assets/images/apple.png"),
+                      const SizedBox(width: 10),
+                      buildSocialIcon("assets/images/google.png"),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: RichText(
+                      text: TextSpan(
+                        text: "Don't have an account? ",
+                        style: const TextStyle(color: Colors.white),
+                        children: [
+                          TextSpan(
+                            text: "Sign Up",
+                            style: const TextStyle(
+                                color: Colors.orangeAccent,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget buildTextField(IconData icon, String hint, bool isPassword) {
+    return TextField(
+      obscureText: isPassword,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        prefixIcon: Icon(icon, color: Colors.white),
+        hintText: hint,
+        hintStyle: const TextStyle(color: Colors.white70),
+        filled: true,
+        fillColor: Colors.black45,
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide.none),
+      ),
+    );
+  }
+
+  Widget buildPasswordField() {
+    return TextField(
+      obscureText: _obscureText,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        prefixIcon: Icon(Icons.lock, color: Colors.white),
+        hintText: "Password",
+        hintStyle: const TextStyle(color: Colors.white70),
+        filled: true,
+        fillColor: Colors.black45,
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide.none),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscureText ? Icons.visibility_off : Icons.visibility,
+            color: Colors.white,
+          ),
+          onPressed: _togglePasswordVisibility,
+        ),
+      ),
+    );
+  }
+
+  Widget buildSocialIcon(String assetPath) {
+    return GestureDetector(
+      onTap: () {},
+      child: Image.asset(assetPath, height: 43),
     );
   }
 }
