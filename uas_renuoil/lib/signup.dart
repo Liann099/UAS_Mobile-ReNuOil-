@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 void main() {
   runApp(MyApp());
@@ -23,41 +21,6 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   bool isAccepted = false;
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
-
-  Future<void> registerUser() async {
-    final String email = emailController.text;
-    final String password = passwordController.text;
-    final String confirmPassword = confirmPasswordController.text;
-
-    if (password != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Passwords do not match!')),
-      );
-      return;
-    }
-
-    final response = await http.post(
-      Uri.parse('https://your-backend.com/auth/signup/'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
-    );
-
-    if (response.statusCode == 201) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Registration successful!')),
-      );
-      // Redirect to login or another screen
-    } else {
-      final Map<String, dynamic> responseData = jsonDecode(response.body);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(responseData['error'] ?? 'Registration failed')),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,8 +28,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/Group 305.png'),
-            fit: BoxFit.cover,
+            image:
+                AssetImage('assets/images/Group 305.png'), // Path gambar bg.png
+            fit: BoxFit.cover, // Agar gambar menutupi seluruh layar
           ),
         ),
         child: Padding(
@@ -77,7 +41,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
             children: [
               IconButton(
                 icon: Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () {},
+                onPressed: () {
+                  // Action back to login screen
+                },
               ),
               SizedBox(height: 20),
               Text(
@@ -90,7 +56,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               SizedBox(height: 40),
               TextField(
-                controller: emailController,
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Color(0xFF82492E),
@@ -105,36 +70,34 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               SizedBox(height: 20),
               TextField(
-                controller: passwordController,
                 obscureText: true,
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Color(0xFF82492E),
                   hintText: 'Password',
                   hintStyle: TextStyle(color: Colors.white),
-                  prefixIcon: Icon(Icons.lock, color: Colors.white),
+                  prefixIcon: Icon(Icons.email, color: Colors.white),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
-                  suffixIcon: Icon(Icons.visibility_off, color: Colors.white),
+                  suffixIcon: Icon(Icons.visibility_off),
                 ),
               ),
               SizedBox(height: 20),
               TextField(
-                controller: confirmPasswordController,
                 obscureText: true,
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Color(0xFF82492E),
                   hintText: 'Confirm Password',
                   hintStyle: TextStyle(color: Colors.white),
-                  prefixIcon: Icon(Icons.lock, color: Colors.white),
+                  prefixIcon: Icon(Icons.email, color: Colors.white),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
-                  suffixIcon: Icon(Icons.visibility_off, color: Colors.white),
+                  suffixIcon: Icon(Icons.visibility_off),
                 ),
               ),
               SizedBox(height: 20),
@@ -157,9 +120,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
               SizedBox(height: 30),
               Center(
                 child: ElevatedButton(
-                  onPressed: isAccepted ? registerUser : null,
+                  onPressed: () {
+                    // Action for Sign Up
+                  },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
+                    backgroundColor: const Color.fromARGB(
+                        255, 255, 255, 255), // Ganti dengan backgroundColor
                     padding:
                         EdgeInsets.symmetric(horizontal: 100, vertical: 15),
                     shape: RoundedRectangleBorder(
@@ -168,7 +134,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   child: Text(
                     'Sign Up',
-                    style: TextStyle(fontSize: 18, color: Colors.black),
+                    style: TextStyle(fontSize: 18),
                   ),
                 ),
               ),
