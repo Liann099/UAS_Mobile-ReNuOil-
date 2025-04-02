@@ -6,6 +6,7 @@ import string
 from django.contrib.auth.models import User
 from decimal import Decimal, InvalidOperation
 import logging
+from django.utils.timezone import now  
 
 
 
@@ -264,11 +265,11 @@ class PickUpOrder(models.Model):
     drop_location = models.CharField(max_length=255)
     liters = models.DecimalField(max_digits=5, decimal_places=2)
     price_per_liter = models.DecimalField(max_digits=10, decimal_places=2, default=DEFAULT_PRICE_PER_LITER, editable=False)
-    total_price = models.DecimalField(max_digits=100, decimal_places=2, editable=False)
+    total_price = models.DecimalField(max_digits=100, decimal_places=2, default=Decimal('0.00'))  # ✅ Default set
     courier = models.CharField(max_length=20, choices=[('gojek', 'Gojek'), ('grab', 'Grab')])
     transport_mode = models.CharField(max_length=10, choices=[('car', 'Car'), ('motor', 'Motor')])
     qr_code = models.CharField(max_length=12, default=generate_qr_code)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField(default=now, editable=False)  # ✅ Default is `now()`
 
     def save(self, *args, **kwargs):
         try:

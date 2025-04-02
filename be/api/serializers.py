@@ -49,8 +49,12 @@ class BankAccountSerializer(serializers.ModelSerializer):
 class PickUpOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = PickUpOrder
-        fields = ['id', 'pick_up_location', 'drop_location', 'liters', 'courier', 'transport_mode', 'qr_code']
-        read_only_fields = ['qr_code']
+        fields = [
+            'id', 'pick_up_location', 'drop_location', 'liters', 
+            'courier', 'transport_mode', 'qr_code', 
+            'price_per_liter', 'total_price', 'timestamp'
+        ]
+        read_only_fields = ['qr_code', 'total_price', 'price_per_liter', 'timestamp']
 
 class TopUpSerializer(serializers.ModelSerializer):
     class Meta:
