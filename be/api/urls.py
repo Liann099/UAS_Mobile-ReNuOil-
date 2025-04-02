@@ -18,5 +18,7 @@ urlpatterns = [
     path('topup/', TopUpCreateView.as_view(), name='topup'),
     path('withdraw/', WithdrawCreateView.as_view(), name='withdraw'),
     path('transaction-history/', TransactionHistoryListView.as_view(), name='transaction-history'),
+    path('rankings/', RankingView.as_view(), name='ranking-list'),
+
 
 ]

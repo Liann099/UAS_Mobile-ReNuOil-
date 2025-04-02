@@ -56,15 +56,28 @@ class TopUpSerializer(serializers.ModelSerializer):
     class Meta:
         model = TopUp
         fields = ['user', 'amount', 'payment_method', 'bank_account', 'timestamp']
+        read_only_fields = ['user']
+
 
 
 class WithdrawSerializer(serializers.ModelSerializer):
     class Meta:
         model = Withdraw
         fields = ['user', 'amount', 'payment_method', 'bank_account', 'timestamp']
+        read_only_fields = ['user']
 
 
 class TransactionHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = TransactionHistory
         fields = ['user', 'transaction_type', 'amount', 'timestamp']
+        read_only_fields = ['user']
+
+
+class RankingSerializer(serializers.ModelSerializer):
+    collected_this_month = serializers.DecimalField(max_digits=10, decimal_places=2)
+    last_month_bonus = serializers.DecimalField(max_digits=12, decimal_places=2)
+
+    class Meta:
+        model = CustomUser
+        fields = ["username", "collected_this_month", "last_month_bonus"]
