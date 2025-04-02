@@ -3,6 +3,9 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.base_user import BaseUserManager
 import random
 import string
+from django.contrib.auth.models import User
+from decimal import Decimal, InvalidOperation
+import logging
 
 
 
@@ -40,6 +43,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     # Custom fields
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
@@ -51,6 +56,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 def generate_profile_id():
     return ''.join(random.choices(string.digits, k=8))
+
+def generate_qr_code():
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=12))
 
 class UserProfile(models.Model):
     GENDER_CHOICES = [
@@ -71,7 +79,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='profile')
     profile_id = models.CharField(max_length=8, unique=True, default=generate_profile_id)  # ID unik tambahan
     bio = models.TextField(blank=True)
-    profile_id = models.CharField(max_length=8, unique=True)
+    # profile_id = models.CharField(max_length=8, unique=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
 
     # Address Fields
@@ -91,5 +99,156 @@ class UserProfile(models.Model):
     address = models.TextField(blank=True, null=True)
     emergency_contact = models.CharField(max_length=20, blank=True, null=True)
 
+    def save(self, *args, **kwargs):
+        if not self.profile_id:  # Jika kosong, buat ID baru
+            self.profile_id = generate_profile_id()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Profile of {self.user.email}"
+    
+
+class Transaction(models.Model):
+    TRANSACTION_TYPES = [('deposit', 'Deposit'), ('withdrawal', 'Withdrawal'), ('sale', 'Oil Sale')]
+    
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+
+class TopUp(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    payment_method = models.CharField(max_length=10, choices=[('bca', 'BCA'), ('ocbc', 'OCBC')])
+    bank_account = models.CharField(max_length=100)  # Bank account details (name, number)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Top-up of {self.amount} for {self.user.username} via {self.payment_method}"
+
+    def save(self, *args, **kwargs):
+        # Update user's balance when top-up occurs
+        self.user.balance += self.amount
+        self.user.save()
+
+        # Record the top-up transaction in the history
+        super().save(*args, **kwargs)
+
+        # Record transaction history
+        TransactionHistory.objects.create(
+            user=self.user,
+            transaction_type='deposit',
+            amount=self.amount
+        )
+
+
+class Withdraw(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    payment_method = models.CharField(max_length=10, choices=[('bca', 'BCA'), ('ocbc', 'OCBC')])
+    bank_account = models.CharField(max_length=100)  # Bank account details (name, number)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Withdrawal of {self.amount} for {self.user.username} via {self.payment_method}"
+
+    def save(self, *args, **kwargs):
+        if self.user.balance >= self.amount:
+            # Deduct from user's balance
+            self.user.balance -= self.amount
+            self.user.save()
+
+            # Record the withdrawal transaction in the history
+            super().save(*args, **kwargs)
+
+            # Record transaction history
+            TransactionHistory.objects.create(
+                user=self.user,
+                transaction_type='withdrawal',
+                amount=self.amount
+            )
+        else:
+            raise ValueError("Insufficient balance for withdrawal")
+
+
+class TransactionHistory(models.Model):
+    TRANSACTION_TYPES = [('deposit', 'Deposit'), ('withdrawal', 'Withdrawal'), ('sale', 'Oil Sale')]
+    
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.transaction_type} of {self.amount} for {self.user.username}"
+
+
+
+logger = logging.getLogger(__name__)
+DEFAULT_PRICE_PER_LITER = Decimal('6336.00')  # Ensure it's a Decimal
+
+
+class OilSale(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    liters = models.DecimalField(max_digits=5, decimal_places=2)
+    price_per_liter = models.DecimalField(max_digits=10, decimal_places=2, default=DEFAULT_PRICE_PER_LITER, editable=False)    
+    total_price = models.DecimalField(max_digits=100, decimal_places=2, editable=False)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+
+    def save(self, *args, **kwargs):
+        try:
+            # Validate liters
+            if self.liters is None or self.liters == "":
+                raise ValueError("Liters cannot be None or empty")
+                
+            # Convert to Decimal safely
+            self.liters = Decimal(str(self.liters)).quantize(Decimal('0.00'))
+            
+            # Ensure price_per_liter is set properly
+            if not self.price_per_liter:
+                self.price_per_liter = DEFAULT_PRICE_PER_LITER
+            self.price_per_liter = Decimal(str(self.price_per_liter)).quantize(Decimal('0.00'))
+            
+            # Calculate total
+            self.total_price = (self.liters * self.price_per_liter).quantize(Decimal('0.00'))
+            
+            # Update user balance
+            self.user.balance += self.total_price
+            self.user.save()
+
+            # Log the sale
+            logger.debug(f"Oil sale recorded - User: {self.user.email}, Liters: {self.liters}, Price: {self.price_per_liter}, Total: {self.total_price}, New Balance: {self.user.balance}")
+            
+        except (ValueError, TypeError, InvalidOperation) as e:
+            logger.error(f"Error saving OilSale: {str(e)}")
+            raise ValueError(f"Invalid data: {str(e)}")
+        
+        super().save(*args, **kwargs)
+
+
+
+
+class Promotion(models.Model):
+    code = models.CharField(max_length=10, unique=True, default=generate_qr_code)
+    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2)
+    valid_until = models.DateField()
+
+
+class BankAccount(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    bank_name = models.CharField(max_length=50)
+    account_holder = models.CharField(max_length=100)
+    account_number = models.CharField(max_length=20, unique=True)
+    branch_code = models.CharField(max_length=10, blank=True, null=True)
+
+
+class PickUpOrder(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    pick_up_location = models.CharField(max_length=255)
+    drop_location = models.CharField(max_length=255)
+    liters = models.DecimalField(max_digits=5, decimal_places=2)
+    courier = models.CharField(max_length=20, choices=[('gojek', 'Gojek'), ('grab', 'Grab')])
+    transport_mode = models.CharField(max_length=10, choices=[('car', 'Car'), ('motor', 'Motor')])
+    qr_code = models.CharField(max_length=12, default=generate_qr_code)
