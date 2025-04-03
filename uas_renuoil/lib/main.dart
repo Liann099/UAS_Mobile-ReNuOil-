@@ -5,6 +5,7 @@ import 'package:flutter_application_1/login.dart';
 import 'package:flutter_application_1/home.dart';
 import 'package:flutter_application_1/settings/accessibility.dart';
 import 'package:flutter_application_1/settings/create_profile.dart';
+import 'package:flutter_application_1/settings/delete_account.dart';
 import 'package:flutter_application_1/settings/edit_profile.dart';
 import 'package:flutter_application_1/settings/history.dart';
 import 'package:flutter_application_1/settings/login_security.dart';
@@ -50,6 +51,7 @@ class MyApp extends StatelessWidget {
         '/create-profile': (context) => CreateProfileScreen(),
         '/help-center': (context) => HelpCenterScreen(),
         '/edit-profile': (context) => EditProfileScreen(),
+        '/delete-account': (context) => DeleteAccountPage(),
 
       },
     );
