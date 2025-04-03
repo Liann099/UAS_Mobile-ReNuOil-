@@ -161,7 +161,7 @@ class CreateProfileScreen extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () {
                       // Navigate to profile creation or next step
-                      Navigator.pushNamed(context, '/profile');
+                      Navigator.pushNamed(context, '/edit-profile');
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFFD358), // Yellow background
