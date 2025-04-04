@@ -1,17 +1,21 @@
-from django.db import models
-from rest_framework import generics, permissions
-from .serializers import UserSerializer, UserProfileSerializer
-from rest_framework.response import Response
-from .models import CustomUser, UserProfile, Transaction, OilSale, Promotion, BankAccount, PickUpOrder, TopUp
-from .serializers import UserSerializer, TransactionSerializer, OilSaleSerializer, PromotionSerializer, BankAccountSerializer, PickUpOrderSerializer
-from .models import TopUp, Withdraw, TransactionHistory
-from .serializers import TopUpSerializer, WithdrawSerializer, TransactionHistorySerializer
-from django.db.models import Sum
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
-from .serializers import RankingSerializer
+from django.db import models
+from django.db.models import Sum, Q
+from rest_framework import generics, permissions
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from .models import (
+    CustomUser, UserProfile, Transaction, OilSale, Promotion,
+    BankAccount, PickUpOrder, TopUp, Withdraw, TransactionHistory
+)
+from .serializers import (
+    UserSerializer, UserProfileSerializer, TransactionSerializer, OilSaleSerializer,
+    PromotionSerializer, BankAccountSerializer, PickUpOrderSerializer, TopUpSerializer,
+    WithdrawSerializer, TransactionHistorySerializer, RankingSerializer
+)
+
 
 
 class UserDetailView(generics.RetrieveUpdateAPIView):
@@ -112,51 +116,48 @@ class TransactionHistoryListView(generics.ListAPIView):
         return TransactionHistory.objects.filter(user=self.request.user)
 
 
+class LeaderboardView(APIView):
+    permission_classes = [AllowAny]
 
-class RankingView(generics.ListAPIView):
-    serializer_class = RankingSerializer
-    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        today = datetime.today()
+        first_day_this_month = today.replace(day=1)
+        first_day_last_month = (first_day_this_month - timedelta(days=1)).replace(day=1)
+        last_day_last_month = first_day_this_month - timedelta(days=1)
 
-    def get_queryset(self):
-        current_date = datetime.now()
-        first_day_last_month = (current_date - relativedelta(months=1)).replace(day=1)
-        first_day_this_month = current_date.replace(day=1)
-        last_day_last_month = first_day_this_month - relativedelta(days=1)
+        users = CustomUser.objects.all()
+        leaderboard_data = []
 
-        users = CustomUser.objects.all().annotate(
-            total_liters_collected=Sum(
-                'oilsale__liters', 
-                filter=models.Q(oilsale__timestamp__gte=first_day_this_month)  # Filter oilsale timestamp this month
-            ),
-            last_month_bonus=Sum(
-                'oilsale__total_price', 
-                filter=models.Q(oilsale__timestamp__gte=first_day_last_month, oilsale__timestamp__lte=last_day_last_month)  # Filter oilsale timestamp last month
+        for user in users:
+            collected_this_month = (
+                OilSale.objects.filter(user=user, timestamp__gte=first_day_this_month)
+                .aggregate(total=Sum('liters'))['total'] or 0
+            ) + (
+                PickUpOrder.objects.filter(user=user, timestamp__gte=first_day_this_month)
+                .aggregate(total=Sum('liters'))['total'] or 0
             )
-        ).order_by('-total_liters_collected')
-
-        return users
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        response_data = []
-
-        for index, user in enumerate(queryset):
-            tier = self.get_tier(index)
-            response_data.append({
-                "name": user.username,
-                "tier": tier,
-                "collected_this_month": user.total_liters_collected or 0,
-                "last_month_bonus": user.last_month_bonus or 0
+            
+            last_month_total_price = (
+                OilSale.objects.filter(user=user, timestamp__range=(first_day_last_month, last_day_last_month))
+                .aggregate(total=Sum('total_price'))['total'] or 0
+            ) + (
+                PickUpOrder.objects.filter(user=user, timestamp__range=(first_day_last_month, last_day_last_month))
+                .aggregate(total=Sum('total_price'))['total'] or 0
+            )
+            
+            leaderboard_data.append({
+                "username": user.username,
+                "collected_this_month": collected_this_month,
+                "last_month_bonus": last_month_total_price,
             })
 
-        return Response(response_data)
+        leaderboard_data.sort(key=lambda x: x["collected_this_month"], reverse=True)
 
-    def get_tier(self, index):
-        if index == 0:
-            return "Gold 🥇"
-        elif index == 1:
-            return "Silver 🥈"
-        elif index == 2:
-            return "Bronze 🥉"
-        else:
-            return "Runner Up 🏅"
+        tiers = ["Gold", "Silver", "Bronze"]
+        for index, user in enumerate(leaderboard_data):
+            if index < 3:
+                user["tier"] = tiers[index]
+            else:
+                user["tier"] = "Runner-up"
+
+        return Response(leaderboard_data)
