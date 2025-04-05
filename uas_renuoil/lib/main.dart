@@ -10,6 +10,7 @@ import 'package:flutter_application_1/settings/edit_profile.dart';
 import 'package:flutter_application_1/settings/history.dart';
 import 'package:flutter_application_1/settings/login_security.dart';
 import 'package:flutter_application_1/settings/notification.dart';
+import 'package:flutter_application_1/settings/payment_methods.dart';
 import 'package:flutter_application_1/settings/payment_payouts.dart';
 import 'package:flutter_application_1/settings/personal_info.dart';
 import 'package:flutter_application_1/settings/privacy_sharing.dart';
@@ -52,7 +53,7 @@ class MyApp extends StatelessWidget {
         '/help-center': (context) => HelpCenterScreen(),
         '/edit-profile': (context) => EditProfileScreen(),
         '/delete-account': (context) => DeleteAccountPage(),
-
+        '/payment-methods': (context) => PaymentMethodsScreen(),
       },
     );
   }

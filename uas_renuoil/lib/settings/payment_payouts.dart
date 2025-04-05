@@ -56,7 +56,7 @@ class PaymentsPayoutsScreen extends StatelessWidget {
                 icon: Icons.credit_card_outlined,
                 title: 'Payment methods',
                 onTap: () {
-                  // Navigate to payment methods
+                  Navigator.pushNamed(context, '/payment-methods');
                 },
               ),
 
@@ -93,7 +93,7 @@ class PaymentsPayoutsScreen extends StatelessWidget {
                 icon: Icons.account_balance_wallet_outlined,
                 title: 'Payout Methods',
                 onTap: () {
-                  // Navigate to payout methods
+                  Navigator.pushNamed(context, '/payment-methods');
                 },
               ),
 
