@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/auth/create_new_password.dart';
+import 'package:flutter_application_1/auth/forgot_password.dart';
+import 'package:flutter_application_1/auth/verify_email.dart';
 import 'package:flutter_application_1/legal/privacy_policy.dart';
 import 'package:flutter_application_1/legal/terms_of_service.dart';
 import 'package:flutter_application_1/login.dart';
@@ -33,9 +36,11 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: 'Poppins'),
       home: const RouteButtonsScreen(), // Start directly here
+      // initialRoute: '/',
       routes: {
         '/buttons': (context) => const RouteButtonsScreen(),
         '/home': (context) => HomePage(),
+        '/login': (context) => LoginScreen(),
         '/signup': (context) => SignUpScreen(),
         '/profile': (context) => ProfilePage(),
         '/personal-info': (context) => PersonalInfoScreen(),
@@ -54,7 +59,9 @@ class MyApp extends StatelessWidget {
         '/edit-profile': (context) => EditProfileScreen(),
         '/delete-account': (context) => DeleteAccountPage(),
         '/payment-methods': (context) => PaymentMethodsScreen(),
-        '/login': (context) => LoginScreen(),
+        '/forgot-password': (context) => ForgotPasswordScreen(),
+        '/verify-email': (context) => VerifyEmailScreen(email: 'email@example.com'),
+        '/create-new-password': (context) => CreateNewPasswordScreen(),
       },
     );
   }
