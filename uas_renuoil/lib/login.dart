@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 void main() {
   runApp(const MyApp());
@@ -22,6 +25,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final storage = FlutterSecureStorage(); // <-- ini WAJIB
   bool _obscureText = true;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -31,6 +35,70 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       _obscureText = !_obscureText;
     });
+  }
+
+  Future<void> _login() async {
+    setState(() {
+      _isLoading = true;
+    });
+    print('ini udh masuk');
+    final url = Uri.parse('http://192.168.0.129:8000/auth/jwt/create/');
+
+    try {
+      print('ini yg email ${_emailController.text}');
+      print('ini yg email ${_passwordController.text}');
+
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': _emailController.text,
+          'password': _passwordController.text,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        // Successful login
+        final responseData = jsonDecode(response.body);
+        final accessToken = responseData['access'];
+        final refreshToken = responseData['refresh'];
+
+        await storage.write(key: 'access_token', value: accessToken);
+        await storage.write(key: 'refresh_token', value: refreshToken);
+
+        // Here you can store the tokens (using shared_preferences or secure_storage)
+        // and navigate to the home screen
+        print('Login successful! Access Token: $accessToken');
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Login successful!')),
+        );
+
+        // Navigate to home screen (replace with your navigation logic)
+        // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomeScreen()));
+      } else {
+        // Failed login
+        final errorData = jsonDecode(response.body);
+        String errorMessage = 'Login failed';
+        if (errorData.containsKey('detail')) {
+          errorMessage = errorData['detail'];
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage)),
+        );
+      }
+    } catch (e) {
+      // Network or server error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -68,9 +136,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Colors.white,
                       shadows: [
                         Shadow(
-                          color: Colors.grey, // Shadow color
-                          offset: Offset(2, 2), // Shadow offset (x, y)
-                          blurRadius: 12, // Blur radius
+                          color: Colors.grey,
+                          offset: Offset(2, 2),
+                          blurRadius: 12,
                         ),
                       ],
                     ),
@@ -82,15 +150,44 @@ class _LoginScreenState extends State<LoginScreen> {
                     textAlign: TextAlign.left,
                   ),
                   const SizedBox(height: 100),
-                  buildTextField(Icons.email, "savetheworld@gmail.com", false),
+                  TextField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.email, color: Colors.white),
+                      hintText: "savetheworld@gmail.com",
+                      hintStyle: const TextStyle(color: Colors.white70),
+                      filled: true,
+                      fillColor: Colors.black45,
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none),
+                    ),
+                  ),
                   const SizedBox(height: 20),
-                  buildPasswordField(),
-                  const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      "Forgot Password",
-                      style: TextStyle(color: Color(0xFF1F3958)),
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: _obscureText,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.lock, color: Colors.white),
+                      hintText: "Password",
+                      hintStyle: const TextStyle(color: Colors.white70),
+                      filled: true,
+                      fillColor: Colors.black45,
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureText
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: Colors.white,
+                        ),
+                        onPressed: _togglePasswordVisibility,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -112,12 +209,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30)),
                       ),
-                      onPressed: () {},
+                      onPressed: _login,
                       child: const Text(
                         "Log in",
                         style: TextStyle(
-                          color: Color(0xFF775873), // Hex color #775873
-                          fontWeight: FontWeight.w900, // Bold text
+                          color: Color(0xFF775873),
+                          fontWeight: FontWeight.w900,
                           fontSize: 18,
                         ),
                       ),

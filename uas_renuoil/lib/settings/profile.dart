@@ -1,6 +1,38 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/generated/assets.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
 import 'package:material_symbols_icons/material_symbols_icons.dart';
+import 'dart:convert';
+
+final storage = FlutterSecureStorage();
+
+Future<Map<String, dynamic>> fetchProfile() async {
+  print("Fetching profile...");
+
+  String? token = await storage.read(key: 'access_token');
+  print("Access token: $token");
+
+  if (token == null) {
+    throw Exception('No access token found');
+  }
+
+  final response = await http.get(
+    Uri.parse('http://192.168.0.129:8000/api/auth/profile/'),
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+  );
+
+  print("Status Code: ${response.statusCode}");
+  print("Response Body: ${response.body}");
+
+  if (response.statusCode == 200) {
+    return json.decode(response.body);
+  } else {
+    throw Exception('Failed to load profile: ${response.statusCode}');
+  }
+}
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -35,10 +67,7 @@ class ProfilePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const ProfileHeader(
-              name: 'Matt',
-              subtitle: 'Show profile',
-            ),
+            const ProfileHeader(),
             const SizedBox(height: 20),
             const PromotionBanner(),
             const SizedBox(height: 20),
@@ -46,106 +75,84 @@ class ProfilePage extends StatelessWidget {
             SettingsItem(
               icon: Symbols.people,
               title: 'Personal information',
-              onTap: () {
-                Navigator.pushNamed(context, '/personal-info');
-              },
+              onTap: () => Navigator.pushNamed(context, '/personal-info'),
             ),
             SettingsItem(
               icon: Icons.shield_outlined,
               title: 'Login and Security',
-              onTap: () {
-                Navigator.pushNamed(context, '/login-security');
-              },
+              onTap: () => Navigator.pushNamed(context, '/login-security'),
             ),
             SettingsItem(
               icon: Icons.shield_outlined,
               title: 'Privacy and Sharing',
-              onTap: () {
-                Navigator.pushNamed(context, '/privacy-sharing');
-              },
+              onTap: () => Navigator.pushNamed(context, '/privacy-sharing'),
             ),
             SettingsItem(
               icon: Icons.translate_outlined,
               title: 'Translation',
-              onTap: () {
-                Navigator.pushNamed(context, '/translation');
-              },
+              onTap: () => Navigator.pushNamed(context, '/translation'),
             ),
             SettingsItem(
               icon: Icons.credit_card_outlined,
               title: 'Payments and payouts',
-              onTap: () {
-                Navigator.pushNamed(context, '/payment-payouts');
-              },
+              onTap: () => Navigator.pushNamed(context, '/payment-payouts'),
             ),
             SettingsItem(
               icon: Icons.accessibility_outlined,
               title: 'Accessibility',
-              onTap: () {
-                Navigator.pushNamed(context, '/accessibility');
-              },
+              onTap: () => Navigator.pushNamed(context, '/accessibility'),
             ),
             SettingsItem(
               icon: Icons.history_outlined,
               title: 'History',
-              onTap: () {
-                Navigator.pushNamed(context, '/history');
-              },
+              onTap: () => Navigator.pushNamed(context, '/history'),
             ),
             SettingsItem(
               icon: Icons.notifications_outlined,
               title: 'Notifications',
-              onTap: () {
-                Navigator.pushNamed(context, '/notification');
-              },
+              onTap: () => Navigator.pushNamed(context, '/notification'),
             ),
             const SizedBox(height: 20),
             const SectionTitle(title: 'Support'),
             SettingsItem(
               icon: Icons.help_outline,
               title: 'Visit the Help Center',
-              onTap: () {
-                Navigator.pushNamed(context, '/help-center');
-              },
+              onTap: () => Navigator.pushNamed(context, '/help-center'),
             ),
             SettingsItem(
               icon: Icons.edit_outlined,
               title: 'Give us feedback',
-              onTap: () {
-                Navigator.pushNamed(context, '/feedback-form');
-              },
+              onTap: () => Navigator.pushNamed(context, '/feedback-form'),
             ),
             const SizedBox(height: 20),
             const SectionTitle(title: 'Legal'),
             SettingsItem(
               icon: Icons.article_outlined,
               title: 'Terms of Service',
-              onTap: () {
-                Navigator.pushNamed(context, '/terms-of-service');
-              },
+              onTap: () => Navigator.pushNamed(context, '/terms-of-service'),
             ),
             SettingsItem(
               icon: Icons.article_outlined,
               title: 'Privacy Policy',
-              onTap: () {
-                Navigator.pushNamed(context, '/privacy-policy');
-              },
+              onTap: () => Navigator.pushNamed(context, '/privacy-policy'),
             ),
             const SizedBox(height: 20),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: GestureDetector(
-                onTap: () {
-                  // Handle logout logic
+                onTap: () async {
+                  await storage.delete(key: 'access_token');
+                  Navigator.pushReplacementNamed(context, '/login');
                 },
                 child: const Text(
                   'Log out',
                   style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                      decoration: TextDecoration.underline),
+                    color: Colors.black,
+                    fontSize: 16,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w500,
+                    decoration: TextDecoration.underline,
+                  ),
                 ),
               ),
             ),
@@ -169,57 +176,89 @@ class ProfilePage extends StatelessWidget {
   }
 }
 
-class ProfileHeader extends StatelessWidget {
-  final String name;
-  final String subtitle;
+class ProfileHeader extends StatefulWidget {
+  const ProfileHeader({super.key});
 
-  const ProfileHeader({
-    super.key,
-    required this.name,
-    required this.subtitle,
-  });
+  @override
+  State<ProfileHeader> createState() => _ProfileHeaderState();
+}
+
+class _ProfileHeaderState extends State<ProfileHeader> {
+  late Future<Map<String, dynamic>> futureProfile;
+
+  @override
+  void initState() {
+    super.initState();
+    futureProfile = fetchProfile();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        Navigator.pushNamed(context, '/create-profile');
-      },
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 30,
-              backgroundImage: const AssetImage('assets/images/profile.jpg'),
+    return FutureBuilder<Map<String, dynamic>>(
+      future: futureProfile,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.all(20),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        } else if (snapshot.hasError) {
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: Text(
+              'Error loading profile',
+              style: TextStyle(color: Colors.red[600]),
             ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),    
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontFamily: 'Poppins',
-                    ),
+          );
+        }
+
+        final profile = snapshot.data!;
+        final profilePicture = profile['profile_picture']; // bisa null
+        return InkWell(
+          onTap: () => Navigator.pushNamed(context, '/create-profile'),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                profilePicture != null
+                    ? CircleAvatar(
+                  radius: 30,
+                  backgroundImage: NetworkImage(profilePicture),
+                )
+                : const CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.grey,
+                  child: Icon(Icons.person, size: 30, color: Colors.white),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        profile['preferred_first_name'] ?? 'Guest User',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Show profile',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                const Icon(Icons.chevron_right),
+              ],
             ),
-            const Icon(Icons.chevron_right),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -238,21 +277,14 @@ class PromotionBanner extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                image: DecorationImage(
-                  image: AssetImage(Assets.imagesPromo30),
-                  fit: BoxFit.cover,
-                ),
+                color: Colors.blue[100],
               ),
-              child: const Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text(
-                    'SALE',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+              child: const Center(
+                child: Text(
+                  'Promotion 1',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
@@ -263,43 +295,16 @@ class PromotionBanner extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                image: DecorationImage(
-                  image: AssetImage(Assets.imagesPromo30),
-                  fit: BoxFit.cover,
-                ),
+                color: Colors.pink[100],
               ),
-              child: Stack(
-                children: [
-                  const Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Text(
-                        'SALE',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+              child: const Center(
+                child: Text(
+                  'Promotion 2',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
                   ),
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: Container(
-                      margin: const EdgeInsets.all(8),
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.yellow,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.favorite_border,
-                        color: Colors.black,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -312,10 +317,7 @@ class PromotionBanner extends StatelessWidget {
 class SectionTitle extends StatelessWidget {
   final String title;
 
-  const SectionTitle({
-    super.key,
-    required this.title,
-  });
+  const SectionTitle({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {
