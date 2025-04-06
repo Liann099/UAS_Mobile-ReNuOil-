@@ -60,7 +60,8 @@ class MyApp extends StatelessWidget {
         '/delete-account': (context) => DeleteAccountPage(),
         '/payment-methods': (context) => PaymentMethodsScreen(),
         '/forgot-password': (context) => ForgotPasswordScreen(),
-        '/verify-email': (context) => VerifyEmailScreen(email: 'email@example.com'),
+        '/verify-email': (context) =>
+            VerifyEmailScreen(email: 'email@example.com'),
         '/create-new-password': (context) => CreateNewPasswordScreen(),
       },
     );
@@ -93,6 +94,9 @@ class RouteButtonsScreen extends StatelessWidget {
       '/edit-profile': 'Edit Profile',
       '/delete-account': 'Delete Account',
       '/payment-methods': 'Payment Methods',
+      '/forgot-password': 'forgot password',
+      '/verify-email': 'verify email',
+      '/create-new-password': 'create-new-password',
     };
 
     return Scaffold(
