@@ -14,9 +14,11 @@ class Assets {
   static const String imagesContactCenter = 'assets/images/contact_center.png';
   static const String imagesCreditCard = 'assets/images/credit_card.png';
   static const String imagesDigitalPayment = 'assets/images/digital_payment.png';
+  static const String imagesFaceId = 'assets/images/face_id.png';
   static const String imagesFb = 'assets/images/fb.png';
   static const String imagesGoogle = 'assets/images/google.png';
   static const String imagesGpn = 'assets/images/gpn.png';
+  static const String imagesGroup306 = 'assets/images/Group306.png';
   static const String imagesLogosMastercard = 'assets/images/logos_mastercard.png';
   static const String imagesMascot = 'assets/images/mascot.png';
   static const String imagesPromo30 = 'assets/images/Promo_30.png';
