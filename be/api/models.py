@@ -80,6 +80,8 @@ class UserProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='profile')
     profile_id = models.CharField(max_length=8, unique=True, default=generate_profile_id)  # ID unik tambahan
     bio = models.TextField(blank=True)
+    profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)  # ✅ ditambahkan
+
     # profile_id = models.CharField(max_length=8, unique=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
 

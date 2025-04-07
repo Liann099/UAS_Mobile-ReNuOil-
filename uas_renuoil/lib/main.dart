@@ -40,10 +40,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: 'Poppins'),
-      initialRoute: '/',
+      home: const RouteButtonsScreen(), // Start directly here
+      // initialRoute: '/',
       routes: {
-        '/': (context) => LoginScreen(),
+        '/buttons': (context) => const RouteButtonsScreen(),
         '/home': (context) => HomePage(),
+        '/login': (context) => LoginScreen(),
         '/signup': (context) => SignUpScreen(),
         '/profile': (context) => ProfilePage(),
         '/personal-info': (context) => PersonalInfoScreen(),
@@ -71,6 +73,66 @@ class MyApp extends StatelessWidget {
         '/make-passcode': (context) => MakePasscodeScreen(),
         '/seller-inquiry': (context) => SellerInquiryScreen(),  
       },
+    );
+  }
+}
+
+class RouteButtonsScreen extends StatelessWidget {
+  const RouteButtonsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final routes = {
+      '/login': 'Login',
+      '/signup': 'Signup',
+      '/home': 'Home',
+      '/profile': 'Profile',
+      '/personal-info': 'Personal Info',
+      '/login-security': 'Login Security',
+      '/privacy-sharing': 'Privacy & Sharing',
+      '/translation': 'Translation',
+      '/payment-payouts': 'Payment & Payouts',
+      '/accessibility': 'Accessibility',
+      '/history': 'History',
+      '/notification': 'Notification',
+      '/feedback-form': 'Feedback Form',
+      '/terms-of-service': 'Terms of Service',
+      '/privacy-policy': 'Privacy Policy',
+      '/create-profile': 'Create Profile',
+      '/help-center': 'Help Center',
+      '/edit-profile': 'Edit Profile',
+      '/delete-account': 'Delete Account',
+      '/payment-methods': 'Payment Methods',
+      '/forgot-password': 'forgot password',
+      '/verify-email': 'verify email',
+      '/create-new-password': 'create-new-password',
+    };
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Navigation Test'),
+        backgroundColor: Colors.deepPurpleAccent,
+        foregroundColor: Colors.white,
+      ),
+      body: ListView.separated(
+        padding: const EdgeInsets.all(20),
+        itemCount: routes.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final entry = routes.entries.elementAt(index);
+          return ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepPurpleAccent,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+            onPressed: () => Navigator.pushNamed(context, entry.key),
+            child: Text(
+              entry.value,
+              style: const TextStyle(color: Colors.white),
+            ),
+          );
+        },
+      ),
     );
   }
 }
