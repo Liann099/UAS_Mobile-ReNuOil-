@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/auth/address_input.dart';
+import 'package:flutter_application_1/auth/buyer_or_seller.dart';
 import 'package:flutter_application_1/auth/create_new_password.dart';
 import 'package:flutter_application_1/auth/forgot_password.dart';
+import 'package:flutter_application_1/auth/how_did_you_know.dart';
+import 'package:flutter_application_1/auth/make_passcode.dart';
+import 'package:flutter_application_1/auth/seller_inquiry.dart';
 import 'package:flutter_application_1/auth/verify_email.dart';
 import 'package:flutter_application_1/legal/privacy_policy.dart';
 import 'package:flutter_application_1/legal/terms_of_service.dart';
@@ -19,7 +24,7 @@ import 'package:flutter_application_1/settings/personal_info.dart';
 import 'package:flutter_application_1/settings/privacy_sharing.dart';
 import 'package:flutter_application_1/settings/profile.dart';
 import 'package:flutter_application_1/settings/translation.dart';
-import 'package:flutter_application_1/signup.dart';
+import 'package:flutter_application_1/auth/signup.dart';
 import 'package:flutter_application_1/support/feedback_form.dart';
 import 'package:flutter_application_1/support/help_center.dart';
 
@@ -59,7 +64,12 @@ class MyApp extends StatelessWidget {
         '/payment-methods': (context) => PaymentMethodsScreen(),
         '/forgot-password': (context) => ForgotPasswordScreen(),
         '/verify-email': (context) => VerifyEmailScreen(email: 'email@example.com'),
-        '/create-new-password': (context) => CreateNewPasswordScreen(),  
+        '/create-new-password': (context) => CreateNewPasswordScreen(),
+        '/address-input': (context) => AddressInputScreen(),
+        '/buyer-or-seller': (context) => BuyerOrSellerScreen(),
+        '/how-did-you-know': (context) => HowDidYouKnowScreen(),
+        '/make-passcode': (context) => MakePasscodeScreen(),
+        '/seller-inquiry': (context) => SellerInquiryScreen(),  
       },
     );
   }

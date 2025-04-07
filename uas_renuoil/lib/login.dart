@@ -138,6 +138,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 20),
                   Center(
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/signup');
+                      },
                     child: RichText(
                       text: TextSpan(
                         text: "Don't have an account? ",
@@ -148,8 +152,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: const TextStyle(
                                 color: Colors.orangeAccent,
                                 fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
