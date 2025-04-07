@@ -323,3 +323,4 @@ class Leaderboard(models.Model):
         return f"{self.user.username} - {self.total_liters_collected} L"
 
 
+#tes
