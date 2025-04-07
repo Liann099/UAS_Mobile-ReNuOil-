@@ -42,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
     print('ini udh masuk');
-    final url = Uri.parse('http://192.168.0.129:8000/auth/jwt/create/');
+    final url = Uri.parse('http://10.10.153.255:8000/auth/jwt/create/');
 
     try {
       print('ini yg email ${_emailController.text}');
@@ -247,16 +247,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       onTap: () {
                         Navigator.pushNamed(context, '/signup');
                       },
-                    child: RichText(
-                      text: TextSpan(
-                        text: "Don't have an account? ",
-                        style: const TextStyle(color: Colors.white),
-                        children: [
-                          TextSpan(
-                            text: "Sign Up",
-                            style: const TextStyle(
-                                color: Colors.orangeAccent,
-                                fontWeight: FontWeight.bold),
+                      child: RichText(
+                        text: TextSpan(
+                          text: "Don't have an account? ",
+                          style: const TextStyle(color: Colors.white),
+                          children: [
+                            TextSpan(
+                              text: "Sign Up",
+                              style: const TextStyle(
+                                  color: Colors.orangeAccent,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),

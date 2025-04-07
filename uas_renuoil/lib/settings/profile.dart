@@ -5,6 +5,33 @@ import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'dart:convert';
 
 final storage = FlutterSecureStorage();
+Future<Map<String, dynamic>> fetchUsername() async {
+  print("Fetching username...");
+
+  String? token = await storage.read(key: 'access_token');
+  print("Access token: $token");
+
+  if (token == null) {
+    throw Exception('No access token found');
+  }
+
+  final response = await http.get(
+    Uri.parse('http://10.10.153.255:8000/auth/users/me/'),
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+  );
+
+  print("Status Code: ${response.statusCode}");
+  print("Response Body: ${response.body}");
+
+  if (response.statusCode == 200) {
+    return json.decode(response.body);
+  } else {
+    throw Exception('Failed to load username: ${response.statusCode}');
+  }
+}
 
 Future<Map<String, dynamic>> fetchProfile() async {
   print("Fetching profile...");
@@ -17,7 +44,7 @@ Future<Map<String, dynamic>> fetchProfile() async {
   }
 
   final response = await http.get(
-    Uri.parse('http://192.168.0.129:8000/api/auth/profile/'),
+    Uri.parse('http://10.10.153.255:8000/api/auth/profile/'),
     headers: {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
@@ -185,18 +212,20 @@ class ProfileHeader extends StatefulWidget {
 
 class _ProfileHeaderState extends State<ProfileHeader> {
   late Future<Map<String, dynamic>> futureProfile;
+  late Future<Map<String, dynamic>> futureUsername;
 
   @override
   void initState() {
     super.initState();
     futureProfile = fetchProfile();
+    futureUsername = fetchUsername();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, dynamic>>(
-      future: futureProfile,
-      builder: (context, snapshot) {
+    return FutureBuilder(
+      future: Future.wait([futureProfile, futureUsername]),
+      builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Padding(
             padding: EdgeInsets.all(20),
@@ -212,8 +241,12 @@ class _ProfileHeaderState extends State<ProfileHeader> {
           );
         }
 
-        final profile = snapshot.data!;
-        final profilePicture = profile['profile_picture']; // bisa null
+        final profile = snapshot.data![0]; // First future result (profile)
+        final usernameData =
+            snapshot.data![1]; // Second future result (username)
+        final profilePicture = profile['profile_picture'];
+        final username = usernameData['username'] ?? 'Guest User';
+
         return InkWell(
           onTap: () => Navigator.pushNamed(context, '/create-profile'),
           child: Padding(
@@ -222,21 +255,22 @@ class _ProfileHeaderState extends State<ProfileHeader> {
               children: [
                 profilePicture != null
                     ? CircleAvatar(
-                  radius: 30,
-                  backgroundImage: NetworkImage(profilePicture),
-                )
-                : const CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.grey,
-                  child: Icon(Icons.person, size: 30, color: Colors.white),
-                ),
+                        radius: 30,
+                        backgroundImage: NetworkImage(profilePicture),
+                      )
+                    : const CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Colors.grey,
+                        child:
+                            Icon(Icons.person, size: 30, color: Colors.white),
+                      ),
                 const SizedBox(width: 20),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        profile['preferred_first_name'] ?? 'Guest User',
+                        username, // Using username from the users/me endpoint
                         style: const TextStyle(
                           fontSize: 20,
                           fontFamily: 'Poppins',

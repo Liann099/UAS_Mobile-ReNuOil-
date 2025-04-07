@@ -65,13 +65,14 @@ class MyApp extends StatelessWidget {
         '/delete-account': (context) => DeleteAccountPage(),
         '/payment-methods': (context) => PaymentMethodsScreen(),
         '/forgot-password': (context) => ForgotPasswordScreen(),
-        '/verify-email': (context) => VerifyEmailScreen(email: 'email@example.com'),
+        '/verify-email': (context) =>
+            VerifyEmailScreen(email: 'email@example.com'),
         '/create-new-password': (context) => CreateNewPasswordScreen(),
         '/address-input': (context) => AddressInputScreen(),
         '/buyer-or-seller': (context) => BuyerOrSellerScreen(),
         '/how-did-you-know': (context) => HowDidYouKnowScreen(),
         '/make-passcode': (context) => MakePasscodeScreen(),
-        '/seller-inquiry': (context) => SellerInquiryScreen(),  
+        '/seller-inquiry': (context) => SellerInquiryScreen(),
       },
     );
   }
@@ -106,6 +107,11 @@ class RouteButtonsScreen extends StatelessWidget {
       '/forgot-password': 'forgot password',
       '/verify-email': 'verify email',
       '/create-new-password': 'create-new-password',
+      '/address-input': 'Address Input',
+      '/buyer-or-seller': 'Buyer or Seller',
+      '/how-did-you-know': 'How Did You Know',
+      '/make-passcode': 'Make Passcode',
+      '/seller-inquiry': 'Seller Inquiry',
     };
 
     return Scaffold(
