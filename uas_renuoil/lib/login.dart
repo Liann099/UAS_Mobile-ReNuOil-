@@ -214,7 +214,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30)),
                       ),
-                      onPressed: _login,
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/home');
+                      },
                       child: const Text(
                         "Log in",
                         style: TextStyle(

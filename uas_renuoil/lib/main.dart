@@ -12,6 +12,7 @@ import 'package:flutter_application_1/legal/terms_of_service.dart';
 import 'package:flutter_application_1/login.dart';
 import 'package:flutter_application_1/home.dart';
 import 'package:flutter_application_1/settings/accessibility.dart';
+import 'package:flutter_application_1/settings/add_payout_method.dart';
 import 'package:flutter_application_1/settings/create_profile.dart';
 import 'package:flutter_application_1/settings/delete_account.dart';
 import 'package:flutter_application_1/settings/edit_profile.dart';
@@ -20,6 +21,7 @@ import 'package:flutter_application_1/settings/login_security.dart';
 import 'package:flutter_application_1/settings/notification.dart';
 import 'package:flutter_application_1/settings/payment_methods.dart';
 import 'package:flutter_application_1/settings/payment_payouts.dart';
+import 'package:flutter_application_1/settings/payout_setup.dart';
 import 'package:flutter_application_1/settings/personal_info.dart';
 import 'package:flutter_application_1/settings/privacy_sharing.dart';
 import 'package:flutter_application_1/settings/profile.dart';
@@ -65,14 +67,15 @@ class MyApp extends StatelessWidget {
         '/delete-account': (context) => DeleteAccountPage(),
         '/payment-methods': (context) => PaymentMethodsScreen(),
         '/forgot-password': (context) => ForgotPasswordScreen(),
-        '/verify-email': (context) =>
-            VerifyEmailScreen(email: 'email@example.com'),
+        '/verify-email': (context) => VerifyEmailScreen(email: 'email@example.com'),
         '/create-new-password': (context) => CreateNewPasswordScreen(),
         '/address-input': (context) => AddressInputScreen(),
         '/buyer-or-seller': (context) => BuyerOrSellerScreen(),
         '/how-did-you-know': (context) => HowDidYouKnowScreen(),
         '/make-passcode': (context) => MakePasscodeScreen(),
         '/seller-inquiry': (context) => SellerInquiryScreen(),
+        '/add-payout-method': (context) => AddPayoutMethodScreen(),
+        '/payout-setup': (context) => PayoutSetupScreen(),
       },
     );
   }
@@ -112,6 +115,7 @@ class RouteButtonsScreen extends StatelessWidget {
       '/how-did-you-know': 'How Did You Know',
       '/make-passcode': 'Make Passcode',
       '/seller-inquiry': 'Seller Inquiry',
+
     };
 
     return Scaffold(
@@ -133,7 +137,7 @@ class RouteButtonsScreen extends StatelessWidget {
             ),
             onPressed: () => Navigator.pushNamed(context, entry.key),
             child: Text(
-              entry.value,
+              entry.value, 
               style: const TextStyle(color: Colors.white),
             ),
           );
