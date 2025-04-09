@@ -42,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
     print('ini udh masuk');
-    final url = Uri.parse('http://10.10.153.255:8000/auth/jwt/create/');
+    final url = Uri.parse('http://10.10.153.204:8000/auth/jwt/create/');
 
     try {
       print('ini yg email ${_emailController.text}');
@@ -214,9 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30)),
                       ),
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/home');
-                      },
+                      onPressed: _login,
                       child: const Text(
                         "Log in",
                         style: TextStyle(

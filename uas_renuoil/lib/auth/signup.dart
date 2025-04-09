@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../constants.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -20,7 +21,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _obscureConfirmPassword = true;
   bool _acceptTerms = false;
 
-  final String signupUrl = 'http://10.10.153.255:8000/auth/users/';
+  final String signupUrl = '$baseUrl/auth/users/';
 
   @override
   void dispose() {

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+// Auth
 import 'package:flutter_application_1/auth/address_input.dart';
 import 'package:flutter_application_1/auth/buyer_or_seller.dart';
 import 'package:flutter_application_1/auth/create_new_password.dart';
@@ -7,10 +9,17 @@ import 'package:flutter_application_1/auth/how_did_you_know.dart';
 import 'package:flutter_application_1/auth/make_passcode.dart';
 import 'package:flutter_application_1/auth/seller_inquiry.dart';
 import 'package:flutter_application_1/auth/verify_email.dart';
+import 'package:flutter_application_1/auth/signup.dart';
+
+// Legal
 import 'package:flutter_application_1/legal/privacy_policy.dart';
 import 'package:flutter_application_1/legal/terms_of_service.dart';
+
+// Screens
 import 'package:flutter_application_1/login.dart';
 import 'package:flutter_application_1/home.dart';
+
+// Settings
 import 'package:flutter_application_1/settings/accessibility.dart';
 import 'package:flutter_application_1/settings/add_payout_method.dart';
 import 'package:flutter_application_1/settings/create_profile.dart';
@@ -28,9 +37,18 @@ import 'package:flutter_application_1/settings/personal_info.dart';
 import 'package:flutter_application_1/settings/privacy_sharing.dart';
 import 'package:flutter_application_1/settings/profile.dart';
 import 'package:flutter_application_1/settings/translation.dart';
-import 'package:flutter_application_1/auth/signup.dart';
+
+// Support
 import 'package:flutter_application_1/support/feedback_form.dart';
 import 'package:flutter_application_1/support/help_center.dart';
+
+// Buyer homepage screen
+import 'package:flutter_application_1/Homepage/Buyer/default.dart';
+
+// Seller Homepage
+import 'package:flutter_application_1/Seller/seller.dart';
+import 'package:flutter_application_1/Seller/pickup.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -44,8 +62,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: 'Poppins'),
-      home: const RouteButtonsScreen(), // Start directly here
-      // initialRoute: '/',
+      home: const RouteButtonsScreen(),
       routes: {
         '/buttons': (context) => const RouteButtonsScreen(),
         '/home': (context) => HomePage(),
@@ -69,7 +86,8 @@ class MyApp extends StatelessWidget {
         '/delete-account': (context) => DeleteAccountPage(),
         '/payment-methods': (context) => PaymentMethodsScreen(),
         '/forgot-password': (context) => ForgotPasswordScreen(),
-        '/verify-email': (context) => VerifyEmailScreen(email: 'email@example.com'),
+        '/verify-email': (context) =>
+            VerifyEmailScreen(email: 'email@example.com'),
         '/create-new-password': (context) => CreateNewPasswordScreen(),
         '/address-input': (context) => AddressInputScreen(),
         '/buyer-or-seller': (context) => BuyerOrSellerScreen(),
@@ -111,15 +129,23 @@ class RouteButtonsScreen extends StatelessWidget {
       '/edit-profile': 'Edit Profile',
       '/delete-account': 'Delete Account',
       '/payment-methods': 'Payment Methods',
-      '/forgot-password': 'forgot password',
-      '/verify-email': 'verify email',
-      '/create-new-password': 'create-new-password',
+      '/forgot-password': 'Forgot Password',
+      '/verify-email': 'Verify Email',
+      '/create-new-password': 'Create New Password',
       '/address-input': 'Address Input',
       '/buyer-or-seller': 'Buyer or Seller',
       '/how-did-you-know': 'How Did You Know',
       '/make-passcode': 'Make Passcode',
       '/seller-inquiry': 'Seller Inquiry',
+      '/add-payout-method': 'Add Payout Method',
+      '/payout-setup': 'Payout Setup',
 
+      // Shortcut to test your Buyer homepage
+      '/buyer-home': 'Buyer Homepage',
+
+      // seller homepage
+      '/seller': 'Seller Homepage',
+      '/pickup': 'Pickup Page',
     };
 
     return Scaffold(
@@ -141,7 +167,7 @@ class RouteButtonsScreen extends StatelessWidget {
             ),
             onPressed: () => Navigator.pushNamed(context, entry.key),
             child: Text(
-              entry.value, 
+              entry.value,
               style: const TextStyle(color: Colors.white),
             ),
           );
