@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'dart:convert';
+import '../constants.dart';
 
 final storage = FlutterSecureStorage();
 Future<Map<String, dynamic>> fetchUsername() async {
@@ -16,7 +17,7 @@ Future<Map<String, dynamic>> fetchUsername() async {
   }
 
   final response = await http.get(
-    Uri.parse('http://10.10.153.255:8000/auth/users/me/'),
+    Uri.parse('$baseUrl/auth/users/me/'),
     headers: {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
@@ -44,7 +45,7 @@ Future<Map<String, dynamic>> fetchProfile() async {
   }
 
   final response = await http.get(
-    Uri.parse('http://10.10.153.255:8000/api/auth/profile/'),
+    Uri.parse('$baseUrl/api/auth/profile/'),
     headers: {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
@@ -255,6 +256,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
               children: [
                 profilePicture != null
                     ? CircleAvatar(
+
                         radius: 30,
                         backgroundImage: NetworkImage(profilePicture),
                       )

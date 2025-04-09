@@ -45,6 +45,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    passcode = models.CharField(max_length=6, blank=True, null=True)
+
 
 
     USERNAME_FIELD = 'email'
@@ -63,8 +65,8 @@ def generate_qr_code():
 
 class UserProfile(models.Model):
     GENDER_CHOICES = [
-        ('girl', 'Girl'),
-        ('boy', 'Boy'),
+        ('female', 'Female'),
+        ('male', 'Male'),
     ]
 
     COUNTRY_CHOICES = [
@@ -79,7 +81,7 @@ class UserProfile(models.Model):
 
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='profile')
     profile_id = models.CharField(max_length=8, unique=True, default=generate_profile_id)  # ID unik tambahan
-    bio = models.TextField(blank=True)
+    bio = models.TextField(blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)  # ✅ ditambahkan
 
     # profile_id = models.CharField(max_length=8, unique=True)
