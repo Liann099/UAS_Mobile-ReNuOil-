@@ -14,7 +14,9 @@ import 'package:flutter_application_1/home.dart';
 import 'package:flutter_application_1/settings/accessibility.dart';
 import 'package:flutter_application_1/settings/add_payout_method.dart';
 import 'package:flutter_application_1/settings/create_profile.dart';
+import 'package:flutter_application_1/settings/credits_and_coupons.dart';
 import 'package:flutter_application_1/settings/delete_account.dart';
+import 'package:flutter_application_1/settings/earnings.dart';
 import 'package:flutter_application_1/settings/edit_profile.dart';
 import 'package:flutter_application_1/settings/history.dart';
 import 'package:flutter_application_1/settings/login_security.dart';
@@ -74,8 +76,10 @@ class MyApp extends StatelessWidget {
         '/how-did-you-know': (context) => HowDidYouKnowScreen(),
         '/make-passcode': (context) => MakePasscodeScreen(),
         '/seller-inquiry': (context) => SellerInquiryScreen(),
+        '/credits-and-coupons': (context) => CreditsAndCouponsScreen(),
         '/add-payout-method': (context) => AddPayoutMethodScreen(),
         '/payout-setup': (context) => PayoutSetupScreen(),
+        '/earnings': (context) => EarningsScreen(),
       },
     );
   }
