@@ -23,7 +23,9 @@ import 'package:flutter_application_1/home.dart';
 import 'package:flutter_application_1/settings/accessibility.dart';
 import 'package:flutter_application_1/settings/add_payout_method.dart';
 import 'package:flutter_application_1/settings/create_profile.dart';
+import 'package:flutter_application_1/settings/credits_and_coupons.dart';
 import 'package:flutter_application_1/settings/delete_account.dart';
+import 'package:flutter_application_1/settings/earnings.dart';
 import 'package:flutter_application_1/settings/edit_profile.dart';
 import 'package:flutter_application_1/settings/history.dart';
 import 'package:flutter_application_1/settings/login_security.dart';
@@ -43,6 +45,13 @@ import 'package:flutter_application_1/support/help_center.dart';
 // Buyer homepage screen
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 
+// Seller Homepage
+import 'package:flutter_application_1/Seller/seller.dart';
+import 'package:flutter_application_1/Seller/pickup.dart';
+import 'package:flutter_application_1/Seller/sellerwithdraw.dart';
+
+
+
 void main() {
   runApp(const MyApp());
 }
@@ -55,7 +64,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: 'Poppins'),
-      home: const RouteButtonsScreen(), 
+      home: const RouteButtonsScreen(),
       routes: {
         '/buttons': (context) => const RouteButtonsScreen(),
         '/home': (context) => HomePage(),
@@ -79,18 +88,18 @@ class MyApp extends StatelessWidget {
         '/delete-account': (context) => DeleteAccountPage(),
         '/payment-methods': (context) => PaymentMethodsScreen(),
         '/forgot-password': (context) => ForgotPasswordScreen(),
-        '/verify-email': (context) => VerifyEmailScreen(email: 'email@example.com'),
+        '/verify-email': (context) =>
+            VerifyEmailScreen(email: 'email@example.com'),
         '/create-new-password': (context) => CreateNewPasswordScreen(),
         '/address-input': (context) => AddressInputScreen(),
         '/buyer-or-seller': (context) => BuyerOrSellerScreen(),
         '/how-did-you-know': (context) => HowDidYouKnowScreen(),
         '/make-passcode': (context) => MakePasscodeScreen(),
         '/seller-inquiry': (context) => SellerInquiryScreen(),
+        '/credits-and-coupons': (context) => CreditsAndCouponsScreen(),
         '/add-payout-method': (context) => AddPayoutMethodScreen(),
         '/payout-setup': (context) => PayoutSetupScreen(),
-
-        // Buyer HomePage route added here:
-        '/buyer-home': (context) => const BuyerHomePage(),
+        '/earnings': (context) => EarningsScreen(),
       },
     );
   }
@@ -135,6 +144,12 @@ class RouteButtonsScreen extends StatelessWidget {
 
       // Shortcut to test your Buyer homepage
       '/buyer-home': 'Buyer Homepage',
+
+      // seller homepage
+      '/seller': 'Seller Homepage',
+      '/pickup': 'Pickup Page',
+      '/seller-withdraw': 'Seller Withdraw',
+
     };
 
     return Scaffold(
