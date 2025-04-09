@@ -43,6 +43,9 @@ import 'package:flutter_application_1/support/help_center.dart';
 // Buyer homepage screen
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 
+// Seller Homepage
+import 'package:flutter_application_1/Seller/seller.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -55,7 +58,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: 'Poppins'),
-      home: const RouteButtonsScreen(), 
+      home: const RouteButtonsScreen(),
       routes: {
         '/buttons': (context) => const RouteButtonsScreen(),
         '/home': (context) => HomePage(),
@@ -79,7 +82,8 @@ class MyApp extends StatelessWidget {
         '/delete-account': (context) => DeleteAccountPage(),
         '/payment-methods': (context) => PaymentMethodsScreen(),
         '/forgot-password': (context) => ForgotPasswordScreen(),
-        '/verify-email': (context) => VerifyEmailScreen(email: 'email@example.com'),
+        '/verify-email': (context) =>
+            VerifyEmailScreen(email: 'email@example.com'),
         '/create-new-password': (context) => CreateNewPasswordScreen(),
         '/address-input': (context) => AddressInputScreen(),
         '/buyer-or-seller': (context) => BuyerOrSellerScreen(),
@@ -91,6 +95,9 @@ class MyApp extends StatelessWidget {
 
         // Buyer HomePage route added here:
         '/buyer-home': (context) => const BuyerHomePage(),
+
+        // seller homepage
+        '/seller': (context) => const SellerPage(),
       },
     );
   }
@@ -135,6 +142,9 @@ class RouteButtonsScreen extends StatelessWidget {
 
       // Shortcut to test your Buyer homepage
       '/buyer-home': 'Buyer Homepage',
+
+      // seller homepage
+      '/seller': 'Seller Homepage',
     };
 
     return Scaffold(
