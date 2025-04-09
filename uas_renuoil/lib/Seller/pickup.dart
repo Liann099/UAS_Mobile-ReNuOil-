@@ -147,7 +147,7 @@ class _PickupPageState extends State<PickupPage> {
                           radius: 12,
                           backgroundColor: Colors.grey.shade200,
                           child: Image.asset(
-                            'assets/images/renuoil_small_logo.png',
+                            'assets/images/handimage.png',
                             width: 16,
                             height: 16,
                           ),
