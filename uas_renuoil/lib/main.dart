@@ -46,6 +46,8 @@ import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 // Seller Homepage
 import 'package:flutter_application_1/Seller/seller.dart';
 import 'package:flutter_application_1/Seller/pickup.dart';
+import 'package:flutter_application_1/Seller/sellerwithdraw.dart';
+
 
 
 void main() {
@@ -101,6 +103,7 @@ class MyApp extends StatelessWidget {
         // seller homepage
         '/seller': (context) => const SellerPage(),
         '/pickup': (context) => const PickupPage(),
+        '/seller-withdraw': (context) => const SellerWithdrawPage(), 
       },
     );
   }
@@ -149,6 +152,8 @@ class RouteButtonsScreen extends StatelessWidget {
       // seller homepage
       '/seller': 'Seller Homepage',
       '/pickup': 'Pickup Page',
+      '/seller-withdraw': 'Seller Withdraw',
+
     };
 
     return Scaffold(
