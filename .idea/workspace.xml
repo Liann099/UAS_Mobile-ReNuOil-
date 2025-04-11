@@ -4,13 +4,7 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="823e5406-a782-4733-ac8a-552dcab26959" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/uas_renuoil/lib/login.dart" beforeDir="false" afterPath="$PROJECT_DIR$/uas_renuoil/lib/login.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/uas_renuoil/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/uas_renuoil/lib/main.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/uas_renuoil/pubspec.lock" beforeDir="false" afterPath="$PROJECT_DIR$/uas_renuoil/pubspec.lock" afterDir="false" />
-    </list>
+    <list default="true" id="823e5406-a782-4733-ac8a-552dcab26959" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

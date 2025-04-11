@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+
 // Auth
 import 'package:flutter_application_1/auth/address_input.dart';
 import 'package:flutter_application_1/auth/buyer_or_seller.dart';
@@ -44,13 +45,13 @@ import 'package:flutter_application_1/support/help_center.dart';
 
 // Buyer homepage screen
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
+import 'package:flutter_application_1/Homepage/Buyer/balancebuy.dart';
 
 // Seller Homepage
 import 'package:flutter_application_1/Seller/seller.dart';
 import 'package:flutter_application_1/Seller/pickup.dart';
 import 'package:flutter_application_1/Seller/sellerwithdraw.dart';
-
-
+import 'package:flutter_application_1/Seller/QRseller.dart';
 
 void main() {
   runApp(const MyApp());
@@ -100,6 +101,16 @@ class MyApp extends StatelessWidget {
         '/add-payout-method': (context) => AddPayoutMethodScreen(),
         '/payout-setup': (context) => PayoutSetupScreen(),
         '/earnings': (context) => EarningsScreen(),
+
+        //Buyer
+        '/buyer-default': (context) => const BuyerHomePage(),
+        '/buyer-balance': (context) => const BalanceBuyerPage(),
+
+        //Seller
+        '/seller': (context) => const SellerPage(),
+        '/pickup': (context) => const PickupPage(),
+        '/seller-withdraw': (context) => const SellerWithdrawPage(),
+        '/qr-seller': (context) => const QRSellerPage(),
       },
     );
   }
@@ -149,7 +160,7 @@ class RouteButtonsScreen extends StatelessWidget {
       '/seller': 'Seller Homepage',
       '/pickup': 'Pickup Page',
       '/seller-withdraw': 'Seller Withdraw',
-
+      '/qr-seller': 'QR Seller',
     };
 
     return Scaffold(
