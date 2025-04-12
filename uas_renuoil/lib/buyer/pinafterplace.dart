@@ -26,103 +26,6 @@ class PasscodeScreen extends StatefulWidget {
 class _PasscodeScreenState extends State<PasscodeScreen> {
   String _passcode = '';
 
-  void _addDigit(String digit) {
-    if (_passcode.length < 6) {
-      setState(() {
-        _passcode += digit;
-      });
-    }
-  }
-
-  void _removeDigit() {
-    if (_passcode.isNotEmpty) {
-      setState(() {
-        _passcode = _passcode.substring(0, _passcode.length - 1);
-      });
-    }
-  }
-
-  Widget _buildPasscodeCircles() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(6, (index) {
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 8),
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: index < _passcode.length ? Colors.black : Colors.white,
-            border: Border.all(
-              color: index < _passcode.length ? Colors.black : Colors.grey,
-              width: 2,
-            ),
-          ),
-        );
-      }),
-    );
-  }
-
-  Widget _buildNumpadButton(String label, {VoidCallback? onPressed}) {
-    if (label == '') {
-      return const SizedBox(width: 80, height: 80);
-    }
-
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: label == '⌫' ? Colors.transparent : Colors.grey[200],
-        foregroundColor: Colors.black,
-        shape: const CircleBorder(),
-        minimumSize: const Size(80, 80),
-        elevation: 0,
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: label == '⌫' ? 24 : 32,
-          fontWeight: label == '⌫' ? FontWeight.bold : FontWeight.normal,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNumpad() {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: ['1', '2', '3']
-              .map((digit) => _buildNumpadButton(digit, 
-                  onPressed: () => _addDigit(digit)))
-              .toList(),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: ['4', '5', '6']
-              .map((digit) => _buildNumpadButton(digit, 
-                  onPressed: () => _addDigit(digit)))
-              .toList(),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: ['7', '8', '9']
-              .map((digit) => _buildNumpadButton(digit, 
-                  onPressed: () => _addDigit(digit)))
-              .toList(),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildNumpadButton(''),
-            _buildNumpadButton('0', onPressed: () => _addDigit('0')),
-            _buildNumpadButton('⌫', onPressed: _removeDigit),
-          ],
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -164,7 +67,24 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                     const SizedBox(height: 32),
 
                     // Passcode circles
-                    _buildPasscodeCircles(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(6, (index) {
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 8),
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: index < _passcode.length ? Colors.black : Colors.white,
+                            border: Border.all(
+                              color: index < _passcode.length ? Colors.black : Colors.grey,
+                              width: 2,
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
                     const SizedBox(height: 32),
 
                     // Or Face ID section
@@ -180,23 +100,12 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Container(
+                    Image.asset(
+                      'assets/images/face_id.png',
                       width: 80,
                       height: 80,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.face,
-                        size: 40,
-                        color: Colors.grey,
-                      ),
+                      color: Colors.grey,
                     ),
-                    const SizedBox(height: 32),
-
-                    // Numpad
-                    _buildNumpad(),
                     const SizedBox(height: 32),
 
                     // Confirm button
