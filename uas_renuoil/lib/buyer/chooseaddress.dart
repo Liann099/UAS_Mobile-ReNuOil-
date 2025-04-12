@@ -148,22 +148,29 @@ class _ChooseAddressScreenState extends State<ChooseAddressScreen> {
           // Save Button
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
-              onPressed: isAddressSelected ? () {
-                // Save address logic
-              } : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.yellow,
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isAddressSelected ? const Color(0xFFFFC107) : Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text(
-                'Save',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
+              child: ElevatedButton(
+                onPressed: isAddressSelected ? () {
+                  // Save address logic
+                } : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Save',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
