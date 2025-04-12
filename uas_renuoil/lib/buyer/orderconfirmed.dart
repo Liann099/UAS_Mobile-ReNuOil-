@@ -68,6 +68,18 @@ class OrderConfirmationScreen extends StatelessWidget {
                   color: Colors.black54,
                 ),
               ),
+              const SizedBox(height: 8),
+
+              // Thank You Message
+              const Text(
+                'Thank you for shopping with us!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
               const SizedBox(height: 24),
 
               // Cute Character
@@ -106,8 +118,8 @@ class OrderConfirmationScreen extends StatelessWidget {
                   // Add order tracking logic
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
