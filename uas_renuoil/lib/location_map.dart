@@ -14,18 +14,19 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
   final MapController _mapController = MapController();
   LocationData? _locationData;
   final Location location = Location();
+  double _currentZoom = 13.0;
 
   @override
   void initState() {
     super.initState();
-    _getLocation();
+    _initializeLocation();
   }
 
-  Future<void> _getLocation() async {
-    final bool serviceEnabled = await location.serviceEnabled();
+  Future<void> _initializeLocation() async {
+    bool serviceEnabled = await location.serviceEnabled();
     if (!serviceEnabled && !await location.requestService()) return;
 
-    final PermissionStatus permissionGranted = await location.hasPermission();
+    PermissionStatus permissionGranted = await location.hasPermission();
     if (permissionGranted == PermissionStatus.denied &&
         await location.requestPermission() != PermissionStatus.granted) {
       return;
@@ -34,55 +35,106 @@ class _LocationMapScreenState extends State<LocationMapScreen> {
     final data = await location.getLocation();
     setState(() {
       _locationData = data;
-      _mapController.move(
-        LatLng(_locationData?.latitude ?? 0, _locationData?.longitude ?? 0),
-        16,
-      );
     });
+
+    _mapController.move(
+      LatLng(data.latitude ?? 0, data.longitude ?? 0),
+      _currentZoom,
+    );
+  }
+
+  void _recenterMap() {
+    if (_locationData != null) {
+      _mapController.move(
+        LatLng(_locationData!.latitude!, _locationData!.longitude!),
+        _currentZoom,
+      );
+    }
+  }
+
+  void _zoomIn() {
+    setState(() {
+      _currentZoom += 1;
+    });
+    _mapController.move(_mapController.camera.center, _currentZoom);
+  }
+
+  void _zoomOut() {
+    setState(() {
+      _currentZoom -= 1;
+    });
+    _mapController.move(_mapController.camera.center, _currentZoom);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Live Location")),
-      body: FlutterMap(
-        mapController: _mapController,
-        options: MapOptions(
-          initialCenter: LatLng(0, 0),
-          initialZoom: 13.0,
-        ),
+      body: Stack(
         children: [
-          TileLayer(
-            urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            subdomains: const ['a', 'b', 'c'],
-            userAgentPackageName: 'com.example.app',
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: LatLng(0, 0),
+              initialZoom: _currentZoom,
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all,
+              ),
+            ),
+            children: [
+              TileLayer(
+                urlTemplate:
+                    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                subdomains: const ['a', 'b', 'c'],
+                userAgentPackageName: 'com.example.app',
+              ),
+              if (_locationData != null)
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: LatLng(
+                        _locationData!.latitude!,
+                        _locationData!.longitude!,
+                      ),
+                      width: 80,
+                      height: 80,
+                      child: const Icon(
+                        Icons.location_pin,
+                        size: 40,
+                        color: Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
           ),
-          if (_locationData != null)
-            MarkerLayer(
-              markers: [
-                Marker(
-                  point: LatLng(
-                    _locationData!.latitude!,
-                    _locationData!.longitude!,
-                  ),
-                  width: 80,
-                  height: 80,
-                  child: const Icon(Icons.location_pin,
-                      size: 40, color: Colors.red),
+          Positioned(
+            bottom: 100,
+            right: 10,
+            child: Column(
+              children: [
+                FloatingActionButton(
+                  mini: true,
+                  heroTag: 'zoomIn',
+                  onPressed: _zoomIn,
+                  child: const Icon(Icons.zoom_in),
+                ),
+                const SizedBox(height: 10),
+                FloatingActionButton(
+                  mini: true,
+                  heroTag: 'zoomOut',
+                  onPressed: _zoomOut,
+                  child: const Icon(Icons.zoom_out),
                 ),
               ],
             ),
+          ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _recenterMap,
+        child: const Icon(Icons.my_location),
       ),
     );
   }
 }
-
-
-
-
-
-
-
-
-
