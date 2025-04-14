@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../constants.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class CreateProfileScreen extends StatefulWidget {
   const CreateProfileScreen({super.key});
@@ -14,11 +18,13 @@ class CreateProfileScreen extends StatefulWidget {
 
 class _CreateProfileScreenState extends State<CreateProfileScreen> {
   final storage = FlutterSecureStorage();
+  final ImagePicker _picker = ImagePicker();
 
   String email = '';
   String username = '';
   String? profilePictureUrl;
   bool isLoading = true;
+  File? _selectedImage;
 
   @override
   void initState() {
@@ -80,6 +86,175 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
     }
   }
 
+  Future<void> _showImageSourceModal() async {
+    await showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take a picture'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from gallery'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.insert_drive_file),
+                title: const Text('Choose from files'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(
+                      ImageSource.gallery); // Using gallery for files too
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.cancel),
+                title: const Text('Cancel'),
+                onTap: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<bool> requestCameraPermission() async {
+    final status = await Permission.camera.request();
+    return status.isGranted;
+  }
+
+  Future<bool> requestPhotosPermission() async {
+    if (await Permission.photos.request().isGranted) {
+      return true;
+    }
+    if (await Permission.storage.request().isGranted) {
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    // Request permissions
+    if (source == ImageSource.camera) {
+      if (!await requestCameraPermission()) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Camera permission denied')),
+        );
+        return;
+      }
+    } else {
+      if (!await requestPhotosPermission()) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Photos permission denied')),
+        );
+        return;
+      }
+    }
+
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        imageQuality: 80,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+
+      if (pickedFile != null) {
+        final file = File(pickedFile.path);
+        final fileSize = await file.length();
+
+        // Check file size (e.g., 5MB limit)
+        if (fileSize > 5 * 1024 * 1024) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Image size should be less than 5MB')),
+          );
+          return;
+        }
+
+        setState(() {
+          _selectedImage = file;
+        });
+        await _uploadProfilePicture();
+      }
+    } on PlatformException catch (e) {
+      print('Platform Exception: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to pick image: ${e.message}')),
+      );
+    } catch (e) {
+      print('Error picking image: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Failed to pick image. Please try again.')),
+      );
+    }
+  }
+
+  Future<void> _uploadProfilePicture() async {
+    if (_selectedImage == null) return;
+    //
+    final token = await storage.read(key: 'access_token');
+    if (token == null) return;
+
+    try {
+      var request = http.MultipartRequest(
+        'PUT',
+        Uri.parse('$baseUrl/api/auth/profile/'),
+      );
+
+      // Add authorization header properly
+      request.headers['Authorization'] = 'Bearer $token';
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'profile_picture',
+          _selectedImage!.path,
+        ),
+      );
+
+      var response = await request.send();
+      final responseBody = await response.stream
+          .bytesToString(); // Add this to read the response
+
+      print(
+          'Upload response: ${response.statusCode} - $responseBody'); // Debug logging
+
+      if (response.statusCode == 200) {
+        await fetchUserProfileData();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile picture updated successfully')),
+        );
+      } else {
+        print(
+            'Failed to upload profile picture: ${response.statusCode} - $responseBody');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text('Failed to update profile picture: ${responseBody}')),
+        );
+      }
+    } catch (e) {
+      print('Error uploading profile picture: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('Error updating profile picture: ${e.toString()}')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -122,18 +297,25 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                                   height: 100,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: profilePictureUrl == null
+                                    color: profilePictureUrl == null &&
+                                            _selectedImage == null
                                         ? Colors.grey[300]
                                         : Colors.white,
-                                    image: profilePictureUrl != null
+                                    image: _selectedImage != null
                                         ? DecorationImage(
-                                            image: NetworkImage(
-                                                profilePictureUrl!),
+                                            image: FileImage(_selectedImage!),
                                             fit: BoxFit.cover,
                                           )
-                                        : null,
+                                        : profilePictureUrl != null
+                                            ? DecorationImage(
+                                                image: NetworkImage(
+                                                    profilePictureUrl!),
+                                                fit: BoxFit.cover,
+                                              )
+                                            : null,
                                   ),
-                                  child: profilePictureUrl == null
+                                  child: profilePictureUrl == null &&
+                                          _selectedImage == null
                                       ? const Icon(
                                           Icons.person,
                                           size: 50,
@@ -157,9 +339,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
 
                           // Change Profile Picture Button
                           TextButton(
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/edit-profile');
-                            },
+                            onPressed: _showImageSourceModal,
                             child: const Text(
                               'Change Profile Picture',
                               style: TextStyle(
@@ -252,7 +432,6 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 30),
                   ],
                 ),

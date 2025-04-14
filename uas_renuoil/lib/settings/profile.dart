@@ -97,8 +97,6 @@ class ProfilePage extends StatelessWidget {
           children: [
             const ProfileHeader(),
             const SizedBox(height: 20),
-            const PromotionBanner(),
-            const SizedBox(height: 20),
             const SectionTitle(title: 'Settings'),
             SettingsItem(
               icon: Symbols.people,
@@ -256,7 +254,6 @@ class _ProfileHeaderState extends State<ProfileHeader> {
               children: [
                 profilePicture != null
                     ? CircleAvatar(
-
                         radius: 30,
                         backgroundImage: NetworkImage(profilePicture),
                       )
@@ -299,56 +296,56 @@ class _ProfileHeaderState extends State<ProfileHeader> {
   }
 }
 
-class PromotionBanner extends StatelessWidget {
-  const PromotionBanner({super.key});
+// class PromotionBanner extends StatelessWidget {
+//   const PromotionBanner({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      height: 150,
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: Colors.blue[100],
-              ),
-              child: const Center(
-                child: Text(
-                  'Promotion 1',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: Colors.pink[100],
-              ),
-              child: const Center(
-                child: Text(
-                  'Promotion 2',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       padding: const EdgeInsets.symmetric(horizontal: 20),
+//       height: 150,
+//       child: Row(
+//         children: [
+//           Expanded(
+//             child: Container(
+//               decoration: BoxDecoration(
+//                 borderRadius: BorderRadius.circular(12),
+//                 color: Colors.blue[100],
+//               ),
+//               child: const Center(
+//                 child: Text(
+//                   'Promotion 1',
+//                   style: TextStyle(
+//                     color: Colors.black,
+//                     fontWeight: FontWeight.bold,
+//                   ),
+//                 ),
+//               ),
+//             ),
+//           ),
+//           const SizedBox(width: 10),
+//           Expanded(
+//             child: Container(
+//               decoration: BoxDecoration(
+//                 borderRadius: BorderRadius.circular(12),
+//                 color: Colors.pink[100],
+//               ),
+//               child: const Center(
+//                 child: Text(
+//                   'Promotion 2',
+//                   style: TextStyle(
+//                     color: Colors.black,
+//                     fontWeight: FontWeight.bold,
+//                   ),
+//                 ),
+//               ),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 
 class SectionTitle extends StatelessWidget {
   final String title;

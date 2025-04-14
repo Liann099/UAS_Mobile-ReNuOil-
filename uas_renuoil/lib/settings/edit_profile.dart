@@ -35,9 +35,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Map<String, TextEditingController> controllers = {};
   Map<String, bool> isEditing = {};
 
-  // Gender options
-  final List<String> genderOptions = ['male', 'female'];
-
   @override
   void initState() {
     super.initState();
@@ -49,7 +46,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       String? token = await storage.read(key: 'access_token');
       if (token == null) throw Exception('No access token found');
 
-      // Fetch from both endpoints
       final userResponse = await http.get(
         Uri.parse('$baseUrl/auth/users/me/'),
         headers: {
@@ -78,7 +74,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             'email': userDataResponse['email'] ?? '',
             'phone': profileData['phone_number'] ?? '',
             'gender': profileData['gender'] ?? '',
-            'birthday': profileData['date_of_birth'] ?? '',
+            'birthday': userDataResponse['date_of_birth'] ?? '',
           };
           profilePictureUrl = profileData['profile_picture'];
           isLoading = false;
@@ -97,23 +93,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: userData['birthday']!.isNotEmpty
-          ? DateFormat('yyyy-MM-dd').parse(userData['birthday']!)
-          : DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-
-    if (picked != null) {
-      final formattedDate = DateFormat('yyyy-MM-dd').format(picked);
-      controllers['birthday']!.text = formattedDate;
-      await _saveField('birthday', formattedDate);
-    }
-  }
-
   Future<void> _saveField(String field, String value) async {
     if (value.trim().isEmpty) return;
 
@@ -125,19 +104,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       String? token = await storage.read(key: 'access_token');
       if (token == null) return;
 
-      // Determine which endpoint to use based on the field
       String endpoint;
       String apiField = field;
       Map<String, dynamic> requestBody = {};
 
-      if (field == 'username' || field == 'email') {
+      if (field == 'username' || field == 'email' || field == 'birthday') {
         endpoint = '$baseUrl/auth/users/me/';
+        if (field == 'birthday') apiField = 'date_of_birth';
         requestBody = {apiField: value};
       } else {
         endpoint = '$baseUrl/api/auth/profile/';
-        // Map field names to match the API
         if (field == 'phone') apiField = 'phone_number';
-        if (field == 'birthday') apiField = 'date_of_birth';
         requestBody = {apiField: value};
       }
 
@@ -157,36 +134,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${field.capitalize()} updated successfully'),
-            duration: const Duration(seconds: 2),
-          ),
+          SnackBar(content: Text('${field.capitalize()} updated successfully')),
         );
       } else {
         print('[ERROR] Failed to update $field: ${response.statusCode}');
-        print('[ERROR] Response body: ${response.body}');
-
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update ${field.capitalize()}'),
-            duration: const Duration(seconds: 2),
-          ),
+          SnackBar(content: Text('Failed to update ${field.capitalize()}')),
         );
-
-        // Revert the change if failed
         controllers[field]!.text = userData[field]!;
       }
     } catch (e) {
       print('[ERROR] Exception on updating $field: $e');
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error updating ${field.capitalize()}'),
-          duration: const Duration(seconds: 2),
-        ),
+        SnackBar(content: Text('Error updating ${field.capitalize()}')),
       );
-
-      // Revert the change if error
       controllers[field]!.text = userData[field]!;
     } finally {
       setState(() {
@@ -195,56 +156,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  Widget _buildGenderField() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              'Gender',
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-                fontFamily: 'Poppins',
-              ),
-            ),
-          ),
-          Expanded(
-            child: DropdownButtonFormField<String>(
-              value: userData['gender']!.isEmpty ? null : userData['gender'],
-              items: genderOptions.map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-              onChanged: (String? newValue) async {
-                if (newValue != null) {
-                  controllers['gender']!.text = newValue;
-                  await _saveField('gender', newValue);
-                }
-              },
-              decoration: const InputDecoration(
-                isDense: true,
-                border: InputBorder.none,
-                hintText: 'Select gender',
-                hintStyle: TextStyle(
-                  color: Colors.grey,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-              style: const TextStyle(
-                fontSize: 16,
-                fontFamily: 'Poppins',
-              ),
-            ),
-          ),
-        ],
-      ),
+  Future<void> _selectBirthday(BuildContext context) async {
+    DateTime initialDate;
+    try {
+      initialDate = DateFormat('yyyy-MM-dd').parse(userData['birthday'] ?? '');
+    } catch (_) {
+      initialDate = DateTime(2000, 1, 1);
+    }
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
     );
+
+    if (picked != null) {
+      String formatted = DateFormat('yyyy-MM-dd').format(picked);
+      await _saveField('birthday', formatted);
+      setState(() {
+        userData['birthday'] = formatted;
+        controllers['birthday']!.text = formatted;
+      });
+    }
   }
 
   @override
@@ -273,7 +207,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.black,
                                 fontFamily: 'Poppins',
                               ),
                             ),
@@ -315,11 +248,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                         : null,
                                   ),
                                   child: profilePictureUrl == null
-                                      ? const Icon(
-                                          Icons.person,
-                                          size: 50,
-                                          color: Colors.white70,
-                                        )
+                                      ? const Icon(Icons.person,
+                                          size: 50, color: Colors.white70)
                                       : null,
                                 ),
                                 const SizedBox(height: 16),
@@ -328,10 +258,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       ? 'No Username'
                                       : userData['username']!,
                                   style: const TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'Poppins',
-                                  ),
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Poppins'),
                                 ),
                               ],
                             ),
@@ -346,17 +275,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               hasClipboard: true),
                           _buildEditableField('email', 'E-mail'),
                           _buildEditableField('phone', 'Phone number'),
-                          _buildGenderField(), // Replaced with the new gender dropdown
-                          _buildBirthdayField(),
+                          _buildGenderDropdown(),
+                          _buildBirthdayField(), // Custom birthday picker
                           const SizedBox(height: 20),
                           Padding(
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 20.0),
                             child: Divider(
-                              height: 30,
-                              thickness: 1.2,
-                              color: Colors.grey.shade400,
-                            ),
+                                height: 30,
+                                thickness: 1.2,
+                                color: Colors.grey.shade400),
                           ),
                           Center(
                             child: Padding(
@@ -368,11 +296,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 child: const Text(
                                   'Delete Account',
                                   style: TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    fontFamily: 'Poppins',
-                                  ),
+                                      color: Colors.red,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Poppins'),
                                 ),
                               ),
                             ),
@@ -402,13 +329,59 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Text(
             title,
             style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'Poppins',
-            ),
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Poppins'),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildGenderDropdown() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+      child: Row(
+        children: [
+          const SizedBox(
+            width: 120,
+            child: Text(
+              'Gender',
+              style: TextStyle(
+                  fontSize: 16, color: Colors.grey, fontFamily: 'Poppins'),
+            ),
+          ),
+          Expanded(
+            child: DropdownButtonFormField<String>(
+              value: (userData['gender'] != null &&
+                      userData['gender'].toString().isNotEmpty)
+                  ? userData['gender'].toString()
+                  : null,
+              decoration: const InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+              ),
+              items: ['male', 'female'].map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(
+                    value[0].toUpperCase() + value.substring(1),
+                    style: const TextStyle(fontSize: 16, fontFamily: 'Poppins'),
+                  ),
+                );
+              }).toList(),
+              onChanged: (String? newValue) async {
+                if (newValue != null && newValue != userData['gender']) {
+                  await _saveField('gender', newValue);
+                  setState(() {
+                    userData['gender'] = newValue;
+                  });
+                }
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -421,16 +394,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(
-                width: 120,
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-              ),
+                  width: 120,
+                  child: Text(label,
+                      style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                          fontFamily: 'Poppins'))),
               Expanded(
                 child: TextFormField(
                   controller: controllers[key],
@@ -443,23 +412,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             ? '-'
                             : null,
                     hintStyle: const TextStyle(
-                      color: Colors.grey,
-                      fontStyle: FontStyle.italic,
-                    ),
+                        color: Colors.grey, fontStyle: FontStyle.italic),
                   ),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontFamily: 'Poppins',
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      isEditing[key] = true;
-                    });
-                  },
+                  style: const TextStyle(fontSize: 16, fontFamily: 'Poppins'),
+                  onChanged: (value) => setState(() => isEditing[key] = true),
                   onFieldSubmitted: (value) async {
-                    if (isEditing[key]!) {
-                      await _saveField(key, value);
-                    }
+                    if (isEditing[key]!) await _saveField(key, value);
                   },
                 ),
               ),
@@ -469,14 +427,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
+                          child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.save, size: 20),
                   onPressed: isSaving
                       ? null
-                      : () async {
-                          await _saveField(key, controllers[key]!.text);
-                        },
+                      : () async =>
+                          await _saveField(key, controllers[key]!.text),
                 )
               else
                 const Icon(Icons.chevron_right, size: 20, color: Colors.black),
@@ -487,51 +443,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Widget _buildBirthdayField() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              'Birthday',
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-                fontFamily: 'Poppins',
-              ),
-            ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => _selectDate(context),
-              child: TextFormField(
-                controller: controllers['birthday'],
-                decoration: InputDecoration(
-                  isDense: true,
-                  border: InputBorder.none,
-                  hintText: userData['birthday']!.isEmpty ? '-' : null,
-                  hintStyle: const TextStyle(
-                    color: Colors.grey,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontFamily: 'Poppins',
-                ),
-                enabled: false,
-              ),
-            ),
-          ),
-          const Icon(Icons.calendar_today, size: 20, color: Colors.black),
-        ],
-      ),
-    );
-  }
-
   Widget _buildReadOnlyField(String key, String label,
       {bool hasClipboard = false}) {
     return Padding(
@@ -539,37 +450,56 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       child: Row(
         children: [
           SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-                fontFamily: 'Poppins',
-              ),
-            ),
-          ),
+              width: 120,
+              child: Text(label,
+                  style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey,
+                      fontFamily: 'Poppins'))),
           Expanded(
-            child: Text(
-              userData[key] ?? '-',
-              style: const TextStyle(
-                fontSize: 16,
-                fontFamily: 'Poppins',
-              ),
-            ),
-          ),
+              child: Text(userData[key] ?? '-',
+                  style: const TextStyle(fontSize: 16, fontFamily: 'Poppins'))),
           if (hasClipboard)
             GestureDetector(
               onTap: () {
                 Clipboard.setData(ClipboardData(text: userData[key] ?? ''));
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Copied to clipboard")),
-                );
+                    const SnackBar(content: Text("Copied to clipboard")));
               },
               child:
                   const Icon(Icons.content_copy, size: 20, color: Colors.black),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBirthdayField() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+      child: GestureDetector(
+        onTap: () => _selectBirthday(context),
+        child: Row(
+          children: [
+            const SizedBox(
+              width: 120,
+              child: Text(
+                'Birthday',
+                style: TextStyle(
+                    fontSize: 16, color: Colors.grey, fontFamily: 'Poppins'),
+              ),
+            ),
+            Expanded(
+              child: Text(
+                userData['birthday']?.isNotEmpty == true
+                    ? userData['birthday']!
+                    : '-',
+                style: const TextStyle(fontSize: 16, fontFamily: 'Poppins'),
+              ),
+            ),
+            const Icon(Icons.calendar_today, size: 20, color: Colors.black),
+          ],
+        ),
       ),
     );
   }
@@ -584,7 +514,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 }
 
 extension StringExtension on String {
-  String capitalize() {
-    return "${this[0].toUpperCase()}${substring(1)}";
-  }
+  String capitalize() =>
+      isEmpty ? this : "${this[0].toUpperCase()}${substring(1)}";
 }

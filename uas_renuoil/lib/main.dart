@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 // Auth
 import 'package:flutter_application_1/auth/address_input.dart';
 import 'package:flutter_application_1/auth/buyer_or_seller.dart';
@@ -19,6 +18,7 @@ import 'package:flutter_application_1/legal/terms_of_service.dart';
 // Screens
 import 'package:flutter_application_1/login.dart';
 import 'package:flutter_application_1/home.dart';
+import 'package:flutter_application_1/balance.dart';
 
 // Settings
 import 'package:flutter_application_1/settings/accessibility.dart';
@@ -69,6 +69,8 @@ class MyApp extends StatelessWidget {
       routes: {
         '/buttons': (context) => const RouteButtonsScreen(),
         '/home': (context) => HomePage(),
+        '/balanceseller': (context) => RnoPayApp(),
+
         '/login': (context) => LoginScreen(),
         '/signup': (context) => SignUpScreen(),
         '/profile': (context) => ProfilePage(),
@@ -155,6 +157,8 @@ class RouteButtonsScreen extends StatelessWidget {
 
       // Shortcut to test your Buyer homepage
       '/buyer-home': 'Buyer Homepage',
+      '/balanceseller': "balanceseller",
+      '/buyer-balance': 'buyer-balance',
 
       // seller homepage
       '/seller': 'Seller Homepage',

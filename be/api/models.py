@@ -43,7 +43,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     # Custom fields
     phone_number = models.CharField(max_length=20, blank=True, null=True)
-    date_of_birth = models.DateField(blank=True, null=True)
+    date_of_birth = models.CharField(max_length=20, blank=True, null=True)
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     passcode = models.CharField(max_length=6, blank=True, null=True)
 
@@ -65,8 +65,8 @@ def generate_qr_code():
 
 class UserProfile(models.Model):
     GENDER_CHOICES = [
-        ('female', 'Female'),
-        ('male', 'Male'),
+        ('female', 'female'),
+        ('male', 'male'),
     ]
 
     COUNTRY_CHOICES = [
@@ -242,13 +242,6 @@ class OilSale(models.Model):
 
 
 
-
-class Promotion(models.Model):
-    code = models.CharField(max_length=10, unique=True, default=generate_qr_code)
-    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2)
-    valid_until = models.DateField()
-
-
 class BankAccount(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     bank_name = models.CharField(max_length=50)
@@ -325,4 +318,144 @@ class Leaderboard(models.Model):
         return f"{self.user.username} - {self.total_liters_collected} L"
 
 
-#tes
+
+from django.db import models
+from django.conf import settings
+
+class Product(models.Model):
+    name = models.CharField(max_length=100)
+    address = models.CharField(max_length=255)
+    price_per_liter = models.DecimalField(max_digits=10, decimal_places=2)
+    description = models.TextField()
+
+    def __str__(self):
+        return self.name
+
+class Review(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    star = models.IntegerField()
+    description = models.TextField(blank=True)
+
+class Cart(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    liters = models.DecimalField(max_digits=6, decimal_places=2)
+
+    def total_price(self):
+        return self.liters * self.product.price_per_liter
+
+class Promotion(models.Model):
+    code = models.CharField(max_length=20, unique=True)
+    discount_percent = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return self.code
+    
+
+class UserPromoUsage(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    promo = models.ForeignKey(Promotion, on_delete=models.CASCADE)
+    used_at = models.DateTimeField(auto_now_add=True)  # Timestamp for when the promo was used
+
+    class Meta:
+        unique_together = ['user', 'promo']  # Prevent the same user from using the same promo more than once
+
+    def __str__(self):
+        return f"{self.user.email} used {self.promo.code} on {self.used_at}"
+
+
+import json
+import logging
+
+logger = logging.getLogger(__name__)
+
+PAYMENT_CHOICES = [
+    ('BCA', 'BCA'),
+    ('OCBC', 'OCBC'),
+    ('WALLET', 'RenuOil Wallet'),
+]
+
+class Checkout(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    items = models.ManyToManyField(Cart)  # untuk melacak item yang dibeli
+    product_total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    delivery_fee = models.DecimalField(max_digits=10, decimal_places=2)
+    service_fee = models.DecimalField(max_digits=10, decimal_places=2, default=1200)
+    voucher = models.ForeignKey(Promotion, on_delete=models.SET_NULL, null=True, blank=True)
+    grand_total = models.DecimalField(max_digits=12, decimal_places=2)
+    payment_method = models.CharField(
+        max_length=10,
+        choices=PAYMENT_CHOICES,
+        default='BCA'  # ✅ Default di sini
+    )    
+    timestamp = models.DateTimeField(default=now, editable=False)  # ✅ Default is `now()`
+
+    def save(self, *args, **kwargs):
+        try:
+            # Simpan transaksi
+            super().save(*args, **kwargs)
+
+            # Ambil item-item cart terkait
+            cart_items = self.items.all()
+            items_data = []
+            for item in cart_items:
+                items_data.append({
+                    "product": item.product.name if item.product else "Unknown",
+                    "quantity": item.quantity,
+                    "price_per_unit": str(item.product.price if item.product else 0),
+                    "total": str(item.total_price() if hasattr(item, 'total_price') else 0)
+                })
+
+            # Simpan ke CheckoutHistory
+            CheckoutHistory.objects.create(
+                user=self.user,
+                items=json.dumps(items_data),
+                product_total_price=self.product_total_price,
+                delivery_fee=self.delivery_fee,
+                service_fee=self.service_fee,
+                grand_total=self.grand_total,
+                payment_method=self.payment_method,
+                voucher_code=self.voucher.code if self.voucher else None
+            )
+
+            # (Optional) Log transaksi (kalau kamu ingin tetap log penjualan minyak)
+            TransactionHistory.objects.create(
+                user=self.user,
+                transaction_type='sale',
+                amount=self.grand_total  # atau self.total_price kalau kamu punya itu
+            )
+
+            logger.debug(f"Checkout berhasil - User: {self.user.email}, Total: {self.grand_total}")
+
+        except Exception as e:
+            logger.error(f"Gagal menyimpan checkout: {str(e)}")
+            raise ValueError(f"Checkout Error: {str(e)}")
+
+
+from django.db import models
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class CheckoutHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="checkout_histories")
+    created_at = models.DateTimeField(auto_now_add=True)
+    items = models.TextField()  # Simpan JSON/cart info sebagai string
+    product_total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    delivery_fee = models.DecimalField(max_digits=10, decimal_places=2)
+    service_fee = models.DecimalField(max_digits=10, decimal_places=2)
+    grand_total = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_method = models.CharField(max_length=50)
+    voucher_code = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return f"History {self.user.email} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+    
+    
+class Tracker(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    product_name = models.CharField(max_length=100)
+    from_location = models.CharField(max_length=255)
+    tanggal_from = models.DateField()
+    tanggal_to = models.DateField()

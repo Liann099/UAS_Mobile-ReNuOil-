@@ -1,107 +1,283 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
 
-void main() {
-  runApp(const RnoPayApp());
-}
+import '../constants.dart';
+import '../generated/assets.dart';
 
-class RnoPayApp extends StatelessWidget {
+import 'package:flutter_application_1/balance.dart';
+import 'package:flutter_application_1/settings/profile.dart';
+import 'package:flutter_application_1/Seller/sellerwithdraw.dart';
+import 'package:flutter_application_1/Seller/pickup.dart';
+import 'package:flutter_application_1/Seller/QRseller.dart';
+import 'package:flutter_application_1/Seller/seller.dart';
+
+class RnoPayApp extends StatefulWidget {
   const RnoPayApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: RnoPayDashboard(),
-      theme: ThemeData(
-        primaryColor: const Color(0xFFFBD562),
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        fontFamily: 'Roboto', // Add a clean, modern font
-      ),
-    );
-  }
+  State<RnoPayApp> createState() => _RnoPayAppState();
 }
 
-class RnoPayDashboard extends StatelessWidget {
-  const RnoPayDashboard({super.key});
+class _RnoPayAppState extends State<RnoPayApp> {
+  final storage = const FlutterSecureStorage();
+  Future<List<Map<String, dynamic>>>? _futureUserData;
+
+  bool isLoading = true;
+  Map<String, String> userData = {};
+  String? profilePictureUrl;
+  final Map<String, TextEditingController> controllers = {};
+  final Map<String, bool> isEditing = {};
+
+  Future<List<Map<String, dynamic>>> fetchUserData() async {
+    try {
+      String? token = await storage.read(key: 'access_token');
+      if (token == null) throw Exception('No access token found');
+
+      final userResponse = await http.get(
+        Uri.parse('$baseUrl/auth/users/me/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      final profileResponse = await http.get(
+        Uri.parse('$baseUrl/api/auth/profile/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (userResponse.statusCode == 200 && profileResponse.statusCode == 200) {
+        final userDataResponse = json.decode(userResponse.body);
+        final profileData = json.decode(profileResponse.body);
+
+        userData = {
+          'username': userDataResponse['username'] ?? '',
+          'bio': profileData['bio'] ?? '',
+          'userId': userDataResponse['id'].toString(),
+          'email': userDataResponse['email'] ?? '',
+          'phone': profileData['phone_number'] ?? '',
+          'gender': profileData['gender'] ?? '',
+          'birthday': userDataResponse['date_of_birth'] ?? '',
+        };
+        profilePictureUrl = profileData['profile_picture'];
+
+        for (var key in userData.keys) {
+          controllers[key] = TextEditingController(text: userData[key]);
+          isEditing[key] = false;
+        }
+
+        return [profileData, userDataResponse];
+      } else {
+        throw Exception(
+            'Failed to load user data: ${userResponse.statusCode} or ${profileResponse.statusCode}');
+      }
+    } catch (e) {
+      print('[ERROR] Exception occurred: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _futureUserData = fetchUserData();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildSearchAndQuickActionBar(),
-            _buildDashboardTitle(),
-            _buildRnoPayBalanceCard(),
-          ],
-        ),
+      backgroundColor: const Color(0xFFF5F5F5),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFFD75E),
+        elevation: 0,
+        toolbarHeight: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
-    );
-  }
+      body: _futureUserData == null
+          ? const Center(child: CircularProgressIndicator())
+          : FutureBuilder<List<Map<String, dynamic>>>(
+              future: _futureUserData,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return const Center(child: Text('Failed to load profile'));
+                }
 
-  Widget _buildSearchAndQuickActionBar() {
-    return Container(
-      color: const Color(0xFFFBD562),
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-      child: Column(
-        children: [
-          _buildSearchBar(),
-          const SizedBox(height: 10),
-          _buildQuickActionIcons(),
-        ],
-      ),
-    );
-  }
+                final profile = snapshot.data![0];
+                final usernameData = snapshot.data![1];
+                final profilePicture = profile['profile_picture'];
+                final username = usernameData['username'] ?? 'Guest User';
 
-  Widget _buildSearchBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          )
-        ],
-      ),
-      child: Row(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0),
-            child: CircleAvatar(
-              backgroundImage: const AssetImage('assets/images/startyoursearch.png'),
-              radius: 15,
+                return SafeArea(
+                  child: Column(
+                    children: [
+                      // Header with profile picture
+                      Container(
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFFD75E),
+                          borderRadius:
+                              BorderRadius.vertical(bottom: Radius.zero),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 15),
+                        child: Column(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ProfilePage()),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(40),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    profilePicture != null
+                                        ? CircleAvatar(
+                                            radius: 25,
+                                            backgroundImage:
+                                                NetworkImage(profilePicture),
+                                          )
+                                        : const CircleAvatar(
+                                            radius: 25,
+                                            backgroundColor: Colors.grey,
+                                            child: Icon(Icons.person,
+                                                size: 25, color: Colors.white),
+                                          ),
+                                    const SizedBox(width: 10),
+                                    const Expanded(
+                                      child: Text(
+                                        'Edit Profile Here',
+                                        style: TextStyle(color: Colors.black54),
+                                      ),
+                                    ),
+                                    const Icon(Icons.person,
+                                        color: Colors.black54),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      Container(
+                        color: const Color(0xFFFFD75E),
+                        child: SizedBox(
+                          height: 5,
+                          child: Container(
+                            color: const Color(0xFFFFD75E),
+                          ),
+                        ),
+                      ),
+
+                      Container(
+                        color: const Color(0xFFFFD75E),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _NavIcon(
+                              icon: 'assets/icons/iconhome.png',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => const SellerPage()),
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 0.5),
+                            _NavIcon(
+                              icon: 'assets/icons/iconbalance.png',
+                              active: true,
+                              showUnderline: true,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => const RnoPayApp()),
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 0.5),
+                            _NavIcon(
+                              icon: 'assets/icons/iconwithdraw.png',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const SellerWithdrawPage()),
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 0.5),
+                            _NavIcon(
+                              icon: 'assets/icons/iconpickup.png',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => const PickupPage()),
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 0.5),
+                            _NavIcon(
+                              icon: 'assets/icons/iconqrcode.png',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const QRSellerPage()),
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 0.5),
+                            _NavIcon(
+                              icon: 'assets/icons/iconhistory.png',
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ProfilePage()),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildDashboardTitle(),
+                      _buildRnoPayBalanceCard(),
+                    ],
+                  ),
+                );
+              },
             ),
-          ),
-          const Expanded(
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Start your search',
-                border: InputBorder.none,
-                hintStyle: TextStyle(color: Colors.grey),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActionIcons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _buildIconWithLabel('assets/icons/iconhome.png', 'Home'),
-        _buildIconWithLabel('assets/icons/iconbalance.png', 'Balance'),
-        _buildIconWithLabel('assets/icons/iconwithdraw.png', 'Withdraw'),
-        _buildIconWithLabel('assets/icons/iconpickup.png', 'Pick Up'),
-        _buildIconWithLabel('assets/icons/iconqrcode.png', 'QR Code'),
-        _buildIconWithLabel('assets/icons/iconhistory.png', 'History'),
-      ],
     );
   }
 
@@ -217,20 +393,41 @@ class RnoPayDashboard extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildIconWithLabel(String iconPath, String label) {
-    return Column(
-      children: [
-        Image.asset(iconPath, width: 24, height: 24),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 10,
-            color: Colors.black87,
+class _NavIcon extends StatelessWidget {
+  final String icon;
+  final bool active;
+  final bool showUnderline;
+  final VoidCallback? onTap;
+
+  const _NavIcon({
+    required this.icon,
+    this.active = false,
+    this.showUnderline = false,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Image.asset(
+            icon,
+            width: 60,
+            height: 65,
           ),
-        ),
-      ],
+          if (showUnderline && active)
+            Container(
+              margin: const EdgeInsets.only(top: 1),
+              height: 1.5,
+              width: 40,
+              color: Colors.black,
+            ),
+        ],
+      ),
     );
   }
 }
