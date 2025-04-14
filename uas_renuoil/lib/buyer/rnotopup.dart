@@ -78,7 +78,7 @@ class _RnoTopUpPageState extends State<RnoTopUpPage> {
               child: Row(
                 children: [
                   Image.asset(
-                    'assets/images/informasitruk.png',
+                    'assets/images/handimage.png',
                     width: 50,
                     height: 50,
                   ),
