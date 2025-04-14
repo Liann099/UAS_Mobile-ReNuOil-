@@ -22,7 +22,7 @@ class TransferScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F2C1A), // latar belakang hijau tua
+      backgroundColor: Colors.white, // Changed from Color(0xFF0F2C1A) to white
       body: Center(
         child: Container(
           margin: const EdgeInsets.all(16),
@@ -30,6 +30,15 @@ class TransferScreen extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(24),
+            // Adding a subtle shadow to distinguish the container from the white background
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                spreadRadius: 2,
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
