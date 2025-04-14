@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'generated/assets.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -14,6 +16,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFFD358),
       appBar: AppBar(
         title: const Text(
           'Promotion',
@@ -21,35 +24,33 @@ class _HomePageState extends State<HomePage> {
             color: Colors.black,
             fontSize: 18,
             fontWeight: FontWeight.w600,
+            fontFamily: 'Poppins',
           ),
         ),
         backgroundColor: const Color(0xFFFFD358),
         centerTitle: true,
         toolbarHeight: 100,
-        leading: Container(
-          width: 32,
-          height: 32,
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          alignment: Alignment.center,
-          child: SvgPicture.asset(
-            'assets/icons/weui_arrow-outlined.svg',
-            width: 40,
-            height: 40,
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
+          ),
           child: Column(
             children: [
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
+              // Tab selector
               Container(
-                margin: const EdgeInsets.all(16.0),
-                padding: const EdgeInsets.all(8.0),
+                margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.all(2.0),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFD358),
                   borderRadius: BorderRadius.circular(12),
@@ -58,51 +59,27 @@ class _HomePageState extends State<HomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Expanded(
-                      child: _buildButton(
-                          'Register Promotion', isRegisterSelected, () {
-                        setState(() {
-                          isRegisterSelected = true;
-                        });
-                      }),
+                      child: _buildTabButton(
+                          'Register Promotion',
+                          isRegisterSelected,
+                              () => setState(() => isRegisterSelected = true)
+                      ),
                     ),
                     Expanded(
-                      child: _buildButton(
-                          'Available Promotion', !isRegisterSelected, () {
-                        setState(() {
-                          isRegisterSelected = false;
-                        });
-                      }),
+                      child: _buildTabButton(
+                          'Available Promotion',
+                          !isRegisterSelected,
+                              () => setState(() => isRegisterSelected = false)
+                      ),
                     ),
                   ],
                 ),
               ),
-              Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Claim your promotion!',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 35),
-                    Image.asset('assets/images/Promo 30%.png', width: 320),
-                    const SizedBox(height: 35),
-                    Image.asset('assets/images/aa.png', width: 320),
-                    const SizedBox(height: 35),
-                    Image.asset('assets/images/2.png', width: 320),
-                    const SizedBox(height: 35),
-                    Image.asset('assets/images/3.png', width: 320),
-                    const SizedBox(height: 35),
-                  ],
-                ),
+              SizedBox(height: 8,),
+
+              // Main content
+              Expanded(
+                child: isRegisterSelected ? _buildRegisterContent() : _buildAvailableContent(),
               ),
             ],
           ),
@@ -111,7 +88,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildButton(String text, bool isSelected, VoidCallback onPressed) {
+  Widget _buildTabButton(String text, bool isSelected, VoidCallback onPressed) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4.0),
       child: ElevatedButton(
@@ -124,18 +101,142 @@ class _HomePageState extends State<HomePage> {
             borderRadius: BorderRadius.circular(10),
           ),
           elevation: isSelected ? 4 : 0,
+          shadowColor: Colors.black38,
         ),
         child: Text(
           text,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            fontFamily: 'Poppins',
+            color: isSelected ? Colors.black : Colors.black87,
+          ),
         ),
       ),
     );
   }
-}
 
-void main() {
-  runApp(const MaterialApp(
-    home: HomePage(),
-  ));
+  Widget _buildRegisterContent() {
+    // Content for Register Promotion tab (Image 1)
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: 20),
+
+          // Mascot and oil promotion - using your existing asset
+          // If you have a combined image with both mascot and speech bubble
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                Image.asset(
+                  Assets.imagesPromoCodeMascot, // Replace with your actual combined image
+                  height: 150,
+                  fit: BoxFit.contain,
+                ),
+                // Promotional banner
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.asset(
+                    Assets.images2,
+                    width: double.infinity,
+                    fit: BoxFit.fitWidth,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Promotion code
+          const Text(
+            'Code: CK188OIL',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Poppins',
+            ),
+          ),
+
+          const SizedBox(height: 60),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvailableContent() {
+    // Content for Available Promotion tab (Image 2)
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(height: 20),
+
+            // Title
+            const Text(
+              'Claim your promotion!',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Poppins',
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Multiple promo cards (using SafeArea to avoid overflow)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.asset(
+                'assets/images/2.png',
+                width: double.infinity,
+                fit: BoxFit.fitWidth,
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.asset(
+                'assets/images/aa.png',
+                width: double.infinity,
+                fit: BoxFit.fitWidth,
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.asset(
+                'assets/images/2.png',
+                width: double.infinity,
+                fit: BoxFit.fitWidth,
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.asset(
+                'assets/images/3.png',
+                width: double.infinity,
+                fit: BoxFit.fitWidth,
+              ),
+            ),
+
+            const SizedBox(height: 35),
+          ],
+        ),
+      ),
+    );
+  }
 }

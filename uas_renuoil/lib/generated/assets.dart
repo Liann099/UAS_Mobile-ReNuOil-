@@ -25,6 +25,7 @@ class Assets {
   static const String imagesLogosPaypal = 'assets/images/logos_paypal.png';
   static const String imagesMascot = 'assets/images/mascot.png';
   static const String imagesPromo30 = 'assets/images/Promo_30.png';
+  static const String imagesPromoCodeMascot = 'assets/images/promo_code_mascot.png';
   static const String imagesSimpleIconsGojek = 'assets/images/simple-icons_gojek.png';
   static const String imagesVisa = 'assets/images/visa.png';
 
