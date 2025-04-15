@@ -83,11 +83,45 @@ class _SellerPage extends State<SellerPage> {
     }
   }
 
+  // Add this to your _SellerPage class
+  Map<String, dynamic>? leaderboardData;
+  bool isLoadingLeaderboard = true;
+
+  Future<void> fetchLeaderboardData() async {
+    try {
+      final String? token = await storage.read(key: 'access_token');
+      if (token == null) throw Exception('No access token found');
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/myrank/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          leaderboardData = json.decode(response.body);
+          isLoadingLeaderboard = false;
+        });
+      } else {
+        throw Exception('Failed to load leaderboard data');
+      }
+    } catch (e) {
+      setState(() {
+        isLoadingLeaderboard = false;
+      });
+      print('Error fetching leaderboard: $e');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     // Change: Initialize _futureUserData in initState
     _futureUserData = fetchUserData();
+    fetchLeaderboardData(); // Add this line
   }
 
   @override
@@ -141,6 +175,8 @@ class _SellerPage extends State<SellerPage> {
                                 );
                               },
                               child: Container(
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 2),
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 8),
                                 decoration: BoxDecoration(
@@ -457,6 +493,7 @@ class _SellerPage extends State<SellerPage> {
                             const SizedBox(height: 15),
 
                             // Achievement Box
+// Replace your achievement section with this updated version
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
@@ -490,17 +527,19 @@ class _SellerPage extends State<SellerPage> {
                                         height: 50,
                                       ),
                                       const SizedBox(width: 15),
-                                      const Expanded(
+                                      Expanded(
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              "25.0 Liter towards Bronze ✨",
+                                              isLoadingLeaderboard
+                                                  ? "Loading your rank..."
+                                                  : "You are in ${leaderboardData?['rank']?.toString() ?? 'N/A'} place ✨",
                                               style: TextStyle(
                                                   fontWeight: FontWeight.w500),
                                             ),
-                                            SizedBox(height: 8),
+                                            const SizedBox(height: 8),
                                           ],
                                         ),
                                       ),
@@ -514,36 +553,40 @@ class _SellerPage extends State<SellerPage> {
                                       color: const Color(0xFFFFD75E),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    padding: const EdgeInsets.all(12),
-                                    child: const Column(
+                                    padding: const EdgeInsets.all(15),
+                                    child: Column(
                                       children: [
                                         Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Text(
+                                            const Text(
                                               "Collected this month:",
                                               style: TextStyle(fontSize: 12),
                                             ),
                                             Text(
-                                              "0.00L",
+                                              isLoadingLeaderboard
+                                                  ? "Loading..."
+                                                  : "${leaderboardData?['collected']?.toStringAsFixed(2) ?? '0.00'}L",
                                               style: TextStyle(
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w500),
                                             ),
                                           ],
                                         ),
-                                        SizedBox(height: 4),
+                                        const SizedBox(height: 4),
                                         Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Text(
+                                            const Text(
                                               "Last month bonus:",
                                               style: TextStyle(fontSize: 12),
                                             ),
                                             Text(
-                                              "Rp0",
+                                              isLoadingLeaderboard
+                                                  ? "Loading..."
+                                                  : "Rp${leaderboardData?['last_month_bonus']?.toStringAsFixed(0) ?? '0'}",
                                               style: TextStyle(
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w500),
@@ -870,8 +913,8 @@ class _NavIcon extends StatelessWidget {
         children: [
           Image.asset(
             icon, // Use the asset path
-            width: 60, // Adjust the size as needed
-            height: 65, // Adjust the size as needed
+            width: 55, // Adjust the size as needed
+            height: 55, // Adjust the size as needed
           ),
           // const SizedBox(height: 4),
           // Text(

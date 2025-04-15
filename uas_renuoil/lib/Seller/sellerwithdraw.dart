@@ -14,6 +14,7 @@ import 'package:flutter_application_1/Seller/pickup.dart';
 import 'package:flutter_application_1/Seller/QRseller.dart';
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 import 'package:flutter_application_1/Seller/seller.dart';
+import 'package:intl/intl.dart';
 
 class SellerWithdrawPage extends StatefulWidget {
   const SellerWithdrawPage({super.key});
@@ -23,6 +24,11 @@ class SellerWithdrawPage extends StatefulWidget {
 }
 
 class _SellerWithdrawPageState extends State<SellerWithdrawPage> {
+  double balance = 0.0; // Declare balance here
+
+  List<BankAccount> _bankAccounts = [];
+  bool _isLoadingBanks = true;
+
   final storage = const FlutterSecureStorage();
   Future<List<Map<String, dynamic>>>? _futureUserData;
   final TextEditingController _amountController = TextEditingController();
@@ -34,6 +40,29 @@ class _SellerWithdrawPageState extends State<SellerWithdrawPage> {
   String? profilePictureUrl;
   final Map<String, TextEditingController> controllers = {};
   final Map<String, bool> isEditing = {};
+
+  bool _validateAmount(String input) {
+    if (input.isEmpty) return false;
+    final amount = double.tryParse(input);
+    if (amount == null) return false;
+    return amount > 0 && amount <= balance;
+  }
+
+  // Helper function to get bank color based on bank name
+  Color _getBankColor(String bankName) {
+    switch (bankName.toLowerCase()) {
+      case 'bca':
+        return const Color(0xFFAFD2FF);
+      case 'ocbc':
+        return const Color(0xFFFFACAC);
+      case 'mandiri':
+        return const Color(0xFF00A651);
+      case 'bni':
+        return const Color(0xFFF58220);
+      default:
+        return Colors.grey[300]!;
+    }
+  }
 
   Future<List<Map<String, dynamic>>> fetchUserData() async {
     try {
@@ -60,16 +89,30 @@ class _SellerWithdrawPageState extends State<SellerWithdrawPage> {
         final userDataResponse = json.decode(userResponse.body);
         final profileData = json.decode(profileResponse.body);
 
-        userData = {
-          'username': userDataResponse['username'] ?? '',
-          'bio': profileData['bio'] ?? '',
-          'userId': userDataResponse['id'].toString(),
-          'email': userDataResponse['email'] ?? '',
-          'phone': profileData['phone_number'] ?? '',
-          'gender': profileData['gender'] ?? '',
-          'birthday': userDataResponse['date_of_birth'] ?? '',
-        };
-        profilePictureUrl = profileData['profile_picture'];
+        print('User data: ${userResponse.body}');
+        print('Balance from API: ${userDataResponse['balance']}');
+
+        double parsedBalance =
+            double.tryParse(userDataResponse['balance'].toString()) ?? 0.0;
+
+        print('[DEBUG] Parsed Balance: $parsedBalance');
+
+        setState(() {
+          balance = parsedBalance;
+
+          userData = {
+            'username': userDataResponse['username'] ?? '',
+            'bio': profileData['bio'] ?? '',
+            'userId': userDataResponse['id'].toString(),
+            'email': userDataResponse['email'] ?? '',
+            'phone': profileData['phone_number'] ?? '',
+            'gender': profileData['gender'] ?? '',
+            'birthday': userDataResponse['date_of_birth'] ?? '',
+            'balance': parsedBalance.toString(), // Corrected
+            // Balance is set as a string to be used in the UI
+          };
+          profilePictureUrl = profileData['profile_picture'];
+        });
 
         for (var key in userData.keys) {
           controllers[key] = TextEditingController(text: userData[key]);
@@ -87,10 +130,176 @@ class _SellerWithdrawPageState extends State<SellerWithdrawPage> {
     }
   }
 
+  Future<void> _fetchBankAccounts() async {
+    try {
+      final token = await storage.read(key: 'access_token');
+      if (token == null) throw Exception('No access token found');
+
+      print(
+          'Fetching bank accounts from: $baseUrl/api/bank-accounts/'); // Debug print
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/bank-accounts/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print('Response status: ${response.statusCode}'); // Debug print
+      print('Response body: ${response.body}'); // Debug print
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        print('Parsed data: $data'); // Debug print
+
+        setState(() {
+          _bankAccounts =
+              data.map((json) => BankAccount.fromJson(json)).toList();
+          _isLoadingBanks = false;
+        });
+      } else {
+        throw Exception('Failed to load bank accounts');
+      }
+    } catch (e) {
+      print('Error fetching bank accounts: $e'); // Debug print
+      setState(() {
+        _isLoadingBanks = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading bank accounts: ${e.toString()}')),
+      );
+    }
+  }
+
+  Future<void> _withdrawBalance() async {
+    try {
+      // Validate amount
+      if (_amountController.text.isEmpty && !_withdrawAll) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text(
+                  'Please enter an amount or select "Withdraw all balance"')),
+        );
+        return;
+      }
+
+      // Get the amount
+      double amount;
+      if (_withdrawAll) {
+        amount = balance;
+      } else {
+        amount = double.tryParse(_amountController.text) ?? 0.0;
+      }
+
+      // Validate amount is positive and not zero
+      if (amount <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Withdrawal amount must be greater than zero')),
+        );
+        return;
+      }
+
+      // Check if we have bank accounts
+      if (_bankAccounts.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please add a bank account first')),
+        );
+        return;
+      }
+
+      // Get selected bank account
+      final selectedBank = _bankAccounts[_selectedBankIndex];
+      final formattedAmount = NumberFormat('#,##0', 'id_ID').format(amount);
+
+      // Show confirmation dialog
+      bool confirm = await showDialog(
+            context: context,
+            builder: (context) => WithdrawalConfirmationDialog(
+              bankName: selectedBank.bankName,
+              accountNumber: selectedBank.accountNumber,
+              accountHolder: selectedBank.accountHolder,
+              amount: formattedAmount,
+              onContinue: () {
+                Navigator.of(context).pop(true); // Return true to confirm
+              },
+            ),
+          ) ??
+          false;
+
+      if (!confirm) return; // User cancelled
+
+      // Get token
+      final token = await storage.read(key: 'access_token');
+      if (token == null) {
+        throw Exception('No access token found');
+      }
+
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      // Make the API request
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/withdraw/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'amount': amount.toString(),
+          'payment_method': selectedBank.bankName.toLowerCase(),
+          'bank_account': selectedBank.accountNumber,
+        }),
+      );
+
+      // Hide loading indicator
+      Navigator.of(context).pop();
+
+      // Handle response
+      if (response.statusCode == 201) {
+        // Success - refresh balance
+        await fetchUserData();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Withdrawal successful!')),
+        );
+      } else if (response.statusCode == 400) {
+        // Check for insufficient balance error specifically
+        final errorData = json.decode(response.body);
+        if (errorData['error']?.contains('Insufficient balance') ?? false) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Insufficient balance for withdrawal')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorData['error'] ?? 'Withdrawal failed')),
+          );
+        }
+      } else {
+        // Other errors
+        final errorData = json.decode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorData['error'] ?? 'Withdrawal failed')),
+        );
+      }
+    } catch (e) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _futureUserData = fetchUserData();
+    _fetchBankAccounts();
   }
 
   @override
@@ -143,6 +352,8 @@ class _SellerWithdrawPageState extends State<SellerWithdrawPage> {
                                 );
                               },
                               child: Container(
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 2),
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 8),
                                 decoration: BoxDecoration(
@@ -290,7 +501,7 @@ class _SellerWithdrawPageState extends State<SellerWithdrawPage> {
                                   fontSize: 16,
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 8),
 
                               // Refund Balance Card
                               Container(
@@ -316,8 +527,8 @@ class _SellerWithdrawPageState extends State<SellerWithdrawPage> {
                                     Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
-                                      children: const [
-                                        Text(
+                                      children: [
+                                        const Text(
                                           'Refund Balance',
                                           style: TextStyle(
                                             fontWeight: FontWeight.w600,
@@ -325,8 +536,8 @@ class _SellerWithdrawPageState extends State<SellerWithdrawPage> {
                                           ),
                                         ),
                                         Text(
-                                          'Balance: Rp0',
-                                          style: TextStyle(
+                                          'Balance: Rp ${NumberFormat('#,##0.00', 'id_ID').format(balance)}',
+                                          style: const TextStyle(
                                             fontSize: 12,
                                           ),
                                         ),
@@ -413,6 +624,12 @@ class _SellerWithdrawPageState extends State<SellerWithdrawPage> {
                                           onChanged: (value) {
                                             setState(() {
                                               _withdrawAll = value;
+                                              if (value) {
+                                                _amountController.text =
+                                                    balance.toStringAsFixed(2);
+                                              } else {
+                                                _amountController.clear();
+                                              }
                                             });
                                           },
                                           activeColor: Colors.white,
@@ -440,57 +657,70 @@ class _SellerWithdrawPageState extends State<SellerWithdrawPage> {
                                   const Text(
                                     'Your withdrawal of funds will be transferred to the selected destination account',
                                     style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 10,
                                       color: Colors.black54,
                                     ),
                                   ),
                                   const SizedBox(height: 12),
 
                                   // Bank Cards
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.05),
-                                          blurRadius: 4,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        // BCA Bank Card
-                                        _BankCard(
-                                          bankName: 'BCA',
-                                          accountNumber: '5147 8816 8499 7303',
-                                          name: 'Matt',
-                                          color: const Color(0xFFAFD2FF),
-                                          isSelected: _selectedBankIndex == 0,
-                                          onTap: () {
-                                            setState(() {
-                                              _selectedBankIndex = 0;
-                                            });
-                                          },
-                                        ),
-                                        const Divider(height: 1, thickness: 1),
-                                        // OCBC Bank Card
-                                        _BankCard(
-                                          bankName: 'OCBC',
-                                          accountNumber: '8428 1945 1234 8888',
-                                          name: 'Matt',
-                                          color: const Color(0xFFFFACAC),
-                                          isSelected: _selectedBankIndex == 1,
-                                          onTap: () {
-                                            setState(() {
-                                              _selectedBankIndex = 1;
-                                            });
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                  _isLoadingBanks
+                                      ? const Center(
+                                          child: CircularProgressIndicator())
+                                      : _bankAccounts.isEmpty
+                                          ? const Text(
+                                              'No bank accounts found. Please add one.',
+                                              style:
+                                                  TextStyle(color: Colors.grey),
+                                            )
+                                          : Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black
+                                                        .withOpacity(0.05),
+                                                    blurRadius: 4,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: Column(
+                                                children: [
+                                                  for (int i = 0;
+                                                      i < _bankAccounts.length;
+                                                      i++) ...[
+                                                    if (i > 0)
+                                                      const Divider(
+                                                          height: 1,
+                                                          thickness: 1),
+                                                    _BankCard(
+                                                      bankName: _bankAccounts[i]
+                                                          .bankName,
+                                                      accountNumber:
+                                                          _bankAccounts[i]
+                                                              .accountNumber,
+                                                      name: _bankAccounts[i]
+                                                          .accountHolder,
+                                                      color: _getBankColor(
+                                                          _bankAccounts[i]
+                                                              .bankName),
+                                                      isSelected:
+                                                          _selectedBankIndex ==
+                                                              i,
+                                                      onTap: () {
+                                                        setState(() {
+                                                          _selectedBankIndex =
+                                                              i;
+                                                        });
+                                                      },
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+                                            ),
                                   const SizedBox(height: 12),
 
                                   // Add New Bank Account Button
@@ -532,7 +762,8 @@ class _SellerWithdrawPageState extends State<SellerWithdrawPage> {
                                   SizedBox(
                                     width: double.infinity,
                                     child: ElevatedButton(
-                                      onPressed: () {},
+                                      onPressed:
+                                          _withdrawBalance, // Updated to call our function
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor:
                                             const Color(0xFFFFD75E),
@@ -673,8 +904,8 @@ class _NavIcon extends StatelessWidget {
         children: [
           Image.asset(
             icon,
-            width: 60,
-            height: 65,
+            width: 55,
+            height: 55,
           ),
           if (showUnderline && active)
             Container(
@@ -684,6 +915,162 @@ class _NavIcon extends StatelessWidget {
               color: Colors.black,
             ),
         ],
+      ),
+    );
+  }
+}
+
+class BankAccount {
+  final int id;
+  final String bankName;
+  final String accountHolder;
+  final String accountNumber;
+  final String? branchCode;
+
+  BankAccount({
+    required this.id,
+    required this.bankName,
+    required this.accountHolder,
+    required this.accountNumber,
+    this.branchCode,
+  });
+
+  factory BankAccount.fromJson(Map<String, dynamic> json) {
+    return BankAccount(
+      id: json['id'],
+      bankName:
+          json['bank_name'], // Make sure these keys match your API response
+      accountHolder: json['account_holder'],
+      accountNumber: json['account_number'],
+      branchCode: json['branch_code'],
+    );
+  }
+  @override
+  String toString() {
+    return 'BankAccount{id: $id, bankName: $bankName, accountNumber: $accountNumber}';
+  }
+}
+
+class WithdrawalConfirmationDialog extends StatelessWidget {
+  final String bankName;
+  final String accountNumber;
+  final String accountHolder;
+  final String amount;
+  final VoidCallback onContinue;
+
+  const WithdrawalConfirmationDialog({
+    super.key,
+    required this.bankName,
+    required this.accountNumber,
+    required this.accountHolder,
+    required this.amount,
+    required this.onContinue,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final formattedDate =
+        DateFormat('dd MMMM yyyy, HH.mm').format(now) + ' WIB';
+
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Withdraw Balance',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Bank Info
+            Text(
+              bankName,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              accountNumber,
+              style: const TextStyle(
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              accountHolder,
+              style: const TextStyle(
+                fontSize: 14,
+              ),
+            ),
+
+            const SizedBox(height: 20),
+            const Text(
+              'Withdrawal request in process',
+              style: TextStyle(
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              formattedDate,
+              style: const TextStyle(
+                fontSize: 14,
+              ),
+            ),
+
+            const SizedBox(height: 20),
+            Text(
+              'Rp$amount',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 20),
+            const Text(
+              'Your balance withdrawal will be processed immediately',
+              style: TextStyle(
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onContinue,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFD75E),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Continue',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -380,3 +380,8 @@ class TrackerListView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
+class BankAccountList(generics.ListCreateAPIView):
+    serializer_class = BankAccountSerializer
+    
+    def get_queryset(self):
+        return BankAccount.objects.filter(user=self.request.user)

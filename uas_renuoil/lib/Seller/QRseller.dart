@@ -162,6 +162,8 @@ class _QRSellerPageState extends State<QRSellerPage> {
                                 );
                               },
                               child: Container(
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 2),
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 8),
                                 decoration: BoxDecoration(
@@ -450,8 +452,8 @@ class _NavIcon extends StatelessWidget {
         children: [
           Image.asset(
             icon,
-            width: 60,
-            height: 65,
+            width: 55,
+            height: 55,
           ),
           if (showUnderline && active)
             Container(

@@ -58,6 +58,8 @@ class _LoginScreenState extends State<LoginScreen> {
         }),
       );
 
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         // Successful login
         final responseData = jsonDecode(response.body);
@@ -123,12 +125,13 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
           Center(
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 30.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const SizedBox(height: 60),
                   const Text(
                     "Let's Go,",
                     style: TextStyle(

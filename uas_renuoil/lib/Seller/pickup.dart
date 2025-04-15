@@ -85,6 +85,60 @@ class _PickupPageState extends State<PickupPage> {
     }
   }
 
+  // Add this method to your _PickupPageState class
+  Future<void> _submitPickupOrder() async {
+    try {
+      final String? token = await storage.read(key: 'access_token');
+      if (token == null) throw Exception('No access token found');
+
+      if (_amountController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter the amount in liters')),
+        );
+        return;
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/pick-up/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'pick_up_location': 'BMW Astra Serpong', // You can make this dynamic
+          'drop_location': 'Nearest ReNuOil (@ Residence BSD City)',
+          'liters': _amountController.text,
+          'courier': 'gojek', // You can make this selectable
+          'transport_mode': 'car', // You can make this selectable
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        // Success - show success message and navigate
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Pickup order created successfully!')),
+        );
+        // Navigate to confirmation page or back to seller home
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const SellerPage()),
+        );
+      } else {
+        // Handle error
+        final errorData = json.decode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Error: ${errorData['detail'] ?? 'Failed to create pickup order'}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -141,6 +195,8 @@ class _PickupPageState extends State<PickupPage> {
                                 );
                               },
                               child: Container(
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 2),
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 8),
                                 decoration: BoxDecoration(
@@ -461,7 +517,7 @@ class _PickupPageState extends State<PickupPage> {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                onPressed: () {},
+                                onPressed: _submitPickupOrder,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFFFFD75E),
                                   padding:
@@ -514,8 +570,8 @@ class _NavIcon extends StatelessWidget {
         children: [
           Image.asset(
             icon,
-            width: 60,
-            height: 65,
+            width: 55,
+            height: 55,
           ),
           if (showUnderline && active)
             Container(

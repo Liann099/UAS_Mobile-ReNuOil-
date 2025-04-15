@@ -13,6 +13,9 @@ import 'package:flutter_application_1/Seller/sellerwithdraw.dart';
 import 'package:flutter_application_1/Seller/pickup.dart';
 import 'package:flutter_application_1/Seller/QRseller.dart';
 import 'package:flutter_application_1/Seller/seller.dart';
+import 'package:iconify_flutter/iconify_flutter.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:intl/intl.dart';
 
 class RnoPayApp extends StatefulWidget {
   const RnoPayApp({super.key});
@@ -22,6 +25,8 @@ class RnoPayApp extends StatefulWidget {
 }
 
 class _RnoPayAppState extends State<RnoPayApp> {
+  double balance = 0.0; // Declare balance here
+
   final storage = const FlutterSecureStorage();
   Future<List<Map<String, dynamic>>>? _futureUserData;
 
@@ -56,16 +61,30 @@ class _RnoPayAppState extends State<RnoPayApp> {
         final userDataResponse = json.decode(userResponse.body);
         final profileData = json.decode(profileResponse.body);
 
-        userData = {
-          'username': userDataResponse['username'] ?? '',
-          'bio': profileData['bio'] ?? '',
-          'userId': userDataResponse['id'].toString(),
-          'email': userDataResponse['email'] ?? '',
-          'phone': profileData['phone_number'] ?? '',
-          'gender': profileData['gender'] ?? '',
-          'birthday': userDataResponse['date_of_birth'] ?? '',
-        };
-        profilePictureUrl = profileData['profile_picture'];
+        print('User data: ${userResponse.body}');
+        print('Balance from API: ${userDataResponse['balance']}');
+
+        double parsedBalance =
+            double.tryParse(userDataResponse['balance'].toString()) ?? 0.0;
+
+        print('[DEBUG] Parsed Balance: $parsedBalance');
+
+        setState(() {
+          balance = parsedBalance;
+
+          userData = {
+            'username': userDataResponse['username'] ?? '',
+            'bio': profileData['bio'] ?? '',
+            'userId': userDataResponse['id'].toString(),
+            'email': userDataResponse['email'] ?? '',
+            'phone': profileData['phone_number'] ?? '',
+            'gender': profileData['gender'] ?? '',
+            'birthday': userDataResponse['date_of_birth'] ?? '',
+            'balance': parsedBalance.toString(), // Corrected
+            // Balance is set as a string to be used in the UI
+          };
+          profilePictureUrl = profileData['profile_picture'];
+        });
 
         for (var key in userData.keys) {
           controllers[key] = TextEditingController(text: userData[key]);
@@ -139,8 +158,10 @@ class _RnoPayAppState extends State<RnoPayApp> {
                                 );
                               },
                               child: Container(
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 2),
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 8),
+                                    horizontal: 12, vertical: 8),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(40),
@@ -282,14 +303,41 @@ class _RnoPayAppState extends State<RnoPayApp> {
   }
 
   Widget _buildDashboardTitle() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-      child: Text(
-        'RNO Pay Dashboard | ReNuOil',
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
+    return Padding(
+      padding: const EdgeInsets.all(16.3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'RNO Pay Dashboard | ReNuOil',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFD75E),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'Top-up',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -297,59 +345,27 @@ class _RnoPayAppState extends State<RnoPayApp> {
   Widget _buildRnoPayBalanceCard() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Container(
-        height: 180,
-        decoration: BoxDecoration(
-          color: const Color(0xFFFBD562),
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 6,
-              offset: const Offset(0, 3),
-            )
-          ],
-        ),
-        child: Stack(
-          children: [
-            _buildBackgroundImage(),
-            _buildTopUpButton(),
-            _buildCardContent(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBackgroundImage() {
-    return Positioned.fill(
-      child: Image.asset(
-        'assets/images/RNO Pay.png',
-        fit: BoxFit.cover,
-        opacity: const AlwaysStoppedAnimation(0.3),
-      ),
-    );
-  }
-
-  Widget _buildTopUpButton() {
-    return Positioned(
-      top: 10,
-      right: 10,
-      child: ElevatedButton(
-        onPressed: () {},
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+      child: AspectRatio(
+        aspectRatio: 325 / 200,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            image: const DecorationImage(
+              image: AssetImage('assets/images/card.png'),
+              fit: BoxFit.cover,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-        ),
-        child: const Text(
-          'Top-up',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
+          child: Stack(
+            children: [
+              _buildCardContent(),
+            ],
           ),
         ),
       ),
@@ -357,38 +373,41 @@ class _RnoPayAppState extends State<RnoPayApp> {
   }
 
   Widget _buildCardContent() {
-    return const Positioned(
-      top: 50,
-      left: 16,
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // RNO Pay label
+          Row(
+            children: [
+              Icon(
+                LucideIcons.wallet,
+                size: 24,
+                color: Colors.black87,
+              ),
+              SizedBox(width: 5),
+              Text(
+                'RNO Pay',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 15),
+
+          // Balance amount
           Text(
-            'RNO Pay',
-            style: TextStyle(
-              fontSize: 16,
+            'Rp ${NumberFormat('#,##0.00', 'id_ID').format(balance)}',
+            style: const TextStyle(
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              fontSize: 28,
             ),
           ),
-          SizedBox(height: 8),
-          Text(
-            'Rp0.00',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-          SizedBox(height: 16),
-          Text(
-            '5270 6206 5315 0372',
-            style: TextStyle(
-              color: Colors.black54,
-              fontSize: 14,
-              letterSpacing: 1.2,
-            ),
-          ),
+
+          const Spacer(),
         ],
       ),
     );
@@ -416,8 +435,8 @@ class _NavIcon extends StatelessWidget {
         children: [
           Image.asset(
             icon,
-            width: 60,
-            height: 65,
+            width: 55,
+            height: 55,
           ),
           if (showUnderline && active)
             Container(

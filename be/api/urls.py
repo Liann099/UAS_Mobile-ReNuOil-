@@ -41,5 +41,5 @@ urlpatterns = [
     path('cart/<int:pk>/delete/', CartDeleteView.as_view(), name='cart-delete'),
     path("checkout-history/", CheckoutHistoryListView.as_view(), name="checkout-history"),
 
-    
+    path('bank-accounts/', BankAccountList.as_view(), name='bank-account-list'),
 ]
