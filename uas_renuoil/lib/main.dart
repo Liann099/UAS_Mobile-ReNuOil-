@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/Seller/ranking_list_page.dart';
 import 'package:flutter_application_1/settings/sheet/bio_bottom_sheet.dart';
 import 'package:flutter_application_1/maps/location_map.dart';
 
@@ -162,6 +163,7 @@ class RouteButtonsScreen extends StatelessWidget {
 
       // Shortcut to test your Buyer homepage
       '/buyer-home': 'Buyer Homepage',
+      '/buyer-default': 'Buyer Default',
 
       // seller homepage
       '/seller': 'Seller Homepage',
