@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/settings/sheet/bio_bottom_sheet.dart';
+import 'package:flutter_application_1/location_map.dart';
 
 // Auth
 import 'package:flutter_application_1/auth/address_input.dart';
@@ -38,6 +39,8 @@ import 'package:flutter_application_1/settings/personal_info.dart';
 import 'package:flutter_application_1/settings/privacy_sharing.dart';
 import 'package:flutter_application_1/settings/profile.dart';
 import 'package:flutter_application_1/settings/translation.dart';
+
+
 
 // Support
 import 'package:flutter_application_1/support/feedback_form.dart';
@@ -102,6 +105,8 @@ class MyApp extends StatelessWidget {
         '/payout-setup': (context) => PayoutSetupScreen(),
         '/earnings': (context) => EarningsScreen(),
 
+        '/location-map': (context) => const LocationMapScreen(),
+
         //Buyer
         '/buyer-default': (context) => const BuyerHomePage(),
         '/buyer-balance': (context) => const BalanceBuyerPage(),
@@ -152,6 +157,8 @@ class RouteButtonsScreen extends StatelessWidget {
       '/seller-inquiry': 'Seller Inquiry',
       '/add-payout-method': 'Add Payout Method',
       '/payout-setup': 'Payout Setup',
+
+      '/location-map': 'Live Location Map',
 
       // Shortcut to test your Buyer homepage
       '/buyer-home': 'Buyer Homepage',
