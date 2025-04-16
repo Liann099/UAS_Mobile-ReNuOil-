@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/maps/location_map.dart';
 
 class PickupPage extends StatefulWidget {
   const PickupPage({super.key});
@@ -10,13 +11,14 @@ class PickupPage extends StatefulWidget {
 class _PickupPageState extends State<PickupPage> {
   final TextEditingController _amountController = TextEditingController();
   String _selectedCourier = '';
-  
+  String _pickupLocationText = 'Fetching Location...'; // State for location text
+
   @override
   void dispose() {
     _amountController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,14 +30,16 @@ class _PickupPageState extends State<PickupPage> {
             Container(
               decoration: const BoxDecoration(
                 color: Color(0xFFFFD75E),
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+                borderRadius:
+                    BorderRadius.vertical(bottom: Radius.circular(30)),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
               child: Column(
                 children: [
                   // Search Bar
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(30),
@@ -50,7 +54,8 @@ class _PickupPageState extends State<PickupPage> {
                     child: Row(
                       children: [
                         const CircleAvatar(
-                          backgroundImage: AssetImage('assets/images/user_circle.png'),
+                          backgroundImage:
+                              AssetImage('assets/images/apple.png'),
                           radius: 18,
                         ),
                         const SizedBox(width: 10),
@@ -70,9 +75,13 @@ class _PickupPageState extends State<PickupPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: const [
                       _NavIcon(icon: Icons.home, label: 'Home'),
-                      _NavIcon(icon: Icons.account_balance_wallet, label: 'Balance'),
+                      _NavIcon(
+                          icon: Icons.account_balance_wallet, label: 'Balance'),
                       _NavIcon(icon: Icons.money_off, label: 'Withdraw'),
-                      _NavIcon(icon: Icons.location_on, label: 'Pick Up', active: true),
+                      _NavIcon(
+                          icon: Icons.location_on,
+                          label: 'Pick Up',
+                          active: true),
                       _NavIcon(icon: Icons.qr_code_scanner, label: 'QR Code'),
                       _NavIcon(icon: Icons.history, label: 'History'),
                     ],
@@ -85,12 +94,12 @@ class _PickupPageState extends State<PickupPage> {
             Expanded(
               child: Stack(
                 children: [
-                  // Map placeholder - in a real app, replace with actual map widget
-                  Image.asset(
-                    'assets/images/map_with_route.png',
-                    width: double.infinity,
-                    height: double.infinity,
-                    fit: BoxFit.cover,
+                  LocationMapScreen(
+                    onLocationUpdated: (address) {
+                      setState(() {
+                        _pickupLocationText = address;
+                      });
+                    },
                   ),
                 ],
               ),
@@ -113,26 +122,27 @@ class _PickupPageState extends State<PickupPage> {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.grey.shade300),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     child: Row(
-                      children: const [
-                        Icon(Icons.home, color: Colors.black),
-                        SizedBox(width: 12),
+                      children: [
+                        const Icon(Icons.home, color: Colors.black),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'BMW Astra Serpong',
-                            style: TextStyle(
+                            _pickupLocationText,
+                            style: const TextStyle(
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
-                        Icon(Icons.keyboard_arrow_down),
+                        const Icon(Icons.keyboard_arrow_down),
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Destination Location
                   Container(
                     decoration: BoxDecoration(
@@ -140,7 +150,8 @@ class _PickupPageState extends State<PickupPage> {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.grey.shade300),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     child: Row(
                       children: [
                         CircleAvatar(
@@ -164,14 +175,14 @@ class _PickupPageState extends State<PickupPage> {
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 20),
-                  
+
                   // Amount Field
                   Row(
                     children: [
                       const Text(
-                        'Amount  : ',
+                        'Amount  : ',
                         style: TextStyle(fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(width: 8),
@@ -199,9 +210,9 @@ class _PickupPageState extends State<PickupPage> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Oil Type
                   Row(
                     children: const [
@@ -216,9 +227,9 @@ class _PickupPageState extends State<PickupPage> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Courier Selection
                   Row(
                     children: [
@@ -233,7 +244,8 @@ class _PickupPageState extends State<PickupPage> {
                             border: Border.all(color: Colors.grey.shade400),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           child: Row(
                             children: [
                               Expanded(
@@ -253,9 +265,9 @@ class _PickupPageState extends State<PickupPage> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 20),
-                  
+
                   // Request Button
                   SizedBox(
                     width: double.infinity,
