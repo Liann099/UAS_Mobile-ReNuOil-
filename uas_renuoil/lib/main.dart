@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/settings/sheet/bio_bottom_sheet.dart';
-import 'package:flutter_application_1/location_map.dart';
+import 'package:flutter_application_1/maps/location_map.dart';
 
 // Auth
 import 'package:flutter_application_1/auth/address_input.dart';
