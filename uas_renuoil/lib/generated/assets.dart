@@ -18,6 +18,7 @@ class Assets {
   static const String imagesContactCenter = 'assets/images/contact_center.png';
   static const String imagesCreditCard = 'assets/images/credit_card.png';
   static const String imagesDigitalPayment = 'assets/images/digital_payment.png';
+  static const String imagesDown = 'assets/images/down.png';
   static const String imagesFaceId = 'assets/images/face_id.png';
   static const String imagesFb = 'assets/images/fb.png';
   static const String imagesGoogle = 'assets/images/google.png';
@@ -31,6 +32,7 @@ class Assets {
   static const String imagesPromo30 = 'assets/images/Promo_30.png';
   static const String imagesPromoCodeMascot = 'assets/images/promo_code_mascot.png';
   static const String imagesSimpleIconsGojek = 'assets/images/simple-icons_gojek.png';
+  static const String imagesUp = 'assets/images/up.png';
   static const String imagesVisa = 'assets/images/visa.png';
   static const String imagesWin1 = 'assets/images/win1.png';
   static const String imagesWin2 = 'assets/images/win2.png';
