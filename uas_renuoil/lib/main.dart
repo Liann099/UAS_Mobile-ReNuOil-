@@ -155,6 +155,7 @@ class RouteButtonsScreen extends StatelessWidget {
 
       // Shortcut to test your Buyer homepage
       '/buyer-home': 'Buyer Homepage',
+      '/buyer-default': 'Buyer Default',
 
       // seller homepage
       '/seller': 'Seller Homepage',

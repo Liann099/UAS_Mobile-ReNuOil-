@@ -12,6 +12,7 @@ class Assets {
   static const String imagesArcticonsOvo = 'assets/images/arcticons_ovo.png';
   static const String imagesBg = 'assets/images/bg.png';
   static const String imagesBiBank = 'assets/images/bi_bank.png';
+  static const String imagesBonusBulanan = 'assets/images/Bonus_bulanan.png';
   static const String imagesBtc = 'assets/images/btc.png';
   static const String imagesContactCenter = 'assets/images/contact_center.png';
   static const String imagesCreditCard = 'assets/images/credit_card.png';
@@ -21,9 +22,11 @@ class Assets {
   static const String imagesGoogle = 'assets/images/google.png';
   static const String imagesGpn = 'assets/images/gpn.png';
   static const String imagesGroup306 = 'assets/images/Group306.png';
+  static const String imagesImageMap = 'assets/images/image_map.png';
   static const String imagesLogosMastercard = 'assets/images/logos_mastercard.png';
   static const String imagesLogosPaypal = 'assets/images/logos_paypal.png';
   static const String imagesMascot = 'assets/images/mascot.png';
+  static const String imagesMoneyLaundering = 'assets/images/Money_Laundering.png';
   static const String imagesPromo30 = 'assets/images/Promo_30.png';
   static const String imagesPromoCodeMascot = 'assets/images/promo_code_mascot.png';
   static const String imagesSimpleIconsGojek = 'assets/images/simple-icons_gojek.png';
