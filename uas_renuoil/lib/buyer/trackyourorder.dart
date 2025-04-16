@@ -1,299 +1,227 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Track Order App',
+      home: TrackOrderPage(),
       theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.amber),
+        fontFamily: 'Roboto',
       ),
-      home: const TrackOrderPage(),
     );
   }
 }
 
 class TrackOrderPage extends StatelessWidget {
-  const TrackOrderPage({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Color(0xFFFFC95C),
       body: SafeArea(
         child: Column(
           children: [
-            // Header with search bar and navigation
-            Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFFFFD75E),
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+            // Search Bar
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Start your search',
+                    prefixIcon: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: CircleAvatar(
+                        backgroundImage: AssetImage('assets/images/profile.png'),
+                      ),
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(vertical: 15),
+                  ),
+                ),
               ),
-              padding: const EdgeInsets.only(bottom: 20, top: 20),
-              child: Column(
+            ),
+
+            // Bottom Navigation
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 20),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        const CircleAvatar(
-                          radius: 20,
-                          backgroundImage: AssetImage('assets/images/user_circle.png'),
-                        ),
-                        const SizedBox(width: 10),
-                        const Expanded(
-                          child: Text(
-                            'Start your search',
-                            style: TextStyle(color: Colors.black54),
-                          ),
-                        ),
-                        const Icon(Icons.search, color: Colors.black54),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  // Bottom nav icons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: const [
-                      _NavIcon(icon: Icons.home, label: 'Home'),
-                      _NavIcon(icon: Icons.account_balance_wallet, label: 'Balance'),
-                      _NavIcon(icon: Icons.monetization_on, label: 'Withdraw'),
-                      _NavIcon(icon: Icons.history, label: 'History'),
-                      _NavIcon(icon: Icons.local_shipping, label: 'Track', active: true),
-                    ],
-                  ),
+                  _buildNavItem(Icons.home, 'Home'),
+                  _buildNavItem(Icons.account_balance_wallet, 'Balance'),
+                  _buildNavItem(Icons.arrow_circle_up, 'Withdraw'),
+                  _buildNavItem(Icons.history, 'History'),
+                  _buildNavItem(Icons.local_shipping, 'Track', isSelected: true),
                 ],
               ),
             ),
-            
-            // Track Your Order title
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              decoration: const BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: Colors.grey, width: 0.5),
-                ),
-              ),
-              child: const Text(
+
+            // Track Your Order Title
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
                 'Track Your Order',
-                textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            
-            // Content
+
+            // Order Tracking Card
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  // Order Card
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Order Header
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
                         ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        child: Column(
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text(
-                                  '#1945',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  'Cooking Oil - Renewable',
-                                  style: TextStyle(fontSize: 16),
-                                ),
-                              ],
-                            ),
-                            Image.asset(
-                              'assets/images/informasitruk.png',
-                              width: 60,
-                              height: 60,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 25),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text(
-                                  '20 Feb, 25',
-                                  style: TextStyle(color: Colors.grey, fontSize: 14),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Jakarta',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                ),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: const [
-                                Text(
-                                  '23 Feb, 25',
-                                  style: TextStyle(color: Colors.grey, fontSize: 14),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Home',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        // Tracking Line
-                        Row(
-                          children: [
-                            Container(
-                              width: 20,
-                              height: 20,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFFFD75E),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            Expanded(
-                              child: Container(
-                                height: 4,
-                                color: Colors.grey.shade300,
-                              ),
-                            ),
-                            Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade300,
-                                    shape: BoxShape.circle,
+                            Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '#1945',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Cooking Oil - Renewable',
+                                        style: TextStyle(
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                Image.asset(
-                                  'assets/images/trukjakarta.png',
-                                  width: 25,
-                                  height: 25,
-                                ),
-                              ],
-                            ),
-                            Expanded(
-                              child: Container(
-                                height: 4,
-                                color: Colors.grey.shade300,
+                                  CircleAvatar(
+                                    backgroundImage: AssetImage('assets/images/logo.png'),
+                                  ),
+                                ],
                               ),
                             ),
-                            Container(
-                              width: 20,
-                              height: 20,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade400,
-                                shape: BoxShape.circle,
+
+                            // Tracking Progress
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                              child: Row(
+                                children: [
+                                  Text('20 Feb, 25\nJakarta'),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          Container(
+                                            height: 4,
+                                            color: Colors.grey[300],
+                                          ),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Container(
+                                                width: 20,
+                                                height: 20,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.yellow,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                              ),
+                                              Container(
+                                                width: 20,
+                                                height: 20,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey[300],
+                                                  shape: BoxShape.circle,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  Text('23 Feb, 25\nHome'),
+                                ],
+                              ),
+                            ),
+
+                            // Truck Icon
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16.0),
+                              child: Icon(
+                                Icons.local_shipping,
+                                color: Colors.grey,
+                                size: 40,
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+
+                      // Detailed Tracking
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Column(
+                            children: [
+                              _buildTrackingStep(
+                                date: '20 Feb, 25',
+                                time: '10:45 AM',
+                                location: 'Drop Off',
+                                detail: 'Silambat Jakarta',
+                                isActive: true,
+                              ),
+                              _buildTrackingStep(
+                                date: '20 Feb, 25',
+                                time: '7:00 PM',
+                                location: 'Sorting Center',
+                                detail: 'DC Cakung',
+                                isActive: true,
+                              ),
+                              _buildTrackingStep(
+                                date: '21 Feb, 25',
+                                location: 'Sorting Center',
+                                detail: 'DC BSD',
+                                isActive: false,
+                              ),
+                              _buildTrackingStep(
+                                date: '23 - 24 Feb, 25',
+                                location: 'Home',
+                                detail: 'B Residence BSD City',
+                                isActive: false,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  // Timeline tracking
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: const [
-                        _TimelineItem(
-                          date: "20 Feb, 25",
-                          time: "10:45 AM",
-                          title: "Drop Off",
-                          subtitle: "Silambat Jakarta",
-                          isActive: true,
-                          isFirst: true,
-                        ),
-                        _TimelineItem(
-                          date: "20 Feb, 25",
-                          time: "7:00 PM",
-                          title: "Sorting Center",
-                          subtitle: "DC Cakung",
-                          isActive: true,
-                        ),
-                        _TimelineItem(
-                          date: "21 Feb, 25",
-                          time: "-",
-                          title: "Sorting Center",
-                          subtitle: "DC BSD",
-                          isActive: false,
-                        ),
-                        _TimelineItem(
-                          date: "23 - 24 Feb, 25",
-                          time: "-",
-                          title: "Home",
-                          subtitle: "B Residence BSD City",
-                          isActive: false,
-                          isLast: true,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ],
@@ -301,139 +229,91 @@ class TrackOrderPage extends StatelessWidget {
       ),
     );
   }
-}
 
-class _NavIcon extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool active;
-
-  const _NavIcon({
-    required this.icon,
-    required this.label,
-    this.active = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildNavItem(IconData icon, String label, {bool isSelected = false}) {
     return Column(
-      mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
           icon,
-          color: active ? Colors.black : Colors.black54,
-          size: 24,
+          color: isSelected ? Colors.black : Colors.black45,
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(
           label,
           style: TextStyle(
+            color: isSelected ? Colors.black : Colors.black45,
             fontSize: 12,
-            color: active ? Colors.black : Colors.black54,
-            fontWeight: active ? FontWeight.bold : FontWeight.normal,
           ),
         ),
       ],
     );
   }
-}
 
-class _TimelineItem extends StatelessWidget {
-  final String date;
-  final String time;
-  final String title;
-  final String subtitle;
-  final bool isActive;
-  final bool isFirst;
-  final bool isLast;
-
-  const _TimelineItem({
-    required this.date,
-    required this.time,
-    required this.title,
-    required this.subtitle,
-    this.isActive = false,
-    this.isFirst = false,
-    this.isLast = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return IntrinsicHeight(
+  Widget _buildTrackingStep({
+    required String date,
+    String? time,
+    required String location,
+    required String detail,
+    bool isActive = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Left column - date and time
-          SizedBox(
-            width: 100,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  date,
-                  style: TextStyle(
-                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  time,
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          const SizedBox(width: 15),
-          
-          // Center column - timeline
+          // Vertical Line and Dot
           Column(
             children: [
               Container(
-                width: 20,
-                height: 20,
+                width: 12,
+                height: 12,
                 decoration: BoxDecoration(
-                  color: isActive ? const Color(0xFFFFD75E) : Colors.grey,
                   shape: BoxShape.circle,
+                  color: isActive ? Colors.yellow : Colors.grey[300],
                 ),
               ),
-              if (!isLast)
-                Expanded(
-                  child: Container(
-                    width: 2,
-                    color: Colors.grey.shade300,
-                  ),
-                ),
+              Container(
+                width: 2,
+                height: 80,
+                color: Colors.grey[300],
+              ),
             ],
           ),
-          
-          const SizedBox(width: 15),
-          
-          // Right column - location info
+
+          // Content
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  date,
                   style: TextStyle(
+                    color: isActive ? Colors.black : Colors.grey,
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
                   ),
                 ),
-                const SizedBox(height: 4),
+                if (time != null)
+                  Text(
+                    time,
+                    style: TextStyle(
+                      color: isActive ? Colors.black : Colors.grey,
+                    ),
+                  ),
+                SizedBox(height: 8),
                 Text(
-                  subtitle,
+                  location,
                   style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 14,
+                    color: isActive ? Colors.black : Colors.grey,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: isLast ? 0 : 20),
+                Text(
+                  detail,
+                  style: TextStyle(
+                    color: isActive ? Colors.black : Colors.grey,
+                  ),
+                ),
               ],
             ),
           ),
