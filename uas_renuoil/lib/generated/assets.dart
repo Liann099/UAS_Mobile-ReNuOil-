@@ -24,6 +24,8 @@ class Assets {
   static const String imagesGoogle = 'assets/images/google.png';
   static const String imagesGpn = 'assets/images/gpn.png';
   static const String imagesGroup306 = 'assets/images/Group306.png';
+  static const String imagesGroup326 = 'assets/images/Group326.png';
+  static const String imagesGroup327 = 'assets/images/Group327.png';
   static const String imagesImageMap = 'assets/images/image_map.png';
   static const String imagesLogosMastercard = 'assets/images/logos_mastercard.png';
   static const String imagesLogosPaypal = 'assets/images/logos_paypal.png';
