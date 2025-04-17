@@ -27,10 +27,13 @@ class Assets {
   static const String imagesGroup326 = 'assets/images/Group326.png';
   static const String imagesGroup327 = 'assets/images/Group327.png';
   static const String imagesImageMap = 'assets/images/image_map.png';
+  static const String imagesIndustrialOil = 'assets/images/industrial_oil.png';
   static const String imagesLogosMastercard = 'assets/images/logos_mastercard.png';
   static const String imagesLogosPaypal = 'assets/images/logos_paypal.png';
   static const String imagesMascot = 'assets/images/mascot.png';
   static const String imagesMoneyLaundering = 'assets/images/Money_Laundering.png';
+  static const String imagesMotorOil = 'assets/images/motor_oil.png';
+  static const String imagesProductMilk = 'assets/images/product_milk.png';
   static const String imagesPromo30 = 'assets/images/Promo_30.png';
   static const String imagesPromoCodeMascot = 'assets/images/promo_code_mascot.png';
   static const String imagesSimpleIconsGojek = 'assets/images/simple-icons_gojek.png';

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/generated/assets.dart';
 
 class BuyerHomePage extends StatelessWidget {
   const BuyerHomePage({super.key});
@@ -11,7 +12,7 @@ class BuyerHomePage extends StatelessWidget {
           children: [
             Container(
               decoration: const BoxDecoration(
-                color: Color(0xFFFFD75E), 
+                color: Color(0xFFFFD75E),
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(30),
                   bottomRight: Radius.circular(30),
@@ -24,7 +25,8 @@ class BuyerHomePage extends StatelessWidget {
                   Row(
                     children: [
                       const CircleAvatar(
-                        backgroundImage: AssetImage('// assets placeholder for profile'),
+                        backgroundImage:
+                            AssetImage('// assets placeholder for profile'),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -39,7 +41,8 @@ class BuyerHomePage extends StatelessWidget {
                             children: [
                               Icon(Icons.search, color: Colors.black54),
                               SizedBox(width: 10),
-                              Text("Start your search", style: TextStyle(color: Colors.black54)),
+                              Text("Start your search",
+                                  style: TextStyle(color: Colors.black54)),
                             ],
                           ),
                         ),
@@ -53,10 +56,13 @@ class BuyerHomePage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: const [
                       NavIcon(icon: Icons.home, label: 'Home', active: true),
-                      NavIcon(icon: Icons.account_balance_wallet_outlined, label: 'Balance'),
+                      NavIcon(
+                          icon: Icons.account_balance_wallet_outlined,
+                          label: 'Balance'),
                       NavIcon(icon: Icons.attach_money, label: 'Withdraw'),
                       NavIcon(icon: Icons.history, label: 'History'),
-                      NavIcon(icon: Icons.local_shipping_outlined, label: 'Track'),
+                      NavIcon(
+                          icon: Icons.local_shipping_outlined, label: 'Track'),
                     ],
                   ),
                 ],
@@ -66,11 +72,10 @@ class BuyerHomePage extends StatelessWidget {
             // Main content section
             Expanded(
               child: Container(
-                color: const Color(0xFFF5F5F5), 
+                color: const Color(0xFFF5F5F5),
                 child: ListView(
                   padding: const EdgeInsets.all(20),
                   children: [
-                  
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -84,7 +89,7 @@ class BuyerHomePage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 10),
-                
+
                         const Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,7 +113,8 @@ class BuyerHomePage extends StatelessWidget {
                         ),
                         // Buyer switch
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(25),
@@ -132,13 +138,11 @@ class BuyerHomePage extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
-
                     // Eco Oil Banner
                     ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: Image.asset(
-                        'assets/images/EcoOilBanner.png',
+                        Assets.images2,
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -158,17 +162,21 @@ class BuyerHomePage extends StatelessWidget {
                         color: const Color(0xFFFFD75E),
                         borderRadius: BorderRadius.circular(15),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 16),
                       child: Row(
                         children: [
-                          const Icon(Icons.card_giftcard, color: Colors.black87),
+                          const Icon(Icons.card_giftcard,
+                              color: Colors.black87),
                           const SizedBox(width: 10),
                           const Text(
                             "Promotion",
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w500),
                           ),
                           const Spacer(),
-                          const Icon(Icons.chevron_right, color: Colors.black87),
+                          const Icon(Icons.chevron_right,
+                              color: Colors.black87),
                         ],
                       ),
                     ),
@@ -245,7 +253,8 @@ class BuyerHomePage extends StatelessWidget {
                     // Flash Sale Section
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 12),
                       decoration: BoxDecoration(
                         color: Colors.grey[200],
                         borderRadius: BorderRadius.circular(8),
@@ -273,30 +282,39 @@ class BuyerHomePage extends StatelessWidget {
                             children: [
                               const Text('Ends in: '),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: Colors.grey[300],
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: const Text('2', style: TextStyle(fontWeight: FontWeight.bold)),
+                                child: const Text('2',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
                               ),
                               const Text(' : '),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: Colors.grey[300],
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: const Text('15', style: TextStyle(fontWeight: FontWeight.bold)),
+                                child: const Text('15',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
                               ),
                               const Text(' : '),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: Colors.grey[300],
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: const Text('9', style: TextStyle(fontWeight: FontWeight.bold)),
+                                child: const Text('9',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
                               ),
                             ],
                           ),
@@ -334,59 +352,14 @@ class BuyerHomePage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        // First cooking oil product
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                height: 150,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Center(child: Text('assets/images/Cookingoil.png')),
-                              ),
-                              const SizedBox(height: 6),
-                              const Text(
-                                'Cooking Oil - Renewable',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 15),
-                        // Second cooking oil product
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                height: 150,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                // Cooking oil image 2 placeholder
-                                child: const Center(child: Text('assets/images/Bomali oil.png')),
-                              ),
-                              const SizedBox(height: 6),
-                              const Text(
-                                'Bomali Oil - Renewable',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                    SizedBox(
+                      height: 200,
+                      child: ListView.builder(
+                        itemBuilder: (context, i) => _usedCookingOilCard(),
+                        itemCount: 5,
+                        shrinkWrap: true,
+                        scrollDirection: Axis.horizontal,
+                      ),
                     ),
                     const SizedBox(height: 20),
 
@@ -419,60 +392,14 @@ class BuyerHomePage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        // First motor oil product
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                height: 150,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                // Motor oil image 1 placeholder
-                                child: const Center(child: Text('assets/images/Refined Motor.png')),
-                              ),
-                              const SizedBox(height: 6),
-                              const Text(
-                                'Refined Motor Oil',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 15),
-                        // Second motor oil product
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                height: 150,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                // Motor oil image 2 placeholder
-                                child: const Center(child: Text('assets/images/Shollmotor.png')),
-                              ),
-                              const SizedBox(height: 6),
-                              const Text(
-                                'Sholl Motor Oil',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                    SizedBox(
+                      height: 200,
+                      child: ListView.builder(
+                        itemBuilder: (context, i) => _usedMotorOilCard(),
+                        itemCount: 5,
+                        shrinkWrap: true,
+                        scrollDirection: Axis.horizontal,
+                      ),
                     ),
                     const SizedBox(height: 20),
 
@@ -505,64 +432,89 @@ class BuyerHomePage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        // First industrial oil product
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                height: 150,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                // Industrial oil image 1 placeholder
-                                child: const Center(child: Text('assets/images/induralube.png')),
-                              ),
-                              const SizedBox(height: 6),
-                              const Text(
-                                'InduraLube Oil',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 15),
-                        // Second industrial oil product
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                height: 150,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                // Industrial oil image 2 placeholder
-                                child: const Center(child: Text('assets/images/titanoil.png')),
-                              ),
-                              const SizedBox(height: 6),
-                              const Text(
-                                'Titan Oil',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                    SizedBox(
+                      height: 200,
+                      child: ListView.builder(
+                        itemBuilder: (context, i) => _usedIndustrialOilCard(),
+                        itemCount: 5,
+                        shrinkWrap: true,
+                        scrollDirection: Axis.horizontal,
+                      ),
                     ),
                     const SizedBox(height: 20),
                   ],
                 ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _usedCookingOilCard() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: SizedBox(
+        width: 150,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Image.asset(Assets.imagesProductMilk,
+                height: 150, fit: BoxFit.cover),
+            const SizedBox(height: 6),
+            const Text(
+              'Cooking Oil - Renewable',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _usedMotorOilCard() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: SizedBox(
+        width: 150,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Image.asset(Assets.imagesMotorOil, height: 150, fit: BoxFit.cover),
+            const SizedBox(height: 6),
+            const Text(
+              'Refined Motor Oil',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _usedIndustrialOilCard() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: SizedBox(
+        width: 150,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Image.asset(Assets.imagesIndustrialOil,
+                height: 150, fit: BoxFit.cover),
+            const SizedBox(height: 6),
+            const Text(
+              'InduraLube Oil',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey,
               ),
             ),
           ],
