@@ -125,8 +125,8 @@ class Transaction(models.Model):
 class TopUp(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
-    payment_method = models.CharField(max_length=10, choices=[('bca', 'BCA'), ('ocbc', 'OCBC')])
-    bank_account = models.CharField(max_length=100)  # Bank account details (name, number)
+    payment_method =  models.CharField(max_length=100) 
+    bank_account = models.CharField(max_length=100)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -144,15 +144,18 @@ class TopUp(models.Model):
         TransactionHistory.objects.create(
             user=self.user,
             transaction_type='deposit',
-            amount=self.amount
+            amount=self.amount,
+            bank_account=self.bank_account,
+            payment_method=self.payment_method
+
         )
 
 
 class Withdraw(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
-    payment_method = models.CharField(max_length=10, choices=[('bca', 'BCA'), ('ocbc', 'OCBC')])
-    bank_account = models.CharField(max_length=100)  # Bank account details (name, number)
+    payment_method =  models.CharField(max_length=100) 
+    bank_account = models.CharField(max_length=100)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -171,7 +174,9 @@ class Withdraw(models.Model):
             TransactionHistory.objects.create(
                 user=self.user,
                 transaction_type='withdrawal',
-                amount=self.amount
+                amount=self.amount,
+                bank_account=self.bank_account,
+                payment_method=self.payment_method
             )
         else:
             raise ValueError("Insufficient balance for withdrawal")
@@ -179,7 +184,9 @@ class Withdraw(models.Model):
 
 class TransactionHistory(models.Model):
     TRANSACTION_TYPES = [('deposit', 'Deposit'), ('withdrawal', 'Withdrawal'), ('sale', 'Oil Sale')]
-    
+    bank_account = models.CharField(max_length=100, blank=True, null=True)
+    payment_method =  models.CharField(max_length=100, blank=True, null=True) 
+
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
@@ -371,8 +378,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 PAYMENT_CHOICES = [
-    ('BCA', 'BCA'),
+    ('bca', 'BCA'),
     ('OCBC', 'OCBC'),
+    ('bni', 'BNI'),
+    ('mandiri', 'mandiri'),
     ('WALLET', 'RenuOil Wallet'),
 ]
 

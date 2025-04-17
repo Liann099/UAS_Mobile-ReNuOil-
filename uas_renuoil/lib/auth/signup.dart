@@ -81,6 +81,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       if (response.statusCode == 201) {
         _showSuccessDialog();
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.pushNamed(context, '/address-input');
+          }
+        });
       } else {
         final responseBody = jsonDecode(response.body);
         String errorMessage = 'Registration failed';

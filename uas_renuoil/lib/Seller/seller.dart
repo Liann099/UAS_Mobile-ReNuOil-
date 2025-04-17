@@ -15,6 +15,7 @@ import 'package:flutter_application_1/Seller/QRseller.dart';
 import 'package:flutter_application_1/Seller/ranking_list_page.dart';
 
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
+import 'package:flutter_application_1/Seller/transaction_history.dart';
 
 class SellerPage extends StatefulWidget {
   const SellerPage({super.key});
@@ -308,7 +309,7 @@ class _SellerPage extends State<SellerPage> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          const ProfilePage()),
+                                          const TransactionHistoryScreen()),
                                 );
                               },
                             ),
@@ -496,109 +497,122 @@ class _SellerPage extends State<SellerPage> {
 
                             // Achievement Box
 // Replace your achievement section with this updated version
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    "Achievement",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16),
-                                  ),
-                                  const SizedBox(height: 15),
-                                  Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Image.asset(
-                                        'assets/images/handimage.png',
-                                        width: 50,
-                                        height: 50,
-                                      ),
-                                      const SizedBox(width: 15),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              isLoadingLeaderboard
-                                                  ? "Loading your rank..."
-                                                  : "You are in ${leaderboardData?['rank']?.toString() ?? 'N/A'} place ✨",
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.w500),
-                                            ),
-                                            const SizedBox(height: 8),
-                                          ],
-                                        ),
-                                      ),
-                                      Icon(Icons.chevron_right,
-                                          color: Colors.grey[400])
-                                    ],
-                                  ),
-                                  const Divider(height: 24),
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFFD75E),
-                                      borderRadius: BorderRadius.circular(12),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => RankingListPage()),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
                                     ),
-                                    padding: const EdgeInsets.all(15),
-                                    child: Column(
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      "Achievement",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 15),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            const Text(
-                                              "Collected this month:",
-                                              style: TextStyle(fontSize: 12),
-                                            ),
-                                            Text(
-                                              isLoadingLeaderboard
-                                                  ? "Loading..."
-                                                  : "${leaderboardData?['collected']?.toStringAsFixed(2) ?? '0.00'}L",
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w500),
-                                            ),
-                                          ],
+                                        Image.asset(
+                                          'assets/images/handimage.png',
+                                          width: 50,
+                                          height: 50,
                                         ),
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            const Text(
-                                              "Last month bonus:",
-                                              style: TextStyle(fontSize: 12),
-                                            ),
-                                            Text(
-                                              isLoadingLeaderboard
-                                                  ? "Loading..."
-                                                  : "Rp${leaderboardData?['last_month_bonus']?.toStringAsFixed(0) ?? '0'}",
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w500),
-                                            ),
-                                          ],
+                                        const SizedBox(width: 15),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                isLoadingLeaderboard
+                                                    ? "Loading your rank..."
+                                                    : "You are in ${leaderboardData?['rank']?.toString() ?? 'N/A'} place ✨",
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                            ],
+                                          ),
                                         ),
+                                        Icon(Icons.chevron_right,
+                                            color: Colors.grey[400])
                                       ],
                                     ),
-                                  ),
-                                ],
+                                    const Divider(height: 24),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFFD75E),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      padding: const EdgeInsets.all(15),
+                                      child: Column(
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const Text(
+                                                "Collected this month:",
+                                                style: TextStyle(fontSize: 12),
+                                              ),
+                                              Text(
+                                                isLoadingLeaderboard
+                                                    ? "Loading..."
+                                                    : "${leaderboardData?['collected']?.toStringAsFixed(2) ?? '0.00'}L",
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const Text(
+                                                "Last month bonus:",
+                                                style: TextStyle(fontSize: 12),
+                                              ),
+                                              Text(
+                                                isLoadingLeaderboard
+                                                    ? "Loading..."
+                                                    : "Rp${leaderboardData?['last_month_bonus']?.toStringAsFixed(0) ?? '0'}",
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
 

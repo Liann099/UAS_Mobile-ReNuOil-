@@ -69,8 +69,9 @@ class WithdrawSerializer(serializers.ModelSerializer):
 class TransactionHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = TransactionHistory
-        fields = ['user', 'transaction_type', 'amount', 'timestamp']
+        fields = ['id', 'user', 'transaction_type', 'amount', 'timestamp', 'payment_method']
         read_only_fields = ['user']
+
 
 from rest_framework import serializers
 

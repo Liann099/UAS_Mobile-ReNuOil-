@@ -16,6 +16,7 @@ import 'package:flutter_application_1/Seller/qr.dart';
 
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 import 'package:flutter_application_1/Seller/seller.dart';
+import 'package:flutter_application_1/Seller/transaction_history.dart';
 
 class QRSellerPage extends StatefulWidget {
   const QRSellerPage({super.key});
@@ -292,7 +293,7 @@ class _QRSellerPageState extends State<QRSellerPage> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          const ProfilePage()),
+                                          const TransactionHistoryScreen()),
                                 );
                               },
                             ),
@@ -306,14 +307,20 @@ class _QRSellerPageState extends State<QRSellerPage> {
                           padding: const EdgeInsets.all(24.0),
                           child: Column(
                             children: [
-                              const SizedBox(height: 40),
+                              const SizedBox(height: 30),
 
                               // Confirmation Card
+
                               Container(
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFFD75E),
                                   borderRadius: BorderRadius.circular(20),
+                                  image: DecorationImage(
+                                    image: AssetImage(
+                                        'assets/images/cardd.png'), // Replace with your image path
+                                    fit: BoxFit
+                                        .cover, // You can also try BoxFit.fill or BoxFit.contain
+                                  ),
                                 ),
                                 padding: const EdgeInsets.all(20),
                                 child: Column(
@@ -379,54 +386,20 @@ class _QRSellerPageState extends State<QRSellerPage> {
                                 ),
                               ),
 
-                              const SizedBox(height: 40),
+                              const SizedBox(height: 10),
 
                               // Mascot and Speech Bubble
-                              Stack(
-                                alignment: Alignment.bottomCenter,
-                                children: [
-                                  // Speech bubble
-                                  Positioned(
-                                    bottom: 80,
-                                    right: 20,
-                                    child: Container(
-                                      width: 180,
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFFFFD75E),
-                                        borderRadius: BorderRadius.only(
-                                          topLeft: Radius.circular(20),
-                                          topRight: Radius.circular(20),
-                                          bottomLeft: Radius.circular(20),
-                                        ),
-                                      ),
-                                      child: const Text(
-                                        'Please ensure that you collect the oil from your home or personal use',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-
-                                  // Mascot image
-                                  Container(
-                                    width: 120,
-                                    height: 120,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF8FD5A6),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: ClipOval(
-                                      child: Image.asset(
-                                        'assets/images/mascot.png',
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              Container(
+                                width: 300,
+                                height: 250,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Image.asset(
+                                  'assets/images/mascott.png',
+                                  fit: BoxFit.cover,
+                                ),
+                              )
                             ],
                           ),
                         ),

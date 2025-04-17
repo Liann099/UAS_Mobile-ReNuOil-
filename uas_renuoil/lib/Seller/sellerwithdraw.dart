@@ -16,6 +16,7 @@ import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 import 'package:flutter_application_1/Seller/seller.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_application_1/Seller/addbankaccount.dart';
+import 'package:flutter_application_1/Seller/transaction_history.dart';
 
 class SellerWithdrawPage extends StatefulWidget {
   const SellerWithdrawPage({super.key});
@@ -480,7 +481,7 @@ class _SellerWithdrawPageState extends State<SellerWithdrawPage> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          const ProfilePage()),
+                                          const TransactionHistoryScreen()),
                                 );
                               },
                             ),

@@ -14,7 +14,7 @@ class RankingListPage extends StatelessWidget {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.all(30.0),
               child: Column(
                 children: [
                   // Title and back button
@@ -64,7 +64,7 @@ class RankingListPage extends StatelessWidget {
                             Text(
                               "Your Ranking : -",
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 14,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -74,14 +74,14 @@ class RankingListPage extends StatelessWidget {
                                 Text(
                                   "Collected This Month : ",
                                   style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 Text(
                                   "0.00L",
                                   style: TextStyle(
-                                    fontSize: 14,
+                                    fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -93,14 +93,14 @@ class RankingListPage extends StatelessWidget {
                                 Text(
                                   "Last Month Bonus      : ",
                                   style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 Text(
                                   "Rp0",
                                   style: TextStyle(
-                                    fontSize: 14,
+                                    fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -476,24 +476,6 @@ class RankingListPage extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                // // Up arrow
-                // if (hasUpArrow)
-                //   Positioned(
-                //     right: 0,
-                //     top: 0,
-                //     bottom: 0,
-                //     child: Center(child: Image.asset(Assets.imagesUp)),
-                //   ),
-
-                // // Down arrow
-                // if (hasDownArrow)
-                //   Positioned(
-                //     right: 0,
-                //     top: 0,
-                //     bottom: 0,
-                //     child: Center(child: Image.asset(Assets.imagesDown)),
-                //   ),
               ],
             ),
           ),

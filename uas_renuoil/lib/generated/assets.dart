@@ -37,4 +37,7 @@ class Assets {
   static const String imagesWin1 = 'assets/images/win1.png';
   static const String imagesWin2 = 'assets/images/win2.png';
   static const String imagesWin3 = 'assets/images/win3.png';
+  static const String imagesIndustrialOil = 'images/industrial_oil.png';
+  static const String imagesMotorOil = 'images/motor_oil.png';
+  static const String imagesProductMilk = 'images/product_milk.png';
 }

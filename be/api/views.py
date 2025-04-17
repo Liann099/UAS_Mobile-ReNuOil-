@@ -116,13 +116,18 @@ class WithdrawCreateView(generics.CreateAPIView):
         response.data['balance'] = request.user.balance  # Return updated balance
         return response
 
-
 class TransactionHistoryListView(generics.ListAPIView):
     serializer_class = TransactionHistorySerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return TransactionHistory.objects.filter(user=self.request.user)
+        transaction_type = self.request.query_params.get('type', None)
+        queryset = TransactionHistory.objects.filter(user=self.request.user)
+
+        if transaction_type:
+            queryset = queryset.filter(transaction_type=transaction_type)
+            
+        return queryset.order_by('-timestamp')
 
 class CheckoutHistoryListView(generics.ListAPIView):
     serializer_class = CheckoutHistorySerializer
@@ -139,6 +144,7 @@ class MyLeaderboardView(APIView):
         first_day_this_month = today.replace(day=1)
         users = CustomUser.objects.all()
         leaderboard_data = []
+        
 
         for user in users:
             collected = (
@@ -212,6 +218,8 @@ class LeaderboardView(APIView):
             })
 
         leaderboard_data.sort(key=lambda x: x["collected_this_month"], reverse=True)
+
+        leaderboard_data = leaderboard_data[:6]
 
         tiers = ["Gold", "Silver", "Bronze"]
         for index, user in enumerate(leaderboard_data):

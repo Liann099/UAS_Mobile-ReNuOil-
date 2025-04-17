@@ -17,6 +17,7 @@ import 'package:iconify_flutter/iconify_flutter.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_application_1/Seller/topup.dart';
+import 'package:flutter_application_1/Seller/transaction_history.dart';
 
 class RnoPayApp extends StatefulWidget {
   const RnoPayApp({super.key});
@@ -286,7 +287,7 @@ class _RnoPayAppState extends State<RnoPayApp> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          const ProfilePage()),
+                                          const TransactionHistoryScreen()),
                                 );
                               },
                             ),

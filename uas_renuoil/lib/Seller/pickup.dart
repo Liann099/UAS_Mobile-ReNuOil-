@@ -14,6 +14,8 @@ import 'package:flutter_application_1/Seller/pickup.dart';
 import 'package:flutter_application_1/Seller/QRseller.dart';
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 import 'package:flutter_application_1/Seller/seller.dart';
+import 'package:flutter_application_1/Seller/transaction_history.dart';
+
 
 class PickupPage extends StatefulWidget {
   const PickupPage({super.key});
@@ -330,7 +332,7 @@ class _PickupPageState extends State<PickupPage> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          const ProfilePage()),
+                                          const TransactionHistoryScreen()),
                                 );
                               },
                             ),
