@@ -12,6 +12,8 @@ import 'package:flutter_application_1/settings/profile.dart';
 import 'package:flutter_application_1/Seller/sellerwithdraw.dart';
 import 'package:flutter_application_1/Seller/pickup.dart';
 import 'package:flutter_application_1/Seller/QRseller.dart';
+import 'package:flutter_application_1/Seller/qr.dart';
+
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 import 'package:flutter_application_1/Seller/seller.dart';
 
@@ -347,7 +349,14 @@ class _QRSellerPageState extends State<QRSellerPage> {
                                     Align(
                                       alignment: Alignment.centerRight,
                                       child: ElevatedButton(
-                                        onPressed: () {},
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    const QRPage()),
+                                          );
+                                        },
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.white,
                                           foregroundColor: Colors.black,

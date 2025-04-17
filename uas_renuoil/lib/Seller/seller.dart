@@ -12,6 +12,8 @@ import 'package:flutter_application_1/settings/profile.dart';
 import 'package:flutter_application_1/Seller/sellerwithdraw.dart';
 import 'package:flutter_application_1/Seller/pickup.dart';
 import 'package:flutter_application_1/Seller/QRseller.dart';
+import 'package:flutter_application_1/Seller/ranking_list_page.dart';
+
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 
 class SellerPage extends StatefulWidget {
@@ -634,55 +636,66 @@ class _SellerPage extends State<SellerPage> {
 
                             const SizedBox(height: 15),
 
-                            // Premium Price Bonus
                             const Text(
                               "Premium Price Bonus",
                               style: TextStyle(
-                                  fontWeight: FontWeight.w600, fontSize: 16),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
                             ),
                             const SizedBox(height: 10),
-                            Container(
-                              decoration: BoxDecoration(
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                children: [
-                                  // Use the actual image instead of creating custom components
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Image.asset(
-                                      'assets/images/Group 324.png',
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => RankingListPage()),
+                                );
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
                                     ),
-                                  ),
-
-                                  // Yellow info box at bottom
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(15),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFFD75E),
-                                      borderRadius: BorderRadius.only(
-                                        bottomLeft: Radius.circular(12),
-                                        bottomRight: Radius.circular(12),
+                                  ],
+                                ),
+                                child: Column(
+                                  children: [
+                                    // Use the actual image instead of creating custom components
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.asset(
+                                        'assets/images/Group 324.png',
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
                                       ),
                                     ),
-                                    child: const Text(
-                                      "Want to get more bonuses? Bring your level to increase your income per liter of recycled used cooking oil with our monthly premium bonus!",
-                                      style: TextStyle(
+
+                                    // Yellow info box at bottom
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(15),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFFD75E),
+                                        borderRadius: const BorderRadius.only(
+                                          bottomLeft: Radius.circular(12),
+                                          bottomRight: Radius.circular(12),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        "Want to get more bonuses? Bring your level to increase your income per liter of recycled used cooking oil with our monthly premium bonus!",
+                                        style: TextStyle(
                                           fontSize: 12,
-                                          fontWeight: FontWeight.w500),
-                                      textAlign: TextAlign.center,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
 

@@ -119,10 +119,18 @@ class _PickupPageState extends State<PickupPage> {
           const SnackBar(content: Text('Pickup order created successfully!')),
         );
         // Navigate to confirmation page or back to seller home
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const SellerPage()),
-        );
+          MaterialPageRoute(
+              builder: (context) => const DriverConfirmationPage()),
+        ).then((_) {
+          // This runs after the driver confirmation page is closed (popped)
+          // Navigate back to seller home
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const SellerPage()),
+          );
+        });
       } else {
         // Handle error
         final errorData = json.decode(response.body);
@@ -581,6 +589,95 @@ class _NavIcon extends StatelessWidget {
               color: Colors.black,
             ),
         ],
+      ),
+    );
+  }
+}
+
+class DriverConfirmationPage extends StatelessWidget {
+  const DriverConfirmationPage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFCD34D), // Matching yellow background
+      body: GestureDetector(
+        // This gesture detector covers the whole screen to handle any tap
+        onTap: () {
+          Navigator.pop(context); // Close this page on any tap
+        },
+        child: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Scooter Icon and Motion Lines
+                  Stack(
+                    alignment: Alignment.centerLeft,
+                    children: [
+                      // Motion lines
+
+                      // Scooter icon
+                      Center(
+                        child: Image.asset(
+                          'images/motor.png',
+                          width: 300,
+                          height: 200,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // You Got A Driver text
+                  const Text(
+                    'You Got A Driver!',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Order number
+                  const Text(
+                    'Your order number is #1234',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Driver heading text
+                  const Text(
+                    'The driver is heading to your location',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Sit tight text
+                  const Text(
+                    'Sit tight and wait for your oil to be delivered.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

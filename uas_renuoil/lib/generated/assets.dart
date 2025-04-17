@@ -3,11 +3,15 @@ class Assets {
   Assets._();
 
   static const String iconsSecurityIcon = 'assets/icons/security_icon.svg';
-  static const String iconsWeuiArrowOutlined = 'assets/icons/weui_arrow-outlined.svg';
+  static const String imagesBiQrCode = 'assets/images/bi_qr-code.png';
+
+  static const String iconsWeuiArrowOutlined =
+      'assets/icons/weui_arrow-outlined.svg';
   static const String images2 = 'assets/images/2.png';
   static const String images3 = 'assets/images/3.png';
   static const String imagesAa = 'assets/images/aa.png';
-  static const String imagesAmericanExpress = 'assets/images/american_express.png';
+  static const String imagesAmericanExpress =
+      'assets/images/american_express.png';
   static const String imagesApple = 'assets/images/apple.png';
   static const String imagesArcticonsOvo = 'assets/images/arcticons_ovo.png';
   static const String imagesBg = 'assets/images/bg.png';
@@ -15,17 +19,22 @@ class Assets {
   static const String imagesBtc = 'assets/images/btc.png';
   static const String imagesContactCenter = 'assets/images/contact_center.png';
   static const String imagesCreditCard = 'assets/images/credit_card.png';
-  static const String imagesDigitalPayment = 'assets/images/digital_payment.png';
+  static const String imagesDigitalPayment =
+      'assets/images/digital_payment.png';
   static const String imagesFaceId = 'assets/images/face_id.png';
   static const String imagesFb = 'assets/images/fb.png';
   static const String imagesGoogle = 'assets/images/google.png';
   static const String imagesGpn = 'assets/images/gpn.png';
   static const String imagesGroup306 = 'assets/images/Group306.png';
-  static const String imagesLogosMastercard = 'assets/images/logos_mastercard.png';
+  static const String imagesLogosMastercard =
+      'assets/images/logos_mastercard.png';
   static const String imagesLogosPaypal = 'assets/images/logos_paypal.png';
   static const String imagesMascot = 'assets/images/mascot.png';
   static const String imagesPromo30 = 'assets/images/Promo_30.png';
-  static const String imagesSimpleIconsGojek = 'assets/images/simple-icons_gojek.png';
+  static const String imagesSimpleIconsGojek =
+      'assets/images/simple-icons_gojek.png';
   static const String imagesVisa = 'assets/images/visa.png';
-
+  static const String imagesWin1 = 'assets/images/win1.png';
+  static const String imagesWin2 = 'assets/images/win2.png';
+  static const String imagesWin3 = 'assets/images/win3.png';
 }

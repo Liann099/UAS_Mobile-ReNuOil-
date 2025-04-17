@@ -15,6 +15,7 @@ import 'package:flutter_application_1/Seller/QRseller.dart';
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 import 'package:flutter_application_1/Seller/seller.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_application_1/Seller/addbankaccount.dart';
 
 class SellerWithdrawPage extends StatefulWidget {
   const SellerWithdrawPage({super.key});
@@ -696,26 +697,32 @@ class _SellerWithdrawPageState extends State<SellerWithdrawPage> {
                                                       const Divider(
                                                           height: 1,
                                                           thickness: 1),
-                                                    _BankCard(
-                                                      bankName: _bankAccounts[i]
-                                                          .bankName,
-                                                      accountNumber:
-                                                          _bankAccounts[i]
-                                                              .accountNumber,
-                                                      name: _bankAccounts[i]
-                                                          .accountHolder,
-                                                      color: _getBankColor(
-                                                          _bankAccounts[i]
-                                                              .bankName),
-                                                      isSelected:
-                                                          _selectedBankIndex ==
-                                                              i,
-                                                      onTap: () {
-                                                        setState(() {
-                                                          _selectedBankIndex =
-                                                              i;
-                                                        });
-                                                      },
+                                                    SizedBox(
+                                                      // Added SizedBox here
+                                                      height:
+                                                          100, // Fixed height for all cards
+                                                      child: _BankCard(
+                                                        bankName:
+                                                            _bankAccounts[i]
+                                                                .bankName,
+                                                        accountNumber:
+                                                            _bankAccounts[i]
+                                                                .accountNumber,
+                                                        name: _bankAccounts[i]
+                                                            .accountHolder,
+                                                        color: _getBankColor(
+                                                            _bankAccounts[i]
+                                                                .bankName),
+                                                        isSelected:
+                                                            _selectedBankIndex ==
+                                                                i,
+                                                        onTap: () {
+                                                          setState(() {
+                                                            _selectedBankIndex =
+                                                                i;
+                                                          });
+                                                        },
+                                                      ),
                                                     ),
                                                   ],
                                                 ],
@@ -738,7 +745,15 @@ class _SellerWithdrawPageState extends State<SellerWithdrawPage> {
                                       ],
                                     ),
                                     child: TextButton(
-                                      onPressed: () {},
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                BankAccountDetailPage(),
+                                          ),
+                                        );
+                                      },
                                       style: TextButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(
                                             vertical: 14),

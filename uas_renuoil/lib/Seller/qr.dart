@@ -12,24 +12,20 @@ import 'package:flutter_application_1/settings/profile.dart';
 import 'package:flutter_application_1/Seller/sellerwithdraw.dart';
 import 'package:flutter_application_1/Seller/pickup.dart';
 import 'package:flutter_application_1/Seller/QRseller.dart';
+import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 import 'package:flutter_application_1/Seller/seller.dart';
-import 'package:iconify_flutter/iconify_flutter.dart';
-import 'package:lucide_icons/lucide_icons.dart';
-import 'package:intl/intl.dart';
-import 'package:flutter_application_1/Seller/topup.dart';
 
-class RnoPayApp extends StatefulWidget {
-  const RnoPayApp({super.key});
+class QRPage extends StatefulWidget {
+  const QRPage({super.key});
 
   @override
-  State<RnoPayApp> createState() => _RnoPayAppState();
+  State<QRPage> createState() => _QRPageState();
 }
 
-class _RnoPayAppState extends State<RnoPayApp> {
-  double balance = 0.0; // Declare balance here
-
+class _QRPageState extends State<QRPage> {
   final storage = const FlutterSecureStorage();
   Future<List<Map<String, dynamic>>>? _futureUserData;
+  final TextEditingController _amountController = TextEditingController();
 
   bool isLoading = true;
   Map<String, String> userData = {};
@@ -62,30 +58,16 @@ class _RnoPayAppState extends State<RnoPayApp> {
         final userDataResponse = json.decode(userResponse.body);
         final profileData = json.decode(profileResponse.body);
 
-        print('User data: ${userResponse.body}');
-        print('Balance from API: ${userDataResponse['balance']}');
-
-        double parsedBalance =
-            double.tryParse(userDataResponse['balance'].toString()) ?? 0.0;
-
-        print('[DEBUG] Parsed Balance: $parsedBalance');
-
-        setState(() {
-          balance = parsedBalance;
-
-          userData = {
-            'username': userDataResponse['username'] ?? '',
-            'bio': profileData['bio'] ?? '',
-            'userId': userDataResponse['id'].toString(),
-            'email': userDataResponse['email'] ?? '',
-            'phone': profileData['phone_number'] ?? '',
-            'gender': profileData['gender'] ?? '',
-            'birthday': userDataResponse['date_of_birth'] ?? '',
-            'balance': parsedBalance.toString(), // Corrected
-            // Balance is set as a string to be used in the UI
-          };
-          profilePictureUrl = profileData['profile_picture'];
-        });
+        userData = {
+          'username': userDataResponse['username'] ?? '',
+          'bio': profileData['bio'] ?? '',
+          'userId': userDataResponse['id'].toString(),
+          'email': userDataResponse['email'] ?? '',
+          'phone': profileData['phone_number'] ?? '',
+          'gender': profileData['gender'] ?? '',
+          'birthday': userDataResponse['date_of_birth'] ?? '',
+        };
+        profilePictureUrl = profileData['profile_picture'];
 
         for (var key in userData.keys) {
           controllers[key] = TextEditingController(text: userData[key]);
@@ -103,10 +85,235 @@ class _RnoPayAppState extends State<RnoPayApp> {
     }
   }
 
+  Future<void> processOilSale() async {
+    try {
+      final String? token = await storage.read(key: 'access_token');
+      if (token == null) throw Exception('No access token found');
+
+      if (_amountController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter the amount in liters')),
+        );
+        return;
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/oilsale/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'liters': _amountController.text,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        // Success - show success message and navigate
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sale recorded successfully!')),
+        );
+        // Navigate to confirmation page or back to seller home
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const SellerPage()),
+        );
+      } else {
+        // Handle error
+        final errorData = json.decode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Error: ${errorData['detail'] ?? 'Failed to create pickup order'}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _futureUserData = fetchUserData();
+  }
+
+  Widget _buildQRCodeScreen() {
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        const Text(
+                          "Point your phone at the camera to start collection",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        const Text(
+                          "RNO",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Image.asset(
+                          'images/qrr.png',
+                          width: 200,
+                          height: 200,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 200,
+                              height: 200,
+                              color: Colors.grey[200],
+                              child: const Center(
+                                child: Text("QR Code Image"),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          userData['username'] ?? 'User',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.refresh,
+                              size: 16,
+                              color: Colors.black54,
+                            ),
+                            const SizedBox(width: 4),
+                            const Text(
+                              "regenerate QR code",
+                              style: TextStyle(
+                                color: Colors.black54,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          "Amount : ",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 50,
+                          height: 45,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: TextField(
+                            controller: _amountController,
+                            keyboardType: TextInputType.number,
+                            textAlign: TextAlign.center,
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              contentPadding:
+                                  EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          "Liters",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: processOilSale,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFFD75E),
+                foregroundColor: Colors.black,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                "CLOSE",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -131,14 +338,11 @@ class _RnoPayAppState extends State<RnoPayApp> {
                 }
 
                 final profile = snapshot.data![0];
-                final usernameData = snapshot.data![1];
                 final profilePicture = profile['profile_picture'];
-                final username = usernameData['username'] ?? 'Guest User';
 
                 return SafeArea(
                   child: Column(
                     children: [
-                      // Header with profile picture
                       Container(
                         decoration: const BoxDecoration(
                           color: Color(0xFFFFD75E),
@@ -162,7 +366,7 @@ class _RnoPayAppState extends State<RnoPayApp> {
                                 margin: const EdgeInsets.symmetric(
                                     horizontal: 20, vertical: 2),
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
+                                    horizontal: 10, vertical: 8),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(40),
@@ -204,7 +408,6 @@ class _RnoPayAppState extends State<RnoPayApp> {
                           ],
                         ),
                       ),
-
                       Container(
                         color: const Color(0xFFFFD75E),
                         child: SizedBox(
@@ -214,7 +417,6 @@ class _RnoPayAppState extends State<RnoPayApp> {
                           ),
                         ),
                       ),
-
                       Container(
                         color: const Color(0xFFFFD75E),
                         child: Row(
@@ -233,8 +435,6 @@ class _RnoPayAppState extends State<RnoPayApp> {
                             const SizedBox(width: 0.5),
                             _NavIcon(
                               icon: 'assets/icons/iconbalance.png',
-                              active: true,
-                              showUnderline: true,
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -269,12 +469,13 @@ class _RnoPayAppState extends State<RnoPayApp> {
                             const SizedBox(width: 0.5),
                             _NavIcon(
                               icon: 'assets/icons/iconqrcode.png',
+                              active: true,
+                              showUnderline: true,
                               onTap: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) =>
-                                          const QRSellerPage()),
+                                      builder: (context) => const QRPage()),
                                 );
                               },
                             ),
@@ -293,132 +494,14 @@ class _RnoPayAppState extends State<RnoPayApp> {
                           ],
                         ),
                       ),
-                      _buildDashboardTitle(),
-                      _buildRnoPayBalanceCard(),
+                      Expanded(
+                        child: _buildQRCodeScreen(),
+                      ),
                     ],
                   ),
                 );
               },
             ),
-    );
-  }
-
-  Widget _buildDashboardTitle() {
-    return Padding(
-      padding: const EdgeInsets.all(16.3),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'RNO Pay Dashboard | ReNuOil',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const SizedBox(height: 10),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => RnoTopUpPage()),
-                  );
-                },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFD75E),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text(
-                    'Top-up',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRnoPayBalanceCard() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: AspectRatio(
-        aspectRatio: 325 / 200,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            image: const DecorationImage(
-              image: AssetImage('assets/images/card.png'),
-              fit: BoxFit.cover,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 6,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Stack(
-            children: [
-              _buildCardContent(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCardContent() {
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // RNO Pay label
-          Row(
-            children: [
-              Icon(
-                LucideIcons.wallet,
-                size: 24,
-                color: Colors.black87,
-              ),
-              SizedBox(width: 5),
-              Text(
-                'RNO Pay',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-
-          // Balance amount
-          Text(
-            'Rp ${NumberFormat('#,##0.00', 'id_ID').format(balance)}',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 28,
-            ),
-          ),
-
-          const Spacer(),
-        ],
-      ),
     );
   }
 }
