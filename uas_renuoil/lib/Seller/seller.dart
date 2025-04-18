@@ -330,10 +330,10 @@ class _SellerPage extends State<SellerPage> {
                               children: [
                                 Image.asset(
                                   'assets/images/mascot.png',
-                                  width: 95,
-                                  height: 95,
+                                  width: 100,
+                                  height: 100,
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 0),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
@@ -392,7 +392,7 @@ class _SellerPage extends State<SellerPage> {
                               ],
                             ),
 
-                            const SizedBox(height: 10),
+                            // const SizedBox(height: 10),
                             Align(
                               alignment: Alignment.centerRight,
                               child: const Text(
@@ -473,7 +473,17 @@ class _SellerPage extends State<SellerPage> {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 16, vertical: 6),
                                     decoration: BoxDecoration(
-                                      color: Colors.white,
+                                      gradient: LinearGradient(
+                                        begin: Alignment
+                                            .bottomCenter, // Gradient starts at the bottom
+                                        end: Alignment
+                                            .topCenter, // Gradient ends at the top
+                                        colors: [
+                                          const Color.fromARGB(
+                                              255, 241, 231, 100),
+                                          Colors.white
+                                        ], // Yellow to white gradient
+                                      ),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: const Text(
@@ -487,13 +497,22 @@ class _SellerPage extends State<SellerPage> {
                             ),
 
                             const SizedBox(height: 5),
-                            const Text(
-                              "Prices may change over time*",
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.black54),
+                            Center(
+                              child: const Text(
+                                "Prices may change over time*",
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.black54),
+                              ),
                             ),
 
                             const SizedBox(height: 15),
+                            const Text(
+                              "Achievement",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                            ),
 
                             // Achievement Box
 // Replace your achievement section with this updated version
@@ -521,14 +540,14 @@ class _SellerPage extends State<SellerPage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      "Achievement",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 15),
+                                    // const Text(
+                                    //   "Achievement",
+                                    //   style: TextStyle(
+                                    //     fontWeight: FontWeight.w600,
+                                    //     fontSize: 16,
+                                    //   ),
+                                    // ),
+                                    // const SizedBox(height: 15),
                                     Row(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -552,6 +571,19 @@ class _SellerPage extends State<SellerPage> {
                                                   fontWeight: FontWeight.w500,
                                                 ),
                                               ),
+                                              Align(
+                                                alignment: Alignment.centerLeft,
+                                                child: Container(
+                                                  width: double
+                                                      .infinity, // Ensures the divider takes the full width
+                                                  child: const Divider(
+                                                    color: Colors
+                                                        .grey, // Divider color
+                                                    thickness:
+                                                        2, // Divider thickness
+                                                  ),
+                                                ),
+                                              ),
                                               const SizedBox(height: 8),
                                             ],
                                           ),
@@ -566,7 +598,7 @@ class _SellerPage extends State<SellerPage> {
                                         color: const Color(0xFFFFD75E),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      padding: const EdgeInsets.all(15),
+                                      padding: const EdgeInsets.all(20),
                                       child: Column(
                                         children: [
                                           Row(

@@ -42,4 +42,7 @@ urlpatterns = [
     path("checkout-history/", CheckoutHistoryListView.as_view(), name="checkout-history"),
 
     path('bank-accounts/', BankAccountList.as_view(), name='bank-account-list'),
+
+    path('update-passcode/', update_passcode, name='update-passcode'),
+
 ]

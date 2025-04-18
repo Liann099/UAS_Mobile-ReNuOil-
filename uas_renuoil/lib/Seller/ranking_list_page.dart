@@ -1,9 +1,112 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/generated/assets.dart';
-import 'package:material_symbols_icons/symbols.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+// import 'package:shared_preferences/shared_preferences.dart';
+import '../constants.dart';
+import '../generated/assets.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class RankingListPage extends StatelessWidget {
+class RankingListPage extends StatefulWidget {
   const RankingListPage({super.key});
+
+  @override
+  _RankingListPageState createState() => _RankingListPageState();
+}
+
+class _RankingListPageState extends State<RankingListPage> {
+  List<dynamic> leaderboardData = [];
+  Map<String, dynamic>? currentUserData;
+  bool isLoading = true;
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLeaderboardData();
+    _fetchCurrentUserRank();
+  }
+
+  Future<void> _fetchLeaderboardData() async {
+    try {
+      const storage = FlutterSecureStorage();
+      final token = await storage.read(key: 'access_token');
+
+      print(
+          'Attempting to fetch leaderboard with token: $token'); // Debug print
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/rankings/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print('Response status: ${response.statusCode}'); // Debug print
+      print('Response body: ${response.body}'); // Debug print
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('Parsed data: $data'); // Debug print
+        setState(() {
+          leaderboardData = data;
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          errorMessage =
+              'Failed to load leaderboard data: ${response.statusCode} - ${response.body}';
+          isLoading = false;
+        });
+      }
+    } catch (e, stackTrace) {
+      print('Error fetching leaderboard: $e'); // Debug print
+      print(stackTrace); // Debug print
+      setState(() {
+        errorMessage = 'Error: ${e.toString()}';
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _fetchCurrentUserRank() async {
+    try {
+      const storage = FlutterSecureStorage();
+      final token = await storage.read(key: 'access_token');
+
+      print('Current user token: $token'); // Debug print
+
+      if (token == null) {
+        setState(() {
+          errorMessage = 'No authentication token found';
+        });
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/myrank/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print(
+          'MyRank response: ${response.statusCode} ${response.body}'); // Debug print
+
+      if (response.statusCode == 200) {
+        setState(() {
+          currentUserData = json.decode(response.body);
+        });
+      } else {
+        print('Failed to fetch user rank: ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      print('Error fetching user rank: $e');
+      print(stackTrace);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,29 +152,40 @@ class RankingListPage extends StatelessWidget {
                       // User profile picture
                       CircleAvatar(
                         radius: 40,
-                        backgroundImage:
-                            const AssetImage('assets/images/user_circle.png'),
-                        backgroundColor: Colors.white,
+                        backgroundColor: Colors.grey[300],
+                        child: currentUserData?['profile_picture'] != null
+                            ? ClipOval(
+                                child: Image.network(
+                                  currentUserData!['profile_picture'],
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(Icons.person, size: 40);
+                                  },
+                                ),
+                              )
+                            : const Icon(Icons.person, size: 40),
                       ),
 
                       const SizedBox(width: 16),
 
                       // User ranking details
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Your Ranking : -",
-                              style: TextStyle(
+                              "Your Ranking : ${currentUserData?['rank'] ?? '-'}",
+                              style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Row(
                               children: [
-                                Text(
+                                const Text(
                                   "Collected This Month : ",
                                   style: TextStyle(
                                     fontSize: 10,
@@ -79,18 +193,18 @@ class RankingListPage extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  "0.00L",
-                                  style: TextStyle(
+                                  "${currentUserData?['collected']?.toStringAsFixed(2) ?? '0.00'}L",
+                                  style: const TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ],
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Row(
                               children: [
-                                Text(
+                                const Text(
                                   "Last Month Bonus      : ",
                                   style: TextStyle(
                                     fontSize: 10,
@@ -98,8 +212,8 @@ class RankingListPage extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  "Rp0",
-                                  style: TextStyle(
+                                  "Rp${currentUserData?['last_month_bonus']?.toStringAsFixed(0) ?? '0'}",
+                                  style: const TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -125,144 +239,115 @@ class RankingListPage extends StatelessWidget {
                     topRight: Radius.circular(30),
                   ),
                 ),
-                child: ListView(
-                  padding: const EdgeInsets.only(top: 16, bottom: 24),
-                  children: [
-                    // Rank 1
-                    _buildRankItem(
-                      rank: 1,
-                      name: "Udin Petot",
-                      tier: "Gold",
-                      amount: "199L",
-                      bonus: "Rp1.990.000",
-                      imageUrl: "assets/images/user1.png",
-                      cardColor: const Color(0xFFFFDC3E),
-                      badgeAsset: Assets.imagesWin1,
-                      // hasUpArrow: false,
-                      // hasDownArrow: false,
-                    ),
-
-                    // Rank 2
-                    _buildRankItem(
-                      rank: 2,
-                      name: "Jessica G.",
-                      tier: "Silver",
-                      amount: "69L",
-                      bonus: "Rp690.000",
-                      imageUrl: "assets/images/user2.png",
-                      cardColor: const Color(0xFFE0E0E0),
-                      badgeAsset: Assets.imagesWin2,
-                      // hasUpArrow: true,
-                      // hasDownArrow: false,
-                    ),
-
-                    // Rank 3
-                    _buildRankItem(
-                      rank: 3,
-                      name: "JaMal Boy",
-                      tier: "Bronze",
-                      amount: "35L",
-                      bonus: "Rp350.000",
-                      imageUrl: "assets/images/user3.png",
-                      cardColor: const Color(0xFFFFDBC2),
-                      badgeAsset: Assets.imagesWin3,
-                      // hasUpArrow: false,
-                      // hasDownArrow: true,
-                    ),
-
-                    // Rank 4
-                    _buildRankItem(
-                      rank: 4,
-                      name: "Valentino Rossi",
-                      tier: "Bronze",
-                      amount: "26L",
-                      bonus: "Rp260.000",
-                      imageUrl: "assets/images/user4.png",
-                      cardColor: const Color(0xFFFFDBC2),
-                      // hasUpArrow: false,
-                      // hasDownArrow: false,
-                    ),
-
-                    // Rank 5
-                    _buildRankItem(
-                      rank: 5,
-                      name: "Billy North",
-                      tier: "Runner Up",
-                      amount: "13L",
-                      bonus: "Rp130.000",
-                      imageUrl: "assets/images/user5.png",
-                      cardColor: const Color(0xFFF5F5F5),
-                      // hasUpArrow: false,
-                      // hasDownArrow: false,
-                    ),
-
-                    // Rank 6
-                    _buildRankItem(
-                      rank: 6,
-                      name: "Vivian R Hoy",
-                      tier: "Runner Up",
-                      amount: "8L",
-                      bonus: "Rp80.000",
-                      imageUrl: "assets/images/user6.png",
-                      cardColor: const Color(0xFFF5F5F5),
-                      // hasUpArrow: false,
-                      // hasDownArrow: false,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Page indicators
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Colors.grey,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Colors.grey,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Colors.grey,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Bottom text
-                    const Center(
-                      child: Text(
-                        "Keep collecting to get bonuses!",
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                child: isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : errorMessage != null
+                        ? Center(child: Text(errorMessage!))
+                        : leaderboardData.isEmpty
+                            ? const Center(
+                                child: Text('No ranking data available'))
+                            : _buildLeaderboardList(),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildLeaderboardList() {
+    return ListView(
+      padding: const EdgeInsets.only(top: 16, bottom: 24),
+      children: [
+        // Build list items from leaderboardData
+        ...leaderboardData.asMap().entries.map((entry) {
+          final index = entry.key;
+          final user = entry.value;
+          final rank = index + 1;
+
+          // Determine tier based on rank
+          String tier;
+          Color cardColor;
+          String? badgeAsset;
+
+          if (rank == 1) {
+            tier = "Gold";
+            cardColor = const Color(0xFFFFDC3E);
+            badgeAsset = "assets/images/win1.png";
+          } else if (rank == 2) {
+            tier = "Silver";
+            cardColor = const Color(0xFFE0E0E0);
+            badgeAsset = "assets/images/win2.png";
+          } else if (rank == 3) {
+            tier = "Bronze";
+            cardColor = const Color(0xFFFFDBC2);
+            badgeAsset = "assets/images/win3.png";
+          } else {
+            tier = "Runner Up";
+            cardColor = const Color(0xFFF5F5F5);
+          }
+
+          return _buildRankItem(
+            rank: rank,
+            name: user['username'] ?? 'Unknown',
+            tier: tier,
+            amount:
+                "${user['collected_this_month']?.toStringAsFixed(2) ?? '0.00'}L",
+            bonus: "Rp${user['last_month_bonus']?.toStringAsFixed(0) ?? '0'}",
+            imageUrl: user['profile_picture'],
+            cardColor: cardColor,
+            badgeAsset: badgeAsset,
+          );
+        }).toList(),
+
+        const SizedBox(height: 16),
+
+        // Page indicators
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: Colors.grey,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: Colors.grey,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: Colors.grey,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        // Bottom text
+        const Center(
+          child: Text(
+            "Keep collecting to get bonuses!",
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -272,11 +357,9 @@ class RankingListPage extends StatelessWidget {
     required String tier,
     required String amount,
     required String bonus,
-    required String imageUrl,
+    required String? imageUrl,
     Color cardColor = Colors.white,
     String? badgeAsset,
-    // bool hasUpArrow = false,
-    // bool hasDownArrow = false,
   }) {
     // Define rank number size based on position
     final double rankFontSize = rank <= 3 ? 55.0 : 40.0;
@@ -364,21 +447,27 @@ class RankingListPage extends StatelessWidget {
                             // Profile Image
                             CircleAvatar(
                               radius: rank <= 3 ? 30 : 25,
-                              backgroundImage: AssetImage(imageUrl),
-                              onBackgroundImageError:
-                                  (exception, stackTrace) {},
-                              child: ClipRRect(
-                                borderRadius:
-                                    BorderRadius.circular(rank <= 3 ? 30 : 25),
-                                child: Container(
-                                  color: Colors.grey[300],
-                                  width: rank <= 3 ? 60 : 50,
-                                  height: rank <= 3 ? 60 : 50,
-                                  child: Icon(Icons.person,
+                              backgroundColor: Colors.grey[300],
+                              child: imageUrl != null && imageUrl.isNotEmpty
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(
+                                          rank <= 3 ? 30 : 25),
+                                      child: Image.network(
+                                        imageUrl,
+                                        width: rank <= 3 ? 60 : 50,
+                                        height: rank <= 3 ? 60 : 50,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                          return Icon(Icons.person,
+                                              size: rank <= 3 ? 30 : 25,
+                                              color: Colors.white);
+                                        },
+                                      ),
+                                    )
+                                  : Icon(Icons.person,
                                       size: rank <= 3 ? 30 : 25,
                                       color: Colors.white),
-                                ),
-                              ),
                             ),
 
                             // Crown or badge image

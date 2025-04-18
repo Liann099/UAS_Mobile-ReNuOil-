@@ -16,8 +16,26 @@ from .serializers import (
     WithdrawSerializer, TransactionHistorySerializer, RankingSerializer, CheckoutHistorySerializer
 )
 
-from rest_framework.exceptions import ValidationError
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def update_passcode(request):
+    user = request.user
+    passcode = request.data.get('passcode')
+
+    if not passcode or len(passcode) != 6 or not passcode.isdigit():
+        return Response({"error": "Passcode must be a 6-digit numeric string."}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.passcode = passcode
+    user.save()
+    return Response({"message": "Passcode updated successfully."}, status=status.HTTP_200_OK)
 
 
 
@@ -163,11 +181,17 @@ class MyLeaderboardView(APIView):
                 .aggregate(total=Sum('total_price'))['total'] or 0
             )
 
+            profile_picture_url = ""
+            if hasattr(user, 'profile') and user.profile.profile_picture:
+                profile_picture_url = request.build_absolute_uri(user.profile.profile_picture.url)
+
             leaderboard_data.append({
                 "id": user.id,
                 "username": user.username,
                 "collected": collected,
                 "last_month_bonus": last_month_total_price,
+                "profile_picture": profile_picture_url,  # Tambahkan URL foto profil
+
             })
 
         leaderboard_data.sort(key=lambda x: x["collected"], reverse=True)
@@ -210,11 +234,16 @@ class LeaderboardView(APIView):
                 PickUpOrder.objects.filter(user=user, timestamp__range=(first_day_last_month, last_day_last_month))
                 .aggregate(total=Sum('total_price'))['total'] or 0
             )
-            
+
+            profile_picture_url = ""
+            if hasattr(user, 'profile') and user.profile.profile_picture:
+                profile_picture_url = request.build_absolute_uri(user.profile.profile_picture.url)
+
             leaderboard_data.append({
                 "username": user.username,
                 "collected_this_month": collected_this_month,
                 "last_month_bonus": last_month_total_price,
+                "profile_picture": profile_picture_url,  # Tambahkan URL foto profil
             })
 
         leaderboard_data.sort(key=lambda x: x["collected_this_month"], reverse=True)

@@ -424,10 +424,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
                           children: [
                             _NavIcon(
                               icon: 'assets/icons/iconhome.png',
-                              active: true,
-                              showUnderline: true,
                               onTap: () {
-                                // Already on home
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => const SellerPage()),
+                                );
                               },
                             ),
                             const SizedBox(width: 0.5),
