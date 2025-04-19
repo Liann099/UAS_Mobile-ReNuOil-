@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/generated/assets.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false, // Added this to remove debug banner
-      home: CookingOilPage(),
+      debugShowCheckedModeBanner: false,
+      home: const CookingOilPage(),
       theme: ThemeData(
-        fontFamily: 'Roboto',
+        fontFamily: 'Poppins',
         scaffoldBackgroundColor: Colors.white,
       ),
     );
@@ -42,191 +45,418 @@ class _CookingOilPageState extends State<CookingOilPage> {
     });
   }
 
-  void _navigateBack(BuildContext context) {
-    Navigator.of(context).pop();
-  }
-
-  void _toggleFavorite(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Favorite toggled')),
-    );
-  }
-
-  void _buyProduct(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Product added to cart')),
-    );
-  }
-
-  Widget _buildProductImage() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        double imageSize = constraints.maxWidth > 300 
-            ? 300 
-            : constraints.maxWidth * 0.8;
-        
-        return Center(
-          child: Container(
-            margin: EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
-                  spreadRadius: 2,
-                  blurRadius: 5,
-                  offset: Offset(0, 3),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(15),
-              child: Image.asset(
-                'assets/images/cookingoil.png',
-                height: imageSize,
-                width: imageSize,
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildPriceAndLocation() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          FittedBox(
-            child: Text(
-              'Rp.49,999/liter',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            '41 Liters Stock',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey,
-            ),
-          ),
-          Text(
-            'North Jakarta, Indonesia',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSellerAndQuantityActions() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 25,
-            backgroundColor: Colors.grey[200],
-            child: Text(
-              'R', 
-              style: TextStyle(
-                color: Colors.black, 
-                fontWeight: FontWeight.bold
-              )
-            ),
-          ),
-          SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Renuoil_offcl',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Row(
-            children: [
-              IconButton(
-                icon: Icon(Icons.remove_circle_outline, size: 30),
-                onPressed: _decreaseQuantity,
-              ),
-              Text(
-                '$_quantity', 
-                style: TextStyle(
-                  fontSize: 18, 
-                  fontWeight: FontWeight.bold
-                )
-              ),
-              IconButton(
-                icon: Icon(Icons.add_circle_outline, size: 30),
-                onPressed: _increaseQuantity,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReviewSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Container(
-        padding: EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.yellow[100],
-          borderRadius: BorderRadius.circular(10),
-        ),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            // Product image with back and favorite buttons
+            Stack(
               children: [
-                Icon(Icons.star, color: Colors.amber),
-                Text(
-                  ' 4.89 • 31 reviews',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
+                // Image
+                Container(
+                  height: 350,
+                  width: double.infinity,
+                  color: const Color(0xFFD0C8BA),
+                  child: Center(
+                    child: Image.asset(
+                    Assets.imagesProductMilk,
+                      height: 350,
+                      fit: BoxFit.fill,
+                    ),
+                  ),
+                ),
+
+                // Back button
+                Positioned(
+                  top: 50,
+                  left: 16,
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(64),
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, size: 18, color: Colors.white,),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+                ),
+
+                // Favorite button
+                Positioned(
+                  top: 50,
+                  right: 16,
+                  child: IconButton(
+                    icon: const Icon(Icons.favorite_border, size: 36, color: Colors.white,),
+                    onPressed: () {},
+                    padding: EdgeInsets.zero,
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 10),
-            Text(
-              'Hansel Richie Gunawan • January 2025',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
+
+            // Price and sold info
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [
+                  Text(
+                    'Rp.49,999/liter',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    '35 sold',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(height: 10),
-            Text(
-              '"I\'ve been using this coconut oil for months, and it\'s amazing! The quality is top-notch—light, pure, and with a subtle coconut scent. I love that it\'s versatile; I use it for cooking, skincare, and even as a natural hair treatment. Plus, the fact that it\'s renewable makes it an eco-friendly choice. Definitely a great buy!"',
-              style: TextStyle(
-                color: Colors.black87,
-                height: 1.5,
+
+            // Stock info
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    '41 Liters Stock',
+                    style: TextStyle(
+                      fontSize: 14,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Cooking Oil - Renewable',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(height: 10),
-            Row(
-              children: List.generate(5, (index) => 
-                Icon(Icons.star, color: Colors.amber, size: 20)
+
+            // Location
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: const [
+                  Icon(Icons.location_on, size: 16),
+                  SizedBox(width: 4),
+                  Text(
+                    'North Jakarta, Indonesia',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Divider
+            Divider(color: Colors.grey[300]),
+
+            // Seller info and quantity
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Seller info with profile picture
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundImage: AssetImage(Assets.imagesMascot),
+                      ),
+                      const SizedBox(width: 10),
+                      Row(
+                        children: const [
+                          Text(
+                            'Renuoil_offi',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                          SizedBox(width: 4),
+                          Icon(Icons.emoji_events, color: Colors.amber, size: 18),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Cart button and quantity selector
+                  Row(
+                    children: [
+                      // Cart icon
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.shopping_cart_outlined),
+                          onPressed: () {},
+                        ),
+                      ),
+
+                      // Divider
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Container(
+                          height: 30,
+                          width: 1,
+                          color: Colors.grey[300],
+                        ),
+                      ),
+
+                      // Decrease button
+                      GestureDetector(
+                        onTap: _decreaseQuantity,
+                        child: Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.grey[300],
+                          ),
+                          child: const Icon(Icons.remove, size: 18),
+                        ),
+                      ),
+
+                      // Quantity value
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                        width: 30,
+                        alignment: Alignment.center,
+                        child: Text(
+                          '$_quantity',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+
+                      // Increase button
+                      GestureDetector(
+                        onTap: _increaseQuantity,
+                        child: Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.grey[300],
+                          ),
+                          child: const Icon(Icons.add, size: 18),
+                        ),
+                      ),
+
+                      // Text "Liters"
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Liters',
+                        style: TextStyle(
+                          fontSize: 14,
+                        ),
+                      ),
+
+                      const Spacer(),
+
+                      // Buy button
+                      ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFBD562),
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 30),
+                        ),
+                        child: const Text(
+                          'Buy',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Reviews section
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(top: 16.0, left: 12, right: 12),
+              decoration: const BoxDecoration(
+                color: Color(0xFFFCE38A),
+                borderRadius: BorderRadius.all(Radius.circular(20)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Rating header
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: const [
+                        Icon(Icons.star, size: 20, color: Colors.black),
+                        SizedBox(width: 4),
+                        Text(
+                          '4.89 • 31 reviews',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Review content in rounded container
+                  Container(
+                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF3C4),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Reviewer info
+                        Row(
+                          children: const [
+                            Text(
+                              'Hansel Richie Gunawan',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Text('•'),
+                            SizedBox(width: 4),
+                            Text(
+                              'January 2025',
+                              style: TextStyle(
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        // Review text
+                        const Text(
+                          '"I\'ve been using this coconut oil for months, and it\'s amazing! The quality is top-notch—light, pure, and with a subtle coconut scent. I love that it\'s versatile; I use it for cooking, skincare, and even as a natural hair treatment. Plus, the fact that it\'s renewable makes it an eco-friendly choice. Definitely a great buy!"',
+                          style: TextStyle(
+                            fontSize: 14,
+                          ),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        // Rating stars
+                        Row(
+                          children: const [
+                            Icon(Icons.star, size: 16, color: Colors.black),
+                            Icon(Icons.star, size: 16, color: Colors.black),
+                            Icon(Icons.star, size: 16, color: Colors.black),
+                            Icon(Icons.star, size: 16, color: Colors.black),
+                            Icon(Icons.star, size: 16, color: Colors.black),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // About the oil
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    'About the oil',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'This high-quality coconut oil is versatile and renewable. Perfect for cooking, skincare, and industrial use, it retains nutrients and purity. It can be reused through refining or filtering, making it an eco-friendly choice. Lightweight with a mild coconut aroma, it\'s a sustainable and efficient solution.',
+                    style: TextStyle(
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Other products
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Other products',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildProductCard(
+                          'ABC Cooking Oil - Used',
+                          Assets.imagesProductMilk,
+                          'Rp39,999',
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildProductCard(
+                          'Chef\'s Oil - Used',
+                          Assets.imagesProductMilk,
+                          'Rp46,999',
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16,)
+                ],
               ),
             ),
           ],
@@ -235,60 +465,27 @@ class _CookingOilPageState extends State<CookingOilPage> {
     );
   }
 
-  Widget _buildAboutOilSection() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'About the oil',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 10),
-          Text(
-            'This high-quality coconut oil is versatile and renewable. Perfect for cooking, skincare, and industrial use. It retains nutrients and purity. It can be reused through refining or filtering, making it an eco-friendly choice. Lightweight with a mild coconut aroma, it\'s a sustainable and efficient solution.',
-            style: TextStyle(
-              color: Colors.black87,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOtherProductCard(String title, String assetPath, String price) {
+  Widget _buildProductCard(String title, String imagePath, String price) {
     return Container(
-      width: 150,
-      margin: EdgeInsets.only(right: 10),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: Offset(0, 2),
-          ),
-        ],
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Product image
           ClipRRect(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             child: Image.asset(
-              assetPath,
-              height: 150,
-              width: 150,
+              imagePath,
+              height: 120,
+              width: double.infinity,
               fit: BoxFit.cover,
             ),
           ),
+
+          // Product info
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
@@ -296,18 +493,16 @@ class _CookingOilPageState extends State<CookingOilPage> {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
+                  style: const TextStyle(
                     fontSize: 12,
+                    fontWeight: FontWeight.w500,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(height: 5),
+                const SizedBox(height: 4),
                 Text(
                   price,
-                  style: TextStyle(
-                    color: Colors.black,
+                  style: const TextStyle(
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -315,111 +510,6 @@ class _CookingOilPageState extends State<CookingOilPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildOtherProductsSection() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Other products',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 10),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildOtherProductCard(
-                  'ABC Cooking Oil - Used',
-                  'assets/images/bomali oil.png',
-                  'Rp39,999'
-                ),
-                _buildOtherProductCard(
-                  'Chef\'s Oil - Used',
-                  'assets/images/bomali oil.png',
-                  'Rp46,999'
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBuyButton(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: ElevatedButton(
-        onPressed: () => _buyProduct(context),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.yellow,
-          minimumSize: Size(double.infinity, 50),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-        child: Text(
-          'Buy',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => _navigateBack(context),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.favorite_border, color: Colors.black),
-            onPressed: () => _toggleFavorite(context),
-          ),
-        ],
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height - 
-                         AppBar().preferredSize.height - 
-                         MediaQuery.of(context).padding.top - 
-                         MediaQuery.of(context).padding.bottom
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildProductImage(),
-                _buildPriceAndLocation(),
-                _buildSellerAndQuantityActions(),
-                _buildReviewSection(),
-                _buildAboutOilSection(),
-                _buildOtherProductsSection(),
-                _buildBuyButton(context),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
