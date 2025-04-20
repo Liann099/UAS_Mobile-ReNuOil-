@@ -37,6 +37,7 @@ class Assets {
   static const String imagesPromo30 = 'assets/images/Promo_30.png';
   static const String imagesPromoCodeMascot = 'assets/images/promo_code_mascot.png';
   static const String imagesSimpleIconsGojek = 'assets/images/simple-icons_gojek.png';
+  static const String imagesTruckDelivery = 'assets/images/truck_delivery.png';
   static const String imagesUp = 'assets/images/up.png';
   static const String imagesVisa = 'assets/images/visa.png';
   static const String imagesWin1 = 'assets/images/win1.png';

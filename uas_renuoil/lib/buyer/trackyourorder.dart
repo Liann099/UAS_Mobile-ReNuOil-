@@ -1,34 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/generated/assets.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Order Tracking App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        fontFamily: 'Poppins',
-        scaffoldBackgroundColor: Colors.white,
-      ),
-      home: const OrderTrackingScreen(),
-    );
-  }
-}
-
-class OrderTrackingScreen extends StatelessWidget {
+class OrderTrackingScreen extends StatefulWidget {
   const OrderTrackingScreen({Key? key}) : super(key: key);
 
+  @override
+  State<OrderTrackingScreen> createState() => _OrderTrackingScreenState();
+}
+
+class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   // Constants for reuse
   static const Color primaryYellow = Color(0xFFFBD85D);
   static const Color borderColor = Color(0xFFEEEEEE);
   static const double defaultPadding = 16.0;
+
+  // State variable to track if timeline is expanded
+  bool _isTimelineVisible = false;
 
   @override
   Widget build(BuildContext context) {
@@ -38,8 +25,23 @@ class OrderTrackingScreen extends StatelessWidget {
           children: [
             _buildHeader(context),
             _buildTitleSection(),
-            _buildOrderCard(context),
-            _buildTrackingTimeline(),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _isTimelineVisible = !_isTimelineVisible;
+                        });
+                      },
+                      child: _buildOrderCard(context),
+                    ),
+                    if (_isTimelineVisible) _buildTrackingTimeline(),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -50,10 +52,10 @@ class OrderTrackingScreen extends StatelessWidget {
   Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(
-        defaultPadding, 
-        defaultPadding / 2, 
-        defaultPadding, 
-        defaultPadding
+          defaultPadding,
+          defaultPadding / 2,
+          defaultPadding,
+          defaultPadding
       ),
       decoration: const BoxDecoration(
         color: primaryYellow,
@@ -83,7 +85,7 @@ class OrderTrackingScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Profile circle (usually an image)
+          // Profile circle
           CircleAvatar(
             radius: 16,
             backgroundColor: Colors.grey[300],
@@ -95,7 +97,6 @@ class OrderTrackingScreen extends StatelessWidget {
                   'assets/images/profile.png',
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
-                    // Fallback if image fails to load
                     return Icon(Icons.person, color: Colors.grey[600]);
                   },
                 ),
@@ -189,7 +190,7 @@ class OrderTrackingScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '#1945',
+              '#1946',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
@@ -197,14 +198,14 @@ class OrderTrackingScreen extends StatelessWidget {
             ),
             SizedBox(height: 4),
             Text(
-              'Cooking Oil - Renewable',
+              'Sholl Motor Oil',
               style: TextStyle(
                 fontSize: 14,
               ),
             ),
           ],
         ),
-        
+
         // Logo image
         CircleAvatar(
           radius: 20,
@@ -217,7 +218,6 @@ class OrderTrackingScreen extends StatelessWidget {
                 'assets/images/handimage.png',
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
-                  // Fallback if image fails to load
                   return Icon(Icons.eco, color: Colors.green[700]);
                 },
               ),
@@ -237,51 +237,48 @@ class OrderTrackingScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '20 Feb, 25',
+              '21 Feb, 25',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
+                color: Colors.black54,
                 fontSize: 14,
               ),
             ),
             SizedBox(height: 4),
             Text(
-              'Jakarta',
+              'Surabaya',
               style: TextStyle(
                 fontSize: 14,
+                  fontWeight: FontWeight.w600
               ),
             ),
           ],
         ),
-        
+
         Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Row(
-              children: [
-                const Text(
-                  '23 Feb, 25',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: Colors.black54,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'estimate',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey[400],
-                  ),
-                ),
-              ],
+            Text(
+              'estimate',
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.grey[400],
+              ),
+            ),
+            const Text(
+              '24 Feb, 25',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: Colors.black54,
+              ),
             ),
             const SizedBox(height: 4),
             const Text(
               'Home',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.black54,
+                fontWeight: FontWeight.w600
               ),
             ),
           ],
@@ -292,9 +289,9 @@ class OrderTrackingScreen extends StatelessWidget {
 
   // Progress bar with truck
   Widget _buildProgressBar(BuildContext context) {
-    // Calculate progress width - 35% of available width
-    final progressWidth = MediaQuery.of(context).size.width * 0.35;
-    
+    // Calculate progress width - about 45% of available width based on the image
+    final progressWidth = MediaQuery.of(context).size.width * 0.45;
+
     return SizedBox(
       height: 50,
       child: Stack(
@@ -312,7 +309,7 @@ class OrderTrackingScreen extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
               ),
-              
+
               // Progress Line
               Expanded(
                 child: Container(
@@ -329,7 +326,7 @@ class OrderTrackingScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               // End Circle (Grey)
               Container(
                 width: 16,
@@ -341,24 +338,24 @@ class OrderTrackingScreen extends StatelessWidget {
               ),
             ],
           ),
-          
-          // Truck Icon
+
+          // Truck Image
           Positioned(
-            left: progressWidth,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Center(
-                child: Icon(
+            left: progressWidth - 40, // Adjusted to center truck on progress point
+            child: Image.asset(
+                Assets.imagesTruckDelivery,
+              width: 80,
+              height: 80,
+              fit: BoxFit.scaleDown,
+              // Don't apply color tint to the image
+              errorBuilder: (context, error, stackTrace) {
+                // Only as fallback if image isn't found
+                return Icon(
                   Icons.local_shipping,
                   color: Colors.orange[700],
                   size: 24,
-                ),
-              ),
+                );
+              },
             ),
           ),
         ],
@@ -368,59 +365,66 @@ class OrderTrackingScreen extends StatelessWidget {
 
   // Timeline section
   Widget _buildTrackingTimeline() {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(
-          defaultPadding, 
-          0, 
-          defaultPadding, 
+    return Container(
+      margin: const EdgeInsets.fromLTRB(
+          defaultPadding,
+          0,
+          defaultPadding,
           defaultPadding
-        ),
-        padding: const EdgeInsets.all(defaultPadding),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: ListView(
-          padding: EdgeInsets.zero,
+      ),
+      padding: const EdgeInsets.all(defaultPadding),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTimelineItem(
-              date: '20 Feb, 25',
-              time: '10:45 AM',
-              title: 'Drop Off',
-              subtitle: 'Silambat Jakarta',
-              isCompleted: true,
+            // Left side - dates and times
+            SizedBox(
+              width: 100,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _buildTimelineDate('21 Feb, 25', '10:45 AM', true),
+                  const SizedBox(height: 60),
+                  _buildTimelineDate('21 Feb, 25', '7:00 PM', true),
+                  const SizedBox(height: 60),
+                  _buildTimelineDate('22 Feb, 25', '-', false),
+                  const SizedBox(height: 60),
+                  _buildTimelineDate('24 - 25 Feb, 25', '-', false),
+                ],
+              ),
             ),
-            _buildTimelineConnector(isActive: true),
-            _buildTimelineItem(
-              date: '20 Feb, 25',
-              time: '7:00 PM',
-              title: 'Sorting Center',
-              subtitle: 'DC Cakung',
-              isCompleted: true,
+
+            // Middle - timeline connector with dots
+            Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16),
+              child: _buildContinuousTimeline(),
             ),
-            _buildTimelineConnector(isActive: false),
-            _buildTimelineItem(
-              date: '21 Feb, 25',
-              time: '-',
-              title: 'Sorting Center',
-              subtitle: 'DC BSD',
-              isCompleted: false,
-            ),
-            _buildTimelineConnector(isActive: false),
-            _buildTimelineItem(
-              date: '23 - 24 Feb, 25',
-              time: '-',
-              title: 'Home',
-              subtitle: 'B Residence BSD City',
-              isCompleted: false,
+
+            // Right side - location info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTimelineInfo('Drop Off', 'Silambat Surabaya', true),
+                  const SizedBox(height: 60),
+                  _buildTimelineInfo('Sorting Center', 'DC Surabaya', true),
+                  const SizedBox(height: 60),
+                  _buildTimelineInfo('Sorting Center', 'DC BSD', false),
+                  const SizedBox(height: 60),
+                  _buildTimelineInfo('Home', 'B Residence BSD City', false),
+                ],
+              ),
             ),
           ],
         ),
@@ -458,96 +462,102 @@ class OrderTrackingScreen extends StatelessWidget {
     );
   }
 
-  // Timeline item with date, status dot, and info
-  Widget _buildTimelineItem({
-    required String date,
-    required String time,
-    required String title,
-    required String subtitle,
-    required bool isCompleted,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  // Timeline date and time element
+  Widget _buildTimelineDate(String date, String time, bool isCompleted) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        // Date and Time
-        SizedBox(
-          width: 100,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                date,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: isCompleted ? Colors.black : Colors.grey[500],
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                time,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isCompleted ? Colors.black : Colors.grey[500],
-                ),
-              ),
-            ],
+        Text(
+          date,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            color: isCompleted ? Colors.black : Colors.grey[500],
           ),
         ),
-        
-        const SizedBox(width: 16),
-        
-        // Status Dot
-        Container(
-          width: 16,
-          height: 16,
-          decoration: BoxDecoration(
-            color: isCompleted ? primaryYellow : Colors.grey[400],
-            shape: BoxShape.circle,
-          ),
-        ),
-        
-        const SizedBox(width: 16),
-        
-        // Status Info
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: isCompleted ? Colors.black : Colors.grey[700],
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isCompleted ? Colors.black87 : Colors.grey[600],
-                ),
-              ),
-            ],
+        const SizedBox(height: 2),
+        Text(
+          time,
+          style: TextStyle(
+            fontSize: 12,
+            color: isCompleted ? Colors.black : Colors.grey[500],
           ),
         ),
       ],
     );
   }
 
-  // Connector line between timeline items
-  Widget _buildTimelineConnector({required bool isActive}) {
-    return Row(
+  // Timeline location info
+  Widget _buildTimelineInfo(String title, String subtitle, bool isCompleted) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(width: 108),
-        Container(
-          width: 2,
-          height: 40,
-          color: isActive ? primaryYellow : Colors.grey[300],
+        Text(
+          title,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            color: isCompleted ? Colors.black : Colors.grey[700],
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          subtitle,
+          style: TextStyle(
+            fontSize: 12,
+            color: isCompleted ? Colors.black87 : Colors.grey[600],
+          ),
         ),
       ],
+    );
+  }
+
+  // Continuous timeline with dots
+  Widget _buildContinuousTimeline() {
+    return Stack(
+      children: [
+        // Vertical line
+        Positioned(
+          left: 7,
+          top: 8,
+          bottom: 8,
+          width: 2,
+          child: Container(
+            color: Colors.grey[300],
+            child: Column(
+              children: [
+                Container(height: 80, color: primaryYellow), // First segment (active)
+                Expanded(child: Container()), // Remaining segment (inactive)
+              ],
+            ),
+          ),
+        ),
+
+        // Dots
+        Column(
+          children: [
+            _buildTimelineDot(true),
+            const SizedBox(height: 60),
+            _buildTimelineDot(true),
+            const SizedBox(height: 60),
+            _buildTimelineDot(false),
+            const SizedBox(height: 60),
+            _buildTimelineDot(false),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // Individual timeline dot
+  Widget _buildTimelineDot(bool isActive) {
+    return Container(
+      width: 16,
+      height: 16,
+      decoration: BoxDecoration(
+        color: isActive ? primaryYellow : Colors.grey[400],
+        shape: BoxShape.circle,
+      ),
     );
   }
 }
