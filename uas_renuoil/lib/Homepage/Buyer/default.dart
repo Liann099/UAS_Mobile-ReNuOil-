@@ -4,7 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import '../../constants.dart';
+import '../../home.dart';
 
+import 'dart:async';
 import 'package:flutter_application_1/balance.dart';
 import 'package:flutter_application_1/settings/profile.dart';
 import 'package:flutter_application_1/Seller/sellerwithdraw.dart';
@@ -12,9 +14,43 @@ import 'package:flutter_application_1/Seller/pickup.dart';
 import 'package:flutter_application_1/Seller/QRseller.dart';
 import 'package:flutter_application_1/Seller/ranking_list_page.dart';
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
+import 'package:flutter_application_1/Homepage/Buyer/detail.dart';
+
 import 'package:flutter_application_1/Seller/transaction_history.dart';
 import 'package:flutter_application_1/generated/assets.dart';
 import 'package:flutter_application_1/Seller/seller.dart';
+
+class Product {
+  final int id;
+  final String name;
+  final String address;
+  final double pricePerLiter;
+  final String description;
+  final String? picture;
+  final String category;
+
+  Product({
+    required this.id,
+    required this.name,
+    required this.address,
+    required this.pricePerLiter,
+    required this.description,
+    this.picture,
+    required this.category,
+  });
+
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      id: json['id'],
+      name: json['name'],
+      address: json['address'],
+      pricePerLiter: double.parse(json['price_per_liter'].toString()),
+      description: json['description'],
+      picture: json['picture'],
+      category: json['category'],
+    );
+  }
+}
 
 class BuyerHomePage extends StatefulWidget {
   const BuyerHomePage({super.key});
@@ -26,15 +62,51 @@ class BuyerHomePage extends StatefulWidget {
 class _BuyerHomePageState extends State<BuyerHomePage> {
   final storage = const FlutterSecureStorage();
   Future<List<Map<String, dynamic>>>? _futureUserData;
+  Future<List<Product>>? _futureProducts;
 
   bool isLoading = true;
   Map<String, String> userData = {};
   String? profilePictureUrl;
   final Map<String, TextEditingController> controllers = {};
   final Map<String, bool> isEditing = {};
-  bool isBuyer = true; // Added to track the switch state
+  bool isBuyer = true;
 
-  // Add your base URL here
+  late Timer _timer;
+  int _hours = 2;
+  int _minutes = 15;
+  int _seconds = 9;
+
+  // Filter variables
+  String? _selectedCategory;
+  List<Product> _allProducts = [];
+
+  Future<List<Product>> fetchProducts() async {
+    try {
+      String? token = await storage.read(key: 'access_token');
+      if (token == null) throw Exception('No access token found');
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/products/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        setState(() {
+          _allProducts = data.map((json) => Product.fromJson(json)).toList();
+        });
+        return _allProducts;
+      } else {
+        throw Exception('Failed to load products');
+      }
+    } catch (e) {
+      print('[ERROR] Exception occurred: $e');
+      rethrow;
+    }
+  }
 
   Future<List<Map<String, dynamic>>> fetchUserData() async {
     try {
@@ -120,11 +192,43 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
     }
   }
 
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        if (_seconds > 0) {
+          _seconds--;
+        } else {
+          if (_minutes > 0) {
+            _minutes--;
+            _seconds = 59;
+          } else {
+            if (_hours > 0) {
+              _hours--;
+              _minutes = 59;
+              _seconds = 59;
+            } else {
+              // Timer finished
+              _timer.cancel();
+            }
+          }
+        }
+      });
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     _futureUserData = fetchUserData();
+    _futureProducts = fetchProducts();
     fetchLeaderboardData();
+    _startTimer();
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel(); // Cancel the timer when the widget is disposed
+    super.dispose();
   }
 
   @override
@@ -137,7 +241,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
         toolbarHeight: 0,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
-      body: _futureUserData == null
+      body: _futureUserData == null || _futureProducts == null
           ? const Center(child: CircularProgressIndicator())
           : FutureBuilder<List<Map<String, dynamic>>>(
               future: _futureUserData,
@@ -392,33 +496,43 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                                 ),
                               ),
                               const SizedBox(height: 10),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFD75E),
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 12, horizontal: 16),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.card_giftcard,
-                                        color: Colors.black87),
-                                    const SizedBox(width: 10),
-                                    const Text(
-                                      "Promotion",
-                                      style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500),
-                                    ),
-                                    const Spacer(),
-                                    const Icon(Icons.chevron_right,
-                                        color: Colors.black87),
-                                  ],
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => HomePage()),
+                                  );
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFD75E),
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 12, horizontal: 16),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.card_giftcard,
+                                          color: Colors.black87),
+                                      const SizedBox(width: 10),
+                                      const Text(
+                                        "Promotion",
+                                        style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w500),
+                                      ),
+                                      const Spacer(),
+                                      const Icon(Icons.chevron_right,
+                                          color: Colors.black87),
+                                    ],
+                                  ),
                                 ),
                               ),
+
                               const SizedBox(height: 25),
 
-                              // Category section
+                              // Category filter section
                               const Text(
                                 'Category',
                                 style: TextStyle(
@@ -431,18 +545,29 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                                 children: [
                                   // Cooking Oil button
                                   Expanded(
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 12),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFFFD75E),
-                                        borderRadius: BorderRadius.circular(25),
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: const Text(
-                                        'Cooking Oil',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w500,
+                                    child: GestureDetector(
+                                      onTap: () => setState(() {
+                                        _selectedCategory =
+                                            _selectedCategory == 'CO'
+                                                ? null
+                                                : 'CO';
+                                      }),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: _selectedCategory == 'CO'
+                                              ? const Color(0xFFFFD75E)
+                                              : Colors.grey[300],
+                                          borderRadius:
+                                              BorderRadius.circular(25),
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: const Text(
+                                          'Cooking Oil',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -450,18 +575,29 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                                   const SizedBox(width: 10),
                                   // Motor Oil button
                                   Expanded(
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 12),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFFFD75E),
-                                        borderRadius: BorderRadius.circular(25),
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: const Text(
-                                        'Motor Oil',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w500,
+                                    child: GestureDetector(
+                                      onTap: () => setState(() {
+                                        _selectedCategory =
+                                            _selectedCategory == 'MO'
+                                                ? null
+                                                : 'MO';
+                                      }),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: _selectedCategory == 'MO'
+                                              ? const Color(0xFFFFD75E)
+                                              : Colors.grey[300],
+                                          borderRadius:
+                                              BorderRadius.circular(25),
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: const Text(
+                                          'Motor Oil',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -469,18 +605,29 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                                   const SizedBox(width: 10),
                                   // Industrial Oil button
                                   Expanded(
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 12),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFFFD75E),
-                                        borderRadius: BorderRadius.circular(25),
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: const Text(
-                                        'Industrial Oil',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w500,
+                                    child: GestureDetector(
+                                      onTap: () => setState(() {
+                                        _selectedCategory =
+                                            _selectedCategory == 'IO'
+                                                ? null
+                                                : 'IO';
+                                      }),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: _selectedCategory == 'IO'
+                                              ? const Color(0xFFFFD75E)
+                                              : Colors.grey[300],
+                                          borderRadius:
+                                              BorderRadius.circular(25),
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: const Text(
+                                          'Industrial Oil',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -529,8 +676,8 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                                             borderRadius:
                                                 BorderRadius.circular(4),
                                           ),
-                                          child: const Text('2',
-                                              style: TextStyle(
+                                          child: Text('$_hours',
+                                              style: const TextStyle(
                                                   fontWeight: FontWeight.bold)),
                                         ),
                                         const Text(' : '),
@@ -542,8 +689,9 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                                             borderRadius:
                                                 BorderRadius.circular(4),
                                           ),
-                                          child: const Text('15',
-                                              style: TextStyle(
+                                          child: Text(
+                                              '$_minutes'.padLeft(2, '0'),
+                                              style: const TextStyle(
                                                   fontWeight: FontWeight.bold)),
                                         ),
                                         const Text(' : '),
@@ -555,8 +703,9 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                                             borderRadius:
                                                 BorderRadius.circular(4),
                                           ),
-                                          child: const Text('9',
-                                              style: TextStyle(
+                                          child: Text(
+                                              '$_seconds'.padLeft(2, '0'),
+                                              style: const TextStyle(
                                                   fontWeight: FontWeight.bold)),
                                         ),
                                       ],
@@ -566,131 +715,74 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                               ),
                               const SizedBox(height: 15),
 
-                              // Used Cooking Oil Section
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text(
-                                    'Used Cooking Oil',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Row(
-                                    children: [
-                                      const Text(
-                                        'See All',
-                                        style: TextStyle(
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                      Icon(
-                                        Icons.arrow_forward,
-                                        color: Colors.grey,
-                                        size: 16,
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              SizedBox(
-                                height: 200,
-                                child: ListView.builder(
-                                  itemBuilder: (context, i) =>
-                                      _usedCookingOilCard(),
-                                  itemCount: 5,
-                                  shrinkWrap: true,
-                                  scrollDirection: Axis.horizontal,
-                                ),
-                              ),
-                              const SizedBox(height: 20),
+                              // Products section
+                              FutureBuilder<List<Product>>(
+                                future: _futureProducts,
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return const Center(
+                                        child: CircularProgressIndicator());
+                                  } else if (snapshot.hasError) {
+                                    return const Center(
+                                        child: Text('Failed to load products'));
+                                  }
 
-                              // Used Motor Oil Section
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text(
-                                    'Used Motor Oil',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Row(
-                                    children: [
-                                      const Text(
-                                        'See All',
-                                        style: TextStyle(
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                      Icon(
-                                        Icons.arrow_forward,
-                                        color: Colors.grey,
-                                        size: 16,
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              SizedBox(
-                                height: 200,
-                                child: ListView.builder(
-                                  itemBuilder: (context, i) =>
-                                      _usedMotorOilCard(),
-                                  itemCount: 5,
-                                  shrinkWrap: true,
-                                  scrollDirection: Axis.horizontal,
-                                ),
-                              ),
-                              const SizedBox(height: 20),
+                                  final products = _allProducts;
+                                  final categories = ['CO', 'MO', 'IO'];
 
-                              // Used Industrial Oil Section
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text(
-                                    'Used Industrial Oil',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Row(
-                                    children: [
-                                      const Text(
-                                        'See All',
-                                        style: TextStyle(
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                      Icon(
-                                        Icons.arrow_forward,
-                                        color: Colors.grey,
-                                        size: 16,
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: categories.map((category) {
+                                      // Filter produk berdasarkan kategori
+                                      final categoryProducts = products
+                                          .where((product) =>
+                                              product.category == category)
+                                          .toList();
+
+                                      // Jika sedang filter dan bukan kategori yang dipilih, skip
+                                      if (_selectedCategory != null &&
+                                          _selectedCategory != category) {
+                                        return const SizedBox.shrink();
+                                      }
+
+                                      // Jika tidak ada produk di kategori ini, skip
+                                      if (categoryProducts.isEmpty) {
+                                        return const SizedBox.shrink();
+                                      }
+
+                                      return Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            _getCategoryName(category),
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          SizedBox(
+                                            height: 220,
+                                            child: ListView.builder(
+                                              scrollDirection: Axis.horizontal,
+                                              itemCount:
+                                                  categoryProducts.length,
+                                              itemBuilder: (context, index) {
+                                                return _productCard(
+                                                    categoryProducts[index]);
+                                              },
+                                            ),
+                                          ),
+                                          const SizedBox(height: 20),
+                                        ],
+                                      );
+                                    }).toList(),
+                                  );
+                                },
                               ),
-                              const SizedBox(height: 10),
-                              SizedBox(
-                                height: 200,
-                                child: ListView.builder(
-                                  itemBuilder: (context, i) =>
-                                      _usedIndustrialOilCard(),
-                                  itemCount: 5,
-                                  shrinkWrap: true,
-                                  scrollDirection: Axis.horizontal,
-                                ),
-                              ),
-                              const SizedBox(height: 20),
                             ],
                           ),
                         ),
@@ -703,72 +795,117 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
     );
   }
 
-  Widget _usedCookingOilCard() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: SizedBox(
-        width: 150,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Image.asset(Assets.imagesProductMilk,
-                height: 150, fit: BoxFit.cover),
-            const SizedBox(height: 6),
-            const Text(
-              'Cooking Oil - Renewable',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  String _getCategoryName(String code) {
+    switch (code) {
+      case 'CO':
+        return 'Used Cooking Oil';
+      case 'MO':
+        return 'Used Motor Oil';
+      case 'IO':
+        return 'Used Industrial Oil';
+      default:
+        return 'Used oil';
+    }
   }
 
-  Widget _usedMotorOilCard() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: SizedBox(
-        width: 150,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Image.asset(Assets.imagesMotorOil, height: 150, fit: BoxFit.cover),
-            const SizedBox(height: 6),
-            const Text(
-              'Refined Motor Oil',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey,
-              ),
+  Widget _productCard(Product product) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CookingOilPage(product: product),
+          ),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: SizedBox(
+          width: 160,
+          child: Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _usedIndustrialOilCard() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: SizedBox(
-        width: 150,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Image.asset(Assets.imagesIndustrialOil,
-                height: 150, fit: BoxFit.cover),
-            const SizedBox(height: 6),
-            const Text(
-              'InduraLube Oil',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Product image
+                ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(12)),
+                  child: Container(
+                    height: 120,
+                    color: Colors.grey[200],
+                    child: product.picture != null &&
+                            product.picture!.isNotEmpty
+                        ? Image.network(
+                            product.picture!.startsWith('http')
+                                ? product.picture!
+                                : '$baseUrl${product.picture}',
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes !=
+                                          null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Center(
+                                    child: Icon(Icons.broken_image, size: 40)),
+                          )
+                        : const Center(
+                            child: Icon(Icons.image,
+                                size: 40, color: Colors.grey)),
+                  ),
+                ),
+                // Product details
+                Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Rp ${product.pricePerLiter.toStringAsFixed(2)}/L',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        product.address,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

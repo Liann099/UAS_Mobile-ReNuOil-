@@ -6,14 +6,18 @@ from rest_framework import generics, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from django.shortcuts import get_object_or_404
+from rest_framework.response import Response
+from rest_framework import status
+
 from .models import (
     CustomUser, UserProfile, Transaction, OilSale, Promotion,
-    BankAccount, PickUpOrder, TopUp, Withdraw, TransactionHistory, CheckoutHistory, UserPromoUsage
+    BankAccount, PickUpOrder, TopUp, Withdraw, TransactionHistory, CheckoutHistory, UserPromoUsage, Product, OrderItem
 )
 from .serializers import (
     UserSerializer, UserProfileSerializer, TransactionSerializer, OilSaleSerializer,
     PromotionSerializer, BankAccountSerializer, PickUpOrderSerializer, TopUpSerializer,
-    WithdrawSerializer, TransactionHistorySerializer, RankingSerializer, CheckoutHistorySerializer
+    WithdrawSerializer, TransactionHistorySerializer, RankingSerializer, CheckoutHistorySerializer, ProductSerializer,PromotionWithStatusSerializer, SingleProductCheckoutSerializer
 )
 
 from rest_framework import status
@@ -36,6 +40,33 @@ def update_passcode(request):
     user.passcode = passcode
     user.save()
     return Response({"message": "Passcode updated successfully."}, status=status.HTTP_200_OK)
+
+
+#sementara
+class PublicPromotionListView(generics.ListAPIView):
+    queryset = Promotion.objects.all()
+    serializer_class = PromotionSerializer
+    permission_classes = [] 
+
+class PromotionUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = Promotion.objects.all()
+    serializer_class = PromotionSerializer
+    lookup_field = 'id'  # default is 'pk'
+
+class PromotionCreateView(generics.CreateAPIView):
+    queryset = Promotion.objects.all()
+    serializer_class = PromotionSerializer
+
+class ProductCreateView(generics.CreateAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+
+class ProductUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    lookup_field = 'id'  # default is 'pk'
+#sementara
+
 
 
 
@@ -76,17 +107,50 @@ class OilSaleCreateView(generics.CreateAPIView):
 
 
 class PromotionListView(generics.ListAPIView):
-    queryset = Promotion.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PromotionSerializer
-    
+
     def get_queryset(self):
         user = self.request.user
-        used_promos = UserPromoUsage.objects.filter(user=user).values_list('promo_id', flat=True)
-        return Promotion.objects.exclude(id__in=used_promos)
+
+        # Promo yang sudah diklaim tapi belum digunakan
+        claimed_not_used_ids = UserPromoUsage.objects.filter(
+            user=user, is_used=False
+        ).values_list('promo_id', flat=True)
+
+        # Promo yang belum pernah diklaim
+        unclaimed_promos = Promotion.objects.exclude(
+            id__in=UserPromoUsage.objects.filter(user=user).values_list('promo_id', flat=True)
+        )
+
+        # Gabungkan dua queryset (pakai union)
+        return Promotion.objects.filter(id__in=claimed_not_used_ids).union(unclaimed_promos)
 
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        context['user'] = self.request.user
+        return context
 
+    
+class ClaimPromotionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        promo = get_object_or_404(Promotion, pk=pk)
+
+        # Check if the user has already claimed this promotion
+        if UserPromoUsage.objects.filter(user=request.user, promo=promo).exists():
+            return Response({'status': 'already claimed'}, status=status.HTTP_400_BAD_REQUEST)
+
+        UserPromoUsage.objects.create(user=request.user, promo=promo)
+
+        # Return the claimed promotion data
+        serializer = PromotionSerializer(promo)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    
 class BankAccountView(generics.ListCreateAPIView):
     serializer_class = BankAccountSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -272,7 +336,7 @@ from .serializers import (
 class ProductListCreateView(generics.ListCreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
 class ProductDetailView(generics.RetrieveAPIView):
     queryset = Product.objects.all()
@@ -315,7 +379,116 @@ from rest_framework import generics, permissions
 from rest_framework.exceptions import ValidationError
 from .models import Checkout, Cart, Promotion
 from .serializers import CheckoutSerializer
+from rest_framework.exceptions import NotFound
 
+
+# views.pyfrom rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.exceptions import ValidationError, NotFound
+from rest_framework import status
+from decimal import Decimal
+from .models import Checkout, Product, OrderItem, Promotion, UserPromoUsage
+from .serializers import SingleProductCheckoutSerializer
+
+class CheckoutSingleProductView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, *args, **kwargs):
+        serializer = SingleProductCheckoutSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        try:
+            product = Product.objects.get(id=data['product_id'])
+        except Product.DoesNotExist:
+            raise NotFound("Product not found")
+
+        # Calculate totals
+        product_total = product.price_per_liter * data['quantity']
+        delivery_fee = Decimal("11000") if data['shipping_method'] == "grab" else Decimal("10000")
+        service_fee = Decimal("1200")
+        
+        # --- VOUCHER --- 
+        voucher_data = self.request.data.get("voucher")
+        print("RAW voucher_data:", voucher_data)
+
+        if isinstance(voucher_data, dict):
+            voucher_code = voucher_data.get("code", "").strip()
+        elif isinstance(voucher_data, str):
+            voucher_code = voucher_data.strip()
+        else:
+            voucher_code = ""
+
+        print("Parsed voucher_code:", voucher_code)
+
+        promo = None
+        discount = Decimal("0")
+
+        if voucher_code:
+            try:
+                promo = Promotion.objects.get(code__iexact=voucher_code)
+                print("Voucher ditemukan:", promo.code)
+
+                # Check if the user has already used the voucher
+                if UserPromoUsage.objects.filter(user=self.request.user, promo=promo).exists():
+                    raise ValidationError(f"Voucher {promo.code} sudah digunakan sebelumnya.")
+
+                # Calculate discount
+                discount = (Decimal(promo.discount_percent) / Decimal("100")) * product_total
+            except Promotion.DoesNotExist:
+                print("Voucher tidak ditemukan di DB:", voucher_code)
+                raise ValidationError("Kode voucher tidak valid.")
+
+        # Calculate grand total
+        grand_total = product_total + delivery_fee + service_fee - discount
+
+        # Payment handling
+        if data['payment_method'] == "WALLET":
+            if request.user.balance < grand_total:
+                raise ValidationError("Insufficient wallet balance")
+            request.user.balance -= grand_total
+            request.user.save()
+
+        # Create checkout
+        checkout = Checkout.objects.create(
+            user=request.user,
+            product_total_price=product_total,
+            delivery_fee=delivery_fee,
+            service_fee=service_fee,
+            grand_total=grand_total,
+            payment_method=data['payment_method'],
+            shipping_method=data['shipping_method'],
+            voucher=promo,
+        )
+
+        # Create order item
+        OrderItem.objects.create(
+            checkout=checkout,
+            product=product,
+            quantity=data['quantity'],
+            price_per_unit=product.price_per_liter,
+        )
+
+        # Mark voucher as used if applicable
+        if promo:
+            # Use get_or_create to avoid duplicate entries
+            user_promo_usage, created = UserPromoUsage.objects.get_or_create(user=request.user, promo=promo)
+            user_promo_usage.is_used = True
+            user_promo_usage.save()
+
+            # Optionally, disable the promo after usage
+            promo.is_active = False  # Ensure there's an `is_active` field in Promotion model
+            promo.save()
+
+        return Response({
+            'status': 'success',
+            'checkout_id': checkout.id,
+            'grand_total': grand_total,
+        }, status=status.HTTP_201_CREATED)
+
+
+
+    
 class CheckoutCreateView(generics.CreateAPIView):
     queryset = Checkout.objects.all()
     serializer_class = CheckoutSerializer
@@ -379,10 +552,10 @@ class CheckoutCreateView(generics.CreateAPIView):
 
         # Pembayaran pakai wallet
         if payment_method == "WALLET":
-            if user.profile.balance < grand_total:
+            if user.balance < grand_total:
                 raise ValidationError("Saldo wallet tidak cukup.")
-            user.profile.balance -= grand_total
-            user.profile.save()
+            user.balance -= grand_total
+            user.save()
 
         # Simpan checkout
         checkout = serializer.save(
@@ -401,9 +574,14 @@ class CheckoutCreateView(generics.CreateAPIView):
 
         # Opsional: Hapus voucher
         if promo:
-            UserPromoUsage.objects.create(user=user, promo=promo)
+            user_promo_usage, created = UserPromoUsage.objects.get_or_create(user=user, promo=promo)
+            user_promo_usage.is_used = True
+            user_promo_usage.save()
 
-            # promo.delete()  # atau promo.is_active = False; promo.save()
+            # Tandai promo sebagai tidak aktif setelah digunakan
+            promo.is_active = False  # Pastikan ada field is_active di model Promotion
+            promo.save()
+                    # promo.delete()  # atau promo.is_active = False; promo.save()
 
 
 
@@ -422,3 +600,18 @@ class BankAccountList(generics.ListCreateAPIView):
     
     def get_queryset(self):
         return BankAccount.objects.filter(user=self.request.user)
+    
+# In your Django views.py
+from rest_framework.views import exception_handler
+from rest_framework.response import Response
+
+def custom_exception_handler(exc, context):
+    response = exception_handler(exc, context)
+    
+    if response is not None:
+        response.data = {
+            'error': True,
+            'message': str(exc),
+            'status_code': response.status_code
+        }
+    return response

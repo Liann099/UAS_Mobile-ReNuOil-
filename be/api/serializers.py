@@ -1,8 +1,9 @@
 from rest_framework import serializers
 from .models import CustomUser, UserProfile
 from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
-from .models import Transaction, OilSale, Promotion, BankAccount, PickUpOrder, TopUp, Withdraw, TransactionHistory, CheckoutHistory
+from .models import Transaction, OilSale, Promotion, BankAccount, PickUpOrder, TopUp, Withdraw, TransactionHistory, CheckoutHistory, UserPromoUsage
 import json
+from api.models import PAYMENT_CHOICES, SHIPPING_CHOICES
 
 
 class UserCreateSerializer(BaseUserCreateSerializer):
@@ -99,12 +100,50 @@ class RankingSerializer(serializers.ModelSerializer):
 
 from .models import Product, Review, Cart, Promotion, Checkout, Tracker
 from .serializers import *
-
+# serializers.py
 class PromotionSerializer(serializers.ModelSerializer):
+    status = serializers.SerializerMethodField()
+    is_used = serializers.SerializerMethodField()
+
     class Meta:
         model = Promotion
-        fields = '__all__'
+        fields = ['id', 'code', 'picture', 'status', 'is_used']  # include status field
+
+    def get_status(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return 'unclaimed'
+        if UserPromoUsage.objects.filter(user=request.user, promo=obj).exists():
+            return 'claimed'
+        return 'unclaimed'
+    
+    
+    def get_is_used(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+
+        try:
+            usage = UserPromoUsage.objects.get(user=request.user, promo=obj)
+            return usage.is_used
+        except UserPromoUsage.DoesNotExist:
+            return False 
         
+# serializers.py
+class PromotionWithStatusSerializer(serializers.ModelSerializer):
+    status = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Promotion
+        fields = ['id', 'code', 'picture', 'status', ...]  # all fields needed
+    
+    def get_status(self, obj):
+        return 'claimed' if UserPromoUsage.objects.filter(
+            user=self.context['user'],
+            promo=obj
+        ).exists() else 'unclaimed'
+    
+      
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
@@ -167,8 +206,41 @@ class CheckoutSerializer(serializers.ModelSerializer):
             for item in obj.items.all()
         ]
 
+class SingleProductCheckoutSerializer(serializers.Serializer):
+    product_id = serializers.IntegerField()
+    quantity = serializers.IntegerField(min_value=1)
+    payment_method = serializers.ChoiceField(choices=PAYMENT_CHOICES)
+    shipping_method = serializers.ChoiceField(choices=SHIPPING_CHOICES)
+    voucher_code = serializers.SerializerMethodField(read_only=True)
 
-    
+    # Fields that are related to the checkout response (not included in the request data)
+    voucher_discount_percent = serializers.IntegerField(read_only=True)
+    items_detail = serializers.SerializerMethodField()
+    grand_total = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+
+    def get_voucher_code(self, obj):
+        # Optional: Add logic for voucher code (if available)
+        return obj.voucher.code if obj.voucher else None
+
+    def get_voucher_discount_percent(self, obj):
+        # Optional: Add logic for voucher discount percent
+        return obj.voucher.discount_percent if obj.voucher else 0
+
+    def get_items_detail(self, obj):
+        # Example for single product checkout, you would adjust as per actual needs.
+        return [{
+            "product": obj.product.name,
+            "quantity": obj.quantity,
+            "price_per_unit": float(obj.product.price_per_liter),
+            "total": float(obj.product.price_per_liter * obj.quantity)
+        }]
+
+    class Meta:
+        # This is not strictly needed, but if using it for model mapping, adjust accordingly.
+        model = Checkout
+        fields = ['product_id', 'quantity', 'payment_method', 'shipping_method', 'voucher_code', 'voucher_discount_percent', 'items_detail', 'grand_total']
+        read_only_fields = ['voucher_discount_percent', 'items_detail', 'grand_total']
+
 
 class CheckoutItemInputSerializer(serializers.Serializer):
     product_id = serializers.IntegerField()

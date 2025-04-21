@@ -14,6 +14,7 @@ class Assets {
       'assets/images/american_express.png';
   static const String imagesApple = 'assets/images/apple.png';
   static const String imagesArcticonsOvo = 'assets/images/arcticons_ovo.png';
+  static const String imagesPromoCodeMascot = 'images/promo_code_mascot.png';
   static const String imagesBg = 'assets/images/bg.png';
   static const String imagesBiBank = 'assets/images/bi_bank.png';
   static const String imagesBtc = 'assets/images/btc.png';

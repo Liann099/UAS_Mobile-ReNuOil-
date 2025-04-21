@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 
 import '../constants.dart';
 import '../generated/assets.dart';
+import '../home.dart';
+
 
 import 'package:flutter_application_1/balance.dart';
 import 'package:flutter_application_1/settings/profile.dart';
@@ -657,28 +659,38 @@ class _SellerPage extends State<SellerPage> {
                                   fontWeight: FontWeight.w600, fontSize: 16),
                             ),
                             const SizedBox(height: 10),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 14),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFD75E),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.card_giftcard),
-                                  const SizedBox(width: 10),
-                                  const Text(
-                                    "Promotion",
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.w500),
-                                  ),
-                                  const Spacer(),
-                                  Icon(Icons.chevron_right,
-                                      color: Colors.grey[800]),
-                                ],
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => HomePage()),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFD75E),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.card_giftcard),
+                                    const SizedBox(width: 10),
+                                    const Text(
+                                      "Promotion",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w500),
+                                    ),
+                                    const Spacer(),
+                                    Icon(Icons.chevron_right,
+                                        color: Colors.grey[800]),
+                                  ],
+                                ),
                               ),
                             ),
+
 
                             const SizedBox(height: 15),
 

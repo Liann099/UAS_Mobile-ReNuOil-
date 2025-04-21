@@ -36,13 +36,28 @@ urlpatterns = [
     path('products/review/', ReviewCreateView.as_view(), name='review-create'),
     path('cart/', CartListCreateView.as_view(), name='cart'),
     path('checkout/', CheckoutCreateView.as_view(), name='checkout'),
+    path('1checkout/', CheckoutSingleProductView.as_view(), name='checkout'),
+
     path('tracker/', TrackerListView.as_view(), name='tracker'),
-    path('promotion/', PromotionListView.as_view(), name='promotion'),
+    
+    path('promotion/', PromotionListView.as_view(), name='promotion'),  # API view (DRF)
+    path('promotion/<int:pk>/claim/', ClaimPromotionView.as_view(), name='claim-promotion'),
+
+
+
     path('cart/<int:pk>/delete/', CartDeleteView.as_view(), name='cart-delete'),
     path("checkout-history/", CheckoutHistoryListView.as_view(), name="checkout-history"),
 
     path('bank-accounts/', BankAccountList.as_view(), name='bank-account-list'),
 
     path('update-passcode/', update_passcode, name='update-passcode'),
+
+
+#buat admin
+    path('promotion/public/', PublicPromotionListView.as_view(), name='promotion_public'),
+    path('promotion/<int:id>/edit/', PromotionUpdateView.as_view(), name='promotion_update'),  # edit promo
+    path('promotion/add/', PromotionCreateView.as_view(), name='promotion_add'),
+    path('product/add/', ProductCreateView.as_view(), name='add_product_api'),
+    path('product/<int:id>/edit/', ProductUpdateView.as_view(), name='product_update'),  # edit promo
 
 ]

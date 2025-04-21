@@ -329,14 +329,35 @@ class Leaderboard(models.Model):
 from django.db import models
 from django.conf import settings
 
+from django.db import models
+
 class Product(models.Model):
+    COOKING_OIL = 'CO'
+    MOTOR_OIL = 'MO'
+    INDUSTRIAL_OIL = 'IO'
+
+    CATEGORY_CHOICES = [
+        (COOKING_OIL, 'Cooking Oil'),
+        (MOTOR_OIL, 'Motor Oil'),
+        (INDUSTRIAL_OIL, 'Industrial Oil'),
+    ]
+
     name = models.CharField(max_length=100)
     address = models.CharField(max_length=255)
     price_per_liter = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField()
+    picture = models.ImageField(upload_to='product/', null=True, blank=True)
+    
+    # Add the category field with choices
+    category = models.CharField(
+        max_length=2,
+        choices=CATEGORY_CHOICES,
+        default=COOKING_OIL,
+    )
 
     def __str__(self):
         return self.name
+
 
 class Review(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
@@ -355,6 +376,8 @@ class Cart(models.Model):
 class Promotion(models.Model):
     code = models.CharField(max_length=20, unique=True)
     discount_percent = models.PositiveIntegerField(default=0)
+    picture = models.ImageField(upload_to='promotion/', null=True, blank=True)  # ✅ ditambahkan
+
 
     def __str__(self):
         return self.code
@@ -364,6 +387,7 @@ class UserPromoUsage(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     promo = models.ForeignKey(Promotion, on_delete=models.CASCADE)
     used_at = models.DateTimeField(auto_now_add=True)  # Timestamp for when the promo was used
+    is_used = models.BooleanField(default=False)  # Salah indentasinya
 
     class Meta:
         unique_together = ['user', 'promo']  # Prevent the same user from using the same promo more than once
@@ -385,6 +409,11 @@ PAYMENT_CHOICES = [
     ('WALLET', 'RenuOil Wallet'),
 ]
 
+SHIPPING_CHOICES = [
+    ('gojek', 'Gojek'),
+    ('grab', 'Grab'),
+]
+
 class Checkout(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     items = models.ManyToManyField(Cart)  # untuk melacak item yang dibeli
@@ -398,11 +427,18 @@ class Checkout(models.Model):
         choices=PAYMENT_CHOICES,
         default='BCA'  # ✅ Default di sini
     )    
+    shipping_method = models.CharField(
+        max_length=10,
+        choices=SHIPPING_CHOICES,
+        default='gojek'
+    )
     timestamp = models.DateTimeField(default=now, editable=False)  # ✅ Default is `now()`
 
     def save(self, *args, **kwargs):
         try:
             # Simpan transaksi
+            if not self.delivery_fee or self.delivery_fee == 0:
+                self.delivery_fee = Decimal("11000") if self.shipping_method == "grab" else Decimal("10000")
             super().save(*args, **kwargs)
 
             # Ambil item-item cart terkait
@@ -441,7 +477,20 @@ class Checkout(models.Model):
             logger.error(f"Gagal menyimpan checkout: {str(e)}")
             raise ValueError(f"Checkout Error: {str(e)}")
 
+class OrderItem(models.Model):
+    checkout = models.ForeignKey(Checkout, on_delete=models.CASCADE, related_name='order_items')
+    product = models.ForeignKey(Product, on_delete=models.PROTECT)
+    quantity = models.PositiveIntegerField()
+    price_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
 
+    @property
+    def total_price(self):
+        return self.price_per_unit * self.quantity
+
+    def __str__(self):
+        return f"{self.quantity}x {self.product.name}"
+    
 from django.db import models
 from django.contrib.auth import get_user_model
 
