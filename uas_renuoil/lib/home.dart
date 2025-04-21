@@ -6,6 +6,7 @@ import 'constants.dart';
 import 'package:flutter/services.dart';
 import '../generated/assets.dart';
 
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -49,10 +50,14 @@ class _HomePageState extends State<HomePage> {
         final data = json.decode(userResponse.body);
         setState(() {
           allPromotions = data;
-          availablePromotions =
-              data.where((promo) => promo['status'] == 'unclaimed').toList();
-          registeredPromotions =
-              data.where((promo) => promo['status'] == 'claimed').toList();
+          registeredPromotions = data
+              .where((promo) => promo['status'].toLowerCase() == 'claimed')
+              .toList();
+
+          availablePromotions = data
+              .where((promo) => promo['status'].toLowerCase() == 'unclaimed')
+              .toList();
+
           isLoading = false;
         });
       } else {
@@ -215,7 +220,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-Widget _buildRegisterContent() {
+  Widget _buildRegisterContent() {
     if (registeredPromotions.isEmpty) {
       return const Center(
         child: Text('No registered promotions yet'),
@@ -284,7 +289,6 @@ Widget _buildRegisterContent() {
     );
   }
 
-
   Widget _buildAvailableContent() {
     if (availablePromotions.isEmpty) {
       return const Center(
@@ -318,15 +322,14 @@ Widget _buildRegisterContent() {
                   Stack(
                     children: [
                       ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            promo['picture'],
-                            width: 325, // Set the width to 325
-                            height: 170, // Set the height to 150
-                            fit:
-                                BoxFit.cover, // Fit the image within the bounds
-                          ),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          promo['picture'],
+                          width: 325, // Set the width to 325
+                          height: 170, // Set the height to 150
+                          fit: BoxFit.cover, // Fit the image within the bounds
                         ),
+                      ),
                       Positioned(
                         bottom: 10,
                         right: 10,

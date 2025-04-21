@@ -430,8 +430,10 @@ class CheckoutSingleProductView(APIView):
                 print("Voucher ditemukan:", promo.code)
 
                 # Check if the user has already used the voucher
-                if UserPromoUsage.objects.filter(user=self.request.user, promo=promo).exists():
-                    raise ValidationError(f"Voucher {promo.code} sudah digunakan sebelumnya.")
+                user_promo_usage = UserPromoUsage.objects.filter(user=self.request.user, promo=promo).first()
+                
+                if user_promo_usage and user_promo_usage.is_used:
+                    raise ValidationError(f"Voucher {promo.code} sudah tidak bisa digunakan karena telah digunakan.")
 
                 # Calculate discount
                 discount = (Decimal(promo.discount_percent) / Decimal("100")) * product_total
@@ -484,6 +486,8 @@ class CheckoutSingleProductView(APIView):
             'status': 'success',
             'checkout_id': checkout.id,
             'grand_total': grand_total,
+            'voucher_discount_percent': promo.discount_percent if promo else 0
+
         }, status=status.HTTP_201_CREATED)
 
 
@@ -535,8 +539,11 @@ class CheckoutCreateView(generics.CreateAPIView):
                 print("Voucher ditemukan:", promo.code)
 
                 # Check if the user has already used the voucher
-                if UserPromoUsage.objects.filter(user=user, promo=promo).exists():
-                    raise ValidationError(f"Voucher {promo.code} sudah digunakan sebelumnya.")
+                user_promo_usage = UserPromoUsage.objects.filter(user=self.request.user, promo=promo).first()
+                
+                if user_promo_usage and user_promo_usage.is_used:
+                    raise ValidationError(f"Voucher {promo.code} sudah tidak bisa digunakan karena telah digunakan.")
+
 
                 # Calculate discount
                 discount = (Decimal(promo.discount_percent) / Decimal("100")) * product_total_price
@@ -582,6 +589,14 @@ class CheckoutCreateView(generics.CreateAPIView):
             promo.is_active = False  # Pastikan ada field is_active di model Promotion
             promo.save()
                     # promo.delete()  # atau promo.is_active = False; promo.save()
+
+        return Response({
+                'status': 'success',
+                'checkout_id': checkout.id,
+                'grand_total': grand_total,
+                'voucher_discount_percent': promo.discount_percent if promo else 0
+
+            }, status=status.HTTP_201_CREATED)
 
 
 

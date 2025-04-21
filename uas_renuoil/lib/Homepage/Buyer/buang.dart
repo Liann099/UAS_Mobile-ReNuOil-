@@ -7,7 +7,6 @@ import '../../constants.dart';
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 import 'package:flutter_application_1/Homepage/Buyer/detail.dart';
 
-
 class CheckoutPage extends StatefulWidget {
   final Product product;
   final int initialQuantity;
@@ -28,69 +27,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
   String? voucherCode;
   String paymentMethod = 'WALLET';
   String shippingMethod = 'gojek';
-  int voucherDiscountPercent = 0;
   final TextEditingController _voucherController = TextEditingController();
   bool isLoading = false;
-  bool _isLoading = true;
-  
-  Map<String, String> personalInfo = {
-    'Legal name': '',
-    'Preferred first name': '',
-    'Phone Number': '',
-    'Email': '',
-    'Address': '',
-    'Emergency contact': '',
-  };
 
   @override
   void initState() {
     super.initState();
     quantity = widget.initialQuantity;
-    fetchUserData();
-  }
-
-  Future<void> fetchUserData() async {
-    try {
-      String? token = await storage.read(key: 'access_token');
-      if (token == null) throw Exception('No access token found');
-
-      final headers = {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      };
-
-      final userResponse = await http.get(
-        Uri.parse('$baseUrl/auth/users/me/'),
-        headers: headers,
-      );
-
-      final profileResponse = await http.get(
-        Uri.parse('$baseUrl/api/auth/profile/'),
-        headers: headers,
-      );
-
-      if (userResponse.statusCode == 200 && profileResponse.statusCode == 200) {
-        final userData = json.decode(userResponse.body);
-        final profileData = json.decode(profileResponse.body);
-
-        setState(() {
-          personalInfo['Email'] = userData['email'] ?? '';
-          personalInfo['Legal name'] = profileData['legal_name'] ?? '';
-          personalInfo['Preferred first name'] =
-              profileData['preferred_first_name'] ?? '';
-          personalInfo['Phone Number'] = profileData['phone_number'] ?? '';
-          personalInfo['Address'] = profileData['address'] ?? '';
-          personalInfo['Emergency contact'] =
-              profileData['emergency_contact'] ?? '';
-          _isLoading = false;
-        });
-      } else {
-        throw Exception('Failed to load profile or user info');
-      }
-    } catch (e) {
-      print('Error fetching data: $e');
-      setState(() => _isLoading = false);
-    }
   }
 
   Future<void> _processCheckout() async {
@@ -116,7 +59,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          'Accept': 'application/json', // Explicitly request JSON
         },
         body: json.encode(requestBody),
       );
@@ -127,20 +70,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
       print('Response Body: ${response.body}');
 
       if (response.statusCode == 201) {
-        final responseData = json.decode(response.body);
-        final double grandTotal = responseData['grand_total'];
-        final int voucherDiscountPercent = responseData['voucher_discount_percent'] ?? 0;
-
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => OrderConfirmationPage(
-              grandTotal: grandTotal,
-              voucherDiscountPercent: voucherDiscountPercent,
-            ),
-          ),
+          MaterialPageRoute(builder: (context) => OrderConfirmationPage()),
         );
       } else {
+        // Handle different error formats
         dynamic errorData;
         try {
           errorData = json.decode(response.body);
@@ -171,6 +106,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Calculate totals
     final double productTotal = widget.product.pricePerLiter * quantity;
     final double deliveryFee = shippingMethod == 'grab' ? 11000.0 : 10000.0;
     final double serviceFee = 1200.0;
@@ -180,6 +116,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       body: SafeArea(
         child: Column(
           children: [
+            // App Bar
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
@@ -203,14 +140,25 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 ],
               ),
             ),
+
+            // Main content
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: [
+                    // Address Section
                     _buildAddressSection(),
+
+                    // Product Card
                     _buildProductCard(),
+
+                    // Voucher Section
                     _buildVoucherSection(),
+
+                    // Shipping Methods
                     _buildShippingMethods(),
+
+                    // Totals Section
                     _buildTotalsSection(
                       productTotal: productTotal,
                       deliveryFee: deliveryFee,
@@ -221,6 +169,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 ),
               ),
             ),
+
+            // Payment Button
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: SizedBox(
@@ -276,24 +226,24 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      personalInfo['Legal name'] ?? '',
-                      style: const TextStyle(
+                    const Text(
+                      'John Doe',
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      personalInfo['Phone Number'] ?? '',
-                      style: const TextStyle(
+                    const Text(
+                      '(+62) 812-3456-7890',
+                      style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      personalInfo['Address'] ?? '',
+                      widget.product.address,
                       style: const TextStyle(
                         fontSize: 14,
                         color: Colors.grey,
@@ -302,7 +252,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   ],
                 ),
               ),
-              // const Icon(Icons.keyboard_arrow_down, size: 20),
+              const Icon(Icons.keyboard_arrow_down, size: 20),
             ],
           ),
         ],
@@ -324,7 +274,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
               ),
               const SizedBox(width: 8),
               Text(
-                "Renuoil_offi",
+                widget.product.name,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -433,11 +383,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
           const SizedBox(height: 8),
           TextField(
             controller: _voucherController,
-            onChanged: (value) {
-              setState(() {
-                voucherCode = value; // Save the voucher code
-              });
-            },
             decoration: InputDecoration(
               hintText: 'Enter voucher code',
               filled: true,
@@ -452,49 +397,40 @@ class _CheckoutPageState extends State<CheckoutPage> {
       ),
     );
   }
-Widget _buildShippingMethods() {
+
+  Widget _buildShippingMethods() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Shipping methods',
+            'Shipping Method',
             style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.normal,
-              color: Colors.black87,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade100),
-              color: Colors.grey.shade100,
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: shippingMethod,
-                isExpanded: true,
-                icon: const Icon(Icons.keyboard_arrow_down),
-                items: ['gojek', 'grab'].map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(
-                      value[0].toUpperCase() + value.substring(1), // Capitalize
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    shippingMethod = newValue!;
-                  });
-                },
+          Row(
+            children: [
+              Expanded(
+                child: RadioListTile<String>(
+                  title: const Text('Gojek'),
+                  value: 'gojek',
+                  groupValue: shippingMethod,
+                  onChanged: (value) => setState(() => shippingMethod = value!),
+                ),
               ),
-            ),
+              Expanded(
+                child: RadioListTile<String>(
+                  title: const Text('Grab'),
+                  value: 'grab',
+                  groupValue: shippingMethod,
+                  onChanged: (value) => setState(() => shippingMethod = value!),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -525,11 +461,6 @@ Widget _buildShippingMethods() {
             label: 'Service Fee',
             value: 'Rp${serviceFee.toStringAsFixed(2)}',
           ),
-          // const SizedBox(height: 8),
-          // _buildPriceRow(
-          //   label: 'Voucher Discount',
-          //   value: '${voucherDiscountPercent}% off',
-          // ),
           const SizedBox(height: 16),
           _buildPriceRow(
             label: 'Grand Total',
@@ -569,14 +500,7 @@ Widget _buildShippingMethods() {
 }
 
 class OrderConfirmationPage extends StatelessWidget {
-  final double grandTotal;
-  final int voucherDiscountPercent;
-
-  const OrderConfirmationPage({
-    Key? key,
-    required this.grandTotal,
-    required this.voucherDiscountPercent,
-  }) : super(key: key);
+  const OrderConfirmationPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -592,22 +516,6 @@ class OrderConfirmationPage extends StatelessWidget {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Grand Total: Rp${grandTotal.toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Voucher Discount: $voucherDiscountPercent%',
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
               ),
             ),
             const SizedBox(height: 20),

@@ -104,21 +104,6 @@ class _CookingOilPageState extends State<CookingOilPage> {
                     ),
                   ),
                 ),
-
-                // Favorite button
-                // Positioned(
-                //   top: 50,
-                //   right: 16,
-                //   child: IconButton(
-                //     icon: const Icon(
-                //       Icons.favorite_border,
-                //       size: 36,
-                //       color: Colors.white,
-                //     ),
-                //     onPressed: () {},
-                //     padding: EdgeInsets.zero,
-                //   ),
-                // ),
               ],
             ),
 
