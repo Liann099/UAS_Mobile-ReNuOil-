@@ -18,15 +18,6 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
   final List<String> _countries = [
     'Indonesia',
     'Singapore',
-    'Malaysia',
-    'Thailand',
-    'Vietnam',
-    'Philippines',
-    'United States',
-    'United Kingdom',
-    'Australia',
-    'Japan',
-    'South Korea',
   ];
 
   void _showCountryPicker() {
@@ -130,6 +121,7 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
         decoration: const BoxDecoration(
           image: DecorationImage(
             image: AssetImage(Assets.imagesGroup306),
+            fit: BoxFit.fill
           ),
           color: Color(0xFFFFB35A),
         ),
