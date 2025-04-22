@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/Seller/ranking_list_page.dart';
-import 'package:flutter_application_1/settings/sheet/bio_bottom_sheet.dart';
 import 'package:flutter_application_1/maps/location_map.dart';
 
 // Auth

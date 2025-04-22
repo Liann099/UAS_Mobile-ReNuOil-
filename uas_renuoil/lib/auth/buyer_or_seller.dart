@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/generated/assets.dart';
 
 class BuyerOrSellerScreen extends StatelessWidget {
-  const BuyerOrSellerScreen({Key? key}) : super(key: key);
+  const BuyerOrSellerScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

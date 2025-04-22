@@ -5,10 +5,10 @@ class GenderBottomSheet extends StatefulWidget {
   final Function(String) onSave;
 
   const GenderBottomSheet({
-    Key? key,
+    super.key,
     required this.initialGender,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   State<GenderBottomSheet> createState() => _GenderBottomSheetState();

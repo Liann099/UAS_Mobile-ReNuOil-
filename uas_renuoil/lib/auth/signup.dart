@@ -237,10 +237,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             value: _acceptTerms,
                             onChanged: (value) =>
                                 setState(() => _acceptTerms = value ?? false),
-                            fillColor: MaterialStateProperty.resolveWith<Color>(
+                            fillColor: WidgetStateProperty.resolveWith<Color>(
                                 (states) {
-                              if (states.contains(MaterialState.selected))
+                              if (states.contains(WidgetState.selected)) {
                                 return Colors.white;
+                              }
                               return Colors.white.withOpacity(0.5);
                             }),
                             checkColor: Colors.brown,

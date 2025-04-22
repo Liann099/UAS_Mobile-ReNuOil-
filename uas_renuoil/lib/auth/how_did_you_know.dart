@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/generated/assets.dart';
 
 class HowDidYouKnowScreen extends StatefulWidget {
-  const HowDidYouKnowScreen({Key? key}) : super(key: key);
+  const HowDidYouKnowScreen({super.key});
 
   @override
   State<HowDidYouKnowScreen> createState() => _HowDidYouKnowScreenState();

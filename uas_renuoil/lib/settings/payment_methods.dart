@@ -218,7 +218,7 @@ class PaymentMethodsScreen extends StatelessWidget {
 }
 
 class PaymentMethodSelector extends StatefulWidget {
-  const PaymentMethodSelector({Key? key}) : super(key: key);
+  const PaymentMethodSelector({super.key});
 
   @override
   State<PaymentMethodSelector> createState() => _PaymentMethodSelectorState();

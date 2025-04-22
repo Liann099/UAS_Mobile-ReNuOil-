@@ -308,9 +308,9 @@ class CongratulationsDialog extends StatelessWidget {
   final VoidCallback onContinue;
 
   const CongratulationsDialog({
-    Key? key,
+    super.key,
     required this.onContinue,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

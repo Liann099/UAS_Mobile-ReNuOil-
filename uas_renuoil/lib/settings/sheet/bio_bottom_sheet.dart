@@ -5,10 +5,10 @@ class BioBottomSheet extends StatefulWidget {
   final Function(String) onSave;
 
   const BioBottomSheet({
-    Key? key,
+    super.key,
     required this.initialBio,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   State<BioBottomSheet> createState() => _BioBottomSheetState();

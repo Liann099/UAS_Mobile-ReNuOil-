@@ -5,7 +5,7 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
 }
 
 class ReviewPage extends StatefulWidget {
-  const ReviewPage({Key? key}) : super(key: key);
+  const ReviewPage({super.key});
 
   @override
   State<ReviewPage> createState() => _ReviewPageState();
@@ -120,7 +120,7 @@ class _ReviewPageState extends State<ReviewPage> {
                                 Center(
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
-                                    child: Container(
+                                    child: SizedBox(
                                       width: 80,
                                       height: 80,
                                       child: Image.asset(
@@ -183,7 +183,7 @@ class _ReviewPageState extends State<ReviewPage> {
                                 // Product Image
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
-                                  child: Container(
+                                  child: SizedBox(
                                     width: screenWidth < 350 ? 70 : 84,
                                     height: screenWidth < 350 ? 70 : 84,
                                     child: Image.asset(

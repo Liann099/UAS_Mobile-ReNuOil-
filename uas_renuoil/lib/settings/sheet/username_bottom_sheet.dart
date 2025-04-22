@@ -5,10 +5,10 @@ class UsernameBottomSheet extends StatefulWidget {
   final Function(String) onSave;
 
   const UsernameBottomSheet({
-    Key? key,
+    super.key,
     required this.initialUsername,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   State<UsernameBottomSheet> createState() => _UsernameBottomSheetState();

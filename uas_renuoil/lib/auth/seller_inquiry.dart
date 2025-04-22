@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 class SellerInquiryScreen extends StatefulWidget {
-  const SellerInquiryScreen({Key? key}) : super(key: key);
+  const SellerInquiryScreen({super.key});
 
   @override
   State<SellerInquiryScreen> createState() => _SellerInquiryScreenState();

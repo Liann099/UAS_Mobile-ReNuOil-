@@ -6,10 +6,10 @@ class BirthdayBottomSheet extends StatefulWidget {
   final Function(String) onSave;
 
   const BirthdayBottomSheet({
-    Key? key,
+    super.key,
     required this.initialBirthday,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   State<BirthdayBottomSheet> createState() => _BirthdayBottomSheetState();

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/generated/assets.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class AddressInputScreen extends StatefulWidget {
   const AddressInputScreen({super.key});

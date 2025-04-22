@@ -5,10 +5,10 @@ class NameBottomSheet extends StatefulWidget {
   final Function(String) onSave;
 
   const NameBottomSheet({
-    Key? key,
+    super.key,
     required this.initialName,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   State<NameBottomSheet> createState() => _NameBottomSheetState();

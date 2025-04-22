@@ -75,7 +75,7 @@ class BuyerHomePage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         // Mascot container
-                        Container(
+                        SizedBox(
                           width: 95,
                           height: 95,
                           child: Image.asset(

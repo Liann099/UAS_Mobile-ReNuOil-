@@ -204,7 +204,7 @@ class CreditsAndCouponsScreen extends StatelessWidget {
 }
 
 class AddGiftCardSheet extends StatefulWidget {
-  const AddGiftCardSheet({Key? key}) : super(key: key);
+  const AddGiftCardSheet({super.key});
 
   @override
   State<AddGiftCardSheet> createState() => _AddGiftCardSheetState();
@@ -318,7 +318,7 @@ class _AddGiftCardSheetState extends State<AddGiftCardSheet> {
 }
 
 class AddCouponSheet extends StatefulWidget {
-  const AddCouponSheet({Key? key}) : super(key: key);
+  const AddCouponSheet({super.key});
 
   @override
   State<AddCouponSheet> createState() => _AddCouponSheetState();

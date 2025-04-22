@@ -6,7 +6,6 @@ import 'package:http/http.dart' as http;
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:intl/intl.dart';
 
-import '../generated/assets.dart';
 import '../constants.dart';
 
 class EditProfileScreen extends StatefulWidget {

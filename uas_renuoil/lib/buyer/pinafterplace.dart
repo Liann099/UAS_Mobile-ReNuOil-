@@ -5,7 +5,7 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -17,14 +17,14 @@ class MyApp extends StatelessWidget {
 }
 
 class PasscodeScreen extends StatefulWidget {
-  const PasscodeScreen({Key? key}) : super(key: key);
+  const PasscodeScreen({super.key});
 
   @override
   _PasscodeScreenState createState() => _PasscodeScreenState();
 }
 
 class _PasscodeScreenState extends State<PasscodeScreen> {
-  String _passcode = '';
+  final String _passcode = '';
 
   @override
   Widget build(BuildContext context) {
