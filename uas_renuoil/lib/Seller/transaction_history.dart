@@ -16,6 +16,7 @@ import 'package:flutter_application_1/Seller/QRseller.dart';
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 import 'package:flutter_application_1/Seller/seller.dart';
 
+
 class Transaction {
   final String type;
   final double amount;

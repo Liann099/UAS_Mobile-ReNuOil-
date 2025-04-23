@@ -106,7 +106,7 @@ class MyApp extends StatelessWidget {
 
         //Buyer
         '/buyer-default': (context) => const BuyerHomePage(),
-        '/buyer-balance': (context) => const BalanceBuyerPage(),
+        '/buyer-balance': (context) => const RnoPayApps(),
 
         //Seller
         '/seller': (context) => const SellerPage(),

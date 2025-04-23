@@ -9,12 +9,12 @@ import '../../home.dart';
 import 'dart:async';
 import 'package:flutter_application_1/balance.dart';
 import 'package:flutter_application_1/settings/profile.dart';
-import 'package:flutter_application_1/Seller/sellerwithdraw.dart';
-import 'package:flutter_application_1/Seller/pickup.dart';
-import 'package:flutter_application_1/Seller/QRseller.dart';
-import 'package:flutter_application_1/Seller/ranking_list_page.dart';
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 import 'package:flutter_application_1/Homepage/Buyer/detail.dart';
+import 'package:flutter_application_1/Homepage/Buyer/whitdraw.dart';
+import 'package:flutter_application_1/Homepage/Buyer/balancebuy.dart';
+import 'package:flutter_application_1/Homepage/Buyer/historybuyer.dart';
+
 
 import 'package:flutter_application_1/Seller/transaction_history.dart';
 import 'package:flutter_application_1/generated/assets.dart';
@@ -357,7 +357,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => const RnoPayApp()),
+                                      builder: (context) => const RnoPayApps()),
                                 );
                               },
                             ),
@@ -369,7 +369,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          const SellerWithdrawPage()),
+                                          const SellerWithdrawsPage()),
                                 );
                               },
                             ),
@@ -381,7 +381,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          const TransactionHistoryScreen()),
+                                          const BuyerHistoryScreen()),
                                 );
                               },
                             ),
@@ -519,7 +519,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                                       const Text(
                                         "Promotion",
                                         style: TextStyle(
-                                            fontSize: 10,
+                                            fontSize: 12,
                                             fontWeight: FontWeight.w500),
                                       ),
                                       const Spacer(),

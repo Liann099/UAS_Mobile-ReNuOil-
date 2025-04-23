@@ -9,6 +9,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
+import json
 
 from .models import (
     CustomUser, UserProfile, Transaction, OilSale, Promotion,
@@ -398,6 +399,10 @@ class CheckoutSingleProductView(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
+        passcode = data.get('passcode')
+        if passcode and passcode != request.user.passcode:
+            return Response({"error": "Passcode salah"}, status=status.HTTP_400_BAD_REQUEST)
+        
         try:
             product = Product.objects.get(id=data['product_id'])
         except Product.DoesNotExist:
@@ -470,6 +475,28 @@ class CheckoutSingleProductView(APIView):
             quantity=data['quantity'],
             price_per_unit=product.price_per_liter,
         )
+        CheckoutHistory.objects.create(
+            user=request.user,
+            items=json.dumps([{
+                "product": product.name,
+                "photo_url": product.picture.url if product.picture else None,
+                "quantity": data['quantity'],
+                "price_per_unit": str(product.price_per_liter),
+                "total": str(product_total)
+            }]),
+            product_total_price=product_total,
+            delivery_fee=delivery_fee,
+            service_fee=service_fee,
+            grand_total=grand_total,
+            payment_method=data['payment_method'],
+            voucher_code=promo.code if promo else None
+        )
+
+        TransactionHistory.objects.create(
+            user=request.user,
+            transaction_type='sale',
+            amount=grand_total
+        )
 
         # Mark voucher as used if applicable
         if promo:
@@ -504,6 +531,10 @@ class CheckoutCreateView(generics.CreateAPIView):
 
         if not cart_items.exists():
             raise ValidationError("Cart kosong!")
+        
+        passcode = self.request.data.get("passcode")
+        if passcode and passcode != user.passcode:  # Ganti dengan logika passcode yang sesuai
+            raise ValidationError("Passcode tidak valid.")
 
         # Hitung total harga produk dari cart
         product_total_price = sum([Decimal(item.total_price()) for item in cart_items])
@@ -577,6 +608,7 @@ class CheckoutCreateView(generics.CreateAPIView):
 
         # Simpan item cart ke checkout dan kosongkan cart
         checkout.items.set(cart_items)
+        checkout.finalize_checkout()
         cart_items.delete()
 
         # Opsional: Hapus voucher
@@ -599,16 +631,25 @@ class CheckoutCreateView(generics.CreateAPIView):
             }, status=status.HTTP_201_CREATED)
 
 
+from rest_framework import generics, permissions
+from django.utils import timezone
+from datetime import timedelta
+from .models import Tracker
+from .serializers import TrackerSerializer
 
 class TrackerListView(generics.ListCreateAPIView):
     serializer_class = TrackerSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Tracker.objects.filter(user=self.request.user)
+        # Waktu sekarang dikurangi 2 jam
+        two_hours_ago = timezone.now() - timedelta(hours=2)
+        # Hanya tampilkan tracker yang dibuat kurang dari 2 jam lalu
+        return Tracker.objects.filter(user=self.request.user, created_at__gte=two_hours_ago)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
 
 class BankAccountList(generics.ListCreateAPIView):
     serializer_class = BankAccountSerializer

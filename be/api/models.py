@@ -414,6 +414,8 @@ SHIPPING_CHOICES = [
     ('grab', 'Grab'),
 ]
 
+from datetime import date
+
 class Checkout(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     items = models.ManyToManyField(Cart)  # untuk melacak item yang dibeli
@@ -435,24 +437,26 @@ class Checkout(models.Model):
     timestamp = models.DateTimeField(default=now, editable=False)  # ✅ Default is `now()`
 
     def save(self, *args, **kwargs):
-        try:
-            # Simpan transaksi
-            if not self.delivery_fee or self.delivery_fee == 0:
-                self.delivery_fee = Decimal("11000") if self.shipping_method == "grab" else Decimal("10000")
-            super().save(*args, **kwargs)
+        if not self.delivery_fee or self.delivery_fee == 0:
+            self.delivery_fee = Decimal("11000") if self.shipping_method == "grab" else Decimal("10000")
+        super().save(*args, **kwargs)
 
-            # Ambil item-item cart terkait
+    def finalize_checkout(self):
+        from .models import CheckoutHistory, TransactionHistory
+        try:
             cart_items = self.items.all()
             items_data = []
+
             for item in cart_items:
+                product = item.product
                 items_data.append({
-                    "product": item.product.name if item.product else "Unknown",
+                    "product": product.name if product else "Unknown",
+                    "photo_url": product.picture.url if product and product.picture else None,
                     "quantity": item.quantity,
-                    "price_per_unit": str(item.product.price if item.product else 0),
+                    "price_per_unit": str(product.price if product else 0),
                     "total": str(item.total_price() if hasattr(item, 'total_price') else 0)
                 })
 
-            # Simpan ke CheckoutHistory
             CheckoutHistory.objects.create(
                 user=self.user,
                 items=json.dumps(items_data),
@@ -464,11 +468,10 @@ class Checkout(models.Model):
                 voucher_code=self.voucher.code if self.voucher else None
             )
 
-            # (Optional) Log transaksi (kalau kamu ingin tetap log penjualan minyak)
             TransactionHistory.objects.create(
                 user=self.user,
                 transaction_type='sale',
-                amount=self.grand_total  # atau self.total_price kalau kamu punya itu
+                amount=self.grand_total
             )
 
             logger.debug(f"Checkout berhasil - User: {self.user.email}, Total: {self.grand_total}")
@@ -476,6 +479,7 @@ class Checkout(models.Model):
         except Exception as e:
             logger.error(f"Gagal menyimpan checkout: {str(e)}")
             raise ValueError(f"Checkout Error: {str(e)}")
+
 
 class OrderItem(models.Model):
     checkout = models.ForeignKey(Checkout, on_delete=models.CASCADE, related_name='order_items')
@@ -510,10 +514,15 @@ class CheckoutHistory(models.Model):
     def __str__(self):
         return f"History {self.user.email} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
     
-    
+from django.utils import timezone
+
 class Tracker(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     product_name = models.CharField(max_length=100)
-    from_location = models.CharField(max_length=255)
-    tanggal_from = models.DateField()
-    tanggal_to = models.DateField()
+    from_location = models.CharField(max_length=255, null=True, blank=True)
+    tanggal_from = models.DateField(null=True, blank=True)
+    tanggal_to = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)  # Set a default value
+
+    def __str__(self):
+        return f"{self.product_name} - {self.user.email}"

@@ -6,7 +6,67 @@ import 'package:http/http.dart' as http;
 import '../../constants.dart';
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 import 'package:flutter_application_1/Homepage/Buyer/detail.dart';
+import 'package:flutter_application_1/Homepage/Buyer/enterpin.dart';
 
+class _PaymentOption extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final Color color;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _PaymentOption({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    required this.color,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: color),
+      title: Text(title),
+      subtitle: subtitle != null ? Text(subtitle!) : null,
+      tileColor: isSelected ? Colors.grey[200] : null,
+      onTap: onTap,
+    );
+  }
+}
+
+class BankAccount {
+  final int id;
+  final String bankName;
+  final String accountHolder;
+  final String accountNumber;
+  final String? branchCode;
+
+  BankAccount({
+    required this.id,
+    required this.bankName,
+    required this.accountHolder,
+    required this.accountNumber,
+    this.branchCode,
+  });
+
+  factory BankAccount.fromJson(Map<String, dynamic> json) {
+    return BankAccount(
+      id: json['id'],
+      bankName:
+          json['bank_name'], // Make sure these keys match your API response
+      accountHolder: json['account_holder'],
+      accountNumber: json['account_number'],
+      branchCode: json['branch_code'],
+    );
+  }
+  @override
+  String toString() {
+    return 'BankAccount{id: $id, bankName: $bankName, accountNumber: $accountNumber}';
+  }
+}
 
 class CheckoutPage extends StatefulWidget {
   final Product product;
@@ -32,7 +92,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
   final TextEditingController _voucherController = TextEditingController();
   bool isLoading = false;
   bool _isLoading = true;
-  
+  String? _enteredPasscode;
+
+  List<BankAccount> _bankAccounts = [];
+  bool _isLoadingBanks = true;
+
   Map<String, String> personalInfo = {
     'Legal name': '',
     'Preferred first name': '',
@@ -47,6 +111,22 @@ class _CheckoutPageState extends State<CheckoutPage> {
     super.initState();
     quantity = widget.initialQuantity;
     fetchUserData();
+    _fetchBankAccounts();
+  }
+
+  Color _getBankColor(String bankName) {
+    switch (bankName.toLowerCase()) {
+      case 'bca':
+        return const Color(0xFFAFD2FF);
+      case 'ocbc':
+        return const Color(0xFFFFACAC);
+      case 'mandiri':
+        return const Color(0xFF00A651);
+      case 'bni':
+        return const Color(0xFFF58220);
+      default:
+        return Colors.grey[300]!;
+    }
   }
 
   Future<void> fetchUserData() async {
@@ -93,6 +173,160 @@ class _CheckoutPageState extends State<CheckoutPage> {
     }
   }
 
+  Future<void> _fetchBankAccounts() async {
+    try {
+      final token = await storage.read(key: 'access_token');
+      if (token == null) throw Exception('No access token found');
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/bank-accounts/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          _bankAccounts =
+              data.map((json) => BankAccount.fromJson(json)).toList();
+          _isLoadingBanks = false;
+        });
+      } else {
+        throw Exception('Failed to load bank accounts');
+      }
+    } catch (e) {
+      print('Error fetching bank accounts: $e');
+      setState(() => _isLoadingBanks = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading bank accounts: ${e.toString()}')),
+      );
+    }
+  }
+
+  void _showPaymentSelectionPopup() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Select Payment Method',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // WALLET option
+                  _PaymentOption(
+                    icon: Icons.account_balance_wallet,
+                    title: 'WALLET',
+                    color: Colors.yellow[700]!,
+                    isSelected: paymentMethod == 'WALLET',
+                    onTap: () => setState(() => paymentMethod = 'WALLET'),
+                  ),
+
+                  // Bank options
+                  _isLoadingBanks
+                      ? const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: CircularProgressIndicator(),
+                        )
+                      : _bankAccounts.isEmpty
+                          ? const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              child: Text('No bank accounts found'),
+                            )
+                          : Column(
+                              children: _bankAccounts
+                                  .map((bank) => _PaymentOption(
+                                        icon: Icons.account_balance,
+                                        title: bank.bankName,
+                                       subtitle: '•••• ${bank.accountNumber.padLeft(4, '*').substring(bank.accountNumber.length.clamp(0, 4))}',
+
+                                        color: _getBankColor(bank.bankName),
+                                        isSelected:
+                                            paymentMethod == bank.bankName,
+                                        onTap: () => setState(() =>
+                                            paymentMethod = bank.bankName),
+                                      ))
+                                  .toList(),
+                            ),
+
+                  const SizedBox(height: 20),
+
+                  // Proceed to Checkout Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF8D148),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      onPressed: isLoading
+                          ? null
+                          : () {
+                              Navigator.pop(context); // Close payment selection
+                              _showPinEntryScreen(); // Show PIN entry screen
+                            },
+                      child: isLoading
+                          ? const CircularProgressIndicator()
+                          : const Text(
+                              'Place Order',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showPinEntryScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PasscodeScreen(
+          onPinVerified: (pin) {
+            // PIN verified, proceed with checkout
+            setState(() => _enteredPasscode = pin);
+            _processCheckout();
+          },
+          onCancel: () {
+            // User cancelled PIN entry
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Order cancelled')),
+            );
+          },
+        ),
+        fullscreenDialog: true,
+      ),
+    );
+  }
+
   Future<void> _processCheckout() async {
     setState(() => isLoading = true);
     final token = await storage.read(key: 'access_token');
@@ -104,6 +338,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         'quantity': quantity,
         'payment_method': paymentMethod,
         'shipping_method': shippingMethod,
+        'passcode': _enteredPasscode, // This will be set from the PIN screen
       };
 
       // Only add voucher_code if not empty
@@ -129,7 +364,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
       if (response.statusCode == 201) {
         final responseData = json.decode(response.body);
         final double grandTotal = responseData['grand_total'];
-        final int voucherDiscountPercent = responseData['voucher_discount_percent'] ?? 0;
+        final int voucherDiscountPercent =
+            responseData['voucher_discount_percent'] ?? 0;
 
         Navigator.pushReplacement(
           context,
@@ -233,7 +469,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  onPressed: isLoading ? null : _processCheckout,
+                  onPressed: isLoading ? null : _showPaymentSelectionPopup,
                   child: isLoading
                       ? const CircularProgressIndicator()
                       : const Text(
@@ -452,7 +688,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
       ),
     );
   }
-Widget _buildShippingMethods() {
+
+  Widget _buildShippingMethods() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -462,7 +699,7 @@ Widget _buildShippingMethods() {
             'Shipping methods',
             style: TextStyle(
               fontSize: 14,
-              fontWeight: FontWeight.normal,
+              fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
           ),

@@ -247,9 +247,9 @@ class CheckoutItemInputSerializer(serializers.Serializer):
     quantity_liter = serializers.DecimalField(max_digits=10, decimal_places=2)
 
 
+
 class TrackerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tracker
         fields = '__all__'
         read_only_fields = ['user']
-
