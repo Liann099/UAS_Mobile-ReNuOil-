@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/generated/assets.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 class RankingListPage extends StatelessWidget {
   const RankingListPage({super.key});
@@ -134,7 +135,7 @@ class RankingListPage extends StatelessWidget {
                       amount: "199L",
                       bonus: "Rp1.990.000",
                       imageUrl: "assets/images/user1.png",
-                      cardColor: const Color(0xFFFFF3C0),
+                      cardColor: const Color(0xFFFFDC3E),
                       badgeAsset: Assets.imagesWin1,
                       hasUpArrow: false,
                       hasDownArrow: false,
@@ -276,223 +277,216 @@ class RankingListPage extends StatelessWidget {
     bool hasUpArrow = false,
     bool hasDownArrow = false,
   }) {
+    // Define rank number size based on position
+    final double rankFontSize = rank <= 3 ? 55.0 : 40.0;
+    final fontWeight = FontWeight.bold;
+
+    // Define different card sizes based on rank
+    final double verticalPadding = rank <= 3 ? 12.0 : 8.0;
+    final double profileSize = rank <= 3 ? 60.0 : 50.0;
+    final double nameFontSize = rank <= 3 ? 18.0 : 16.0;
+    final double detailsFontSize = rank <= 3 ? 12.0 : 11.0;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Stack(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Card with gradient background
-          Container(
-            decoration: BoxDecoration(
-              gradient: rank <= 3
-                  ? rank == 1
-                  ? const LinearGradient(
-                colors: [Color(0xFFFFF3C0), Color(0xFFFFEB99)],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              )
-                  : rank == 2
-                  ? const LinearGradient(
-                colors: [Color(0xFFE0E0E0), Color(0xFFD1D1D1)],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              )
-                  : const LinearGradient(
-                colors: [Color(0xFFFFDBC2), Color(0xFFFFCBA8)],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              )
-                  : null,
-              color: rank > 3 ? cardColor : null,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                // Rank number
-                SizedBox(
-                  width: 40,
-                  child: Text(
-                    "$rank",
-                    style: const TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-
-                // User image with crown
-                SizedBox(
-                  width: 70,
-                  height: 100,
-                  child: Stack(
-                    children: [
-                      // Profile Image
-                      SizedBox(
-                        height: 100,
-                        child: CircleAvatar(
-                          radius: 30,
-                          backgroundImage: AssetImage(imageUrl),
-                          onBackgroundImageError: (exception, stackTrace) {},
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(30),
-                            child: Container(
-                              color: Colors.grey[300],
-                              width: 60,
-                              height: 60,
-                              child: const Icon(Icons.person, size: 30, color: Colors.white),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Crown or badge image
-                      if (badgeAsset != null)
-                        Positioned(
-                          top: -5,
-                          left: 0,
-                          right: 0,
-                          child: Image.asset(
-                            badgeAsset,
-                            width: 30,
-                            height: 30,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const SizedBox();
-                            },
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(width: 12),
-
-                // User details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Text(
-                            "Tier",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            ": $tier",
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          const Text(
-                            "Collected This Month",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            ": $amount",
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          const Text(
-                            "Last Month Bonus",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            ": $bonus",
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          // Rank number positioned outside the card
+          SizedBox(
+            width: 40,
+            child: Text(
+              "$rank",
+              style: TextStyle(
+                fontSize: rankFontSize,
+                fontWeight: fontWeight,
+              ),
             ),
           ),
 
-          // Up arrow
-          if (hasUpArrow)
-            Positioned(
-              right: 16,
-              top: 0,
-              bottom: 0,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: Colors.green,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.arrow_upward,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ),
+          const SizedBox(width: 8),
 
-          // Down arrow
-          if (hasDownArrow)
-            Positioned(
-              right: 16,
-              top: 0,
-              bottom: 0,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
+          // Card with gradient background
+          Expanded(
+            child: Stack(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: rank <= 4
+                        ? rank == 1
+                        ? const LinearGradient(
+                      colors: [Color(0xFFFFFFFF), Color(0XFFFFDC3E)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    )
+                        : rank == 2
+                        ? const LinearGradient(
+                      colors: [Color(0xFFFFFFFF), Color(0xFFB5B5B5)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    )
+                        : const LinearGradient(
+                      colors: [Color(0xFFFFFFFF), Color(0xFFF07D35)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    )
+                        : null,
+                    color: rank > 3 ? cardColor : null,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.5),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  child: const Icon(
-                    Icons.arrow_downward,
-                    color: Colors.white,
-                    size: 20,
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: verticalPadding),
+                  margin: rank>3? const EdgeInsets.only(right: 24):null,
+                  child: Row(
+                    children: [
+                      // User image with crown
+                      SizedBox(
+                        width: 70,
+                        height: rank <= 3 ? 70 : 60,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          clipBehavior: Clip.none,
+                          children: [
+                            // Profile Image
+                            CircleAvatar(
+                              radius: rank <= 3 ? 30 : 25,
+                              backgroundImage: AssetImage(imageUrl),
+                              onBackgroundImageError: (exception, stackTrace) {},
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(rank <= 3 ? 30 : 25),
+                                child: Container(
+                                  color: Colors.grey[300],
+                                  width: rank <= 3 ? 60 : 50,
+                                  height: rank <= 3 ? 60 : 50,
+                                  child: Icon(Icons.person, size: rank <= 3 ? 30 : 25, color: Colors.white),
+                                ),
+                              ),
+                            ),
+
+                            // Crown or badge image
+                            if (badgeAsset != null)
+                              Positioned(
+                                top: -15,
+                                child: Image.asset(
+                                  badgeAsset,
+                                  width: 30,
+                                  height: 30,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const SizedBox();
+                                  },
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      // User details
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              style: TextStyle(
+                                fontSize: nameFontSize,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: rank <= 3 ? 4 : 2),
+                            Row(
+                              children: [
+                                Text(
+                                  "Tier",
+                                  style: TextStyle(
+                                    fontSize: detailsFontSize,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  ": $tier",
+                                  style: TextStyle(
+                                    fontSize: detailsFontSize,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: rank <= 3 ? 2 : 1),
+                            Row(
+                              children: [
+                                Text(
+                                  "Collected This Month",
+                                  style: TextStyle(
+                                    fontSize: detailsFontSize,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  ": $amount",
+                                  style: TextStyle(
+                                    fontSize: detailsFontSize,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: rank <= 3 ? 2 : 1),
+                            Row(
+                              children: [
+                                Text(
+                                  "Last Month Bonus",
+                                  style: TextStyle(
+                                    fontSize: detailsFontSize,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  ": $bonus",
+                                  style: TextStyle(
+                                    fontSize: detailsFontSize,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
+
+                // Up arrow
+                if (hasUpArrow)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child:Image.asset(Assets.imagesUp)
+                  ),
+                ),
+
+                // Down arrow
+                if (hasDownArrow)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(child: Image.asset(Assets.imagesDown)),
+                  ),
+              ],
             ),
+          ),
         ],
       ),
     );

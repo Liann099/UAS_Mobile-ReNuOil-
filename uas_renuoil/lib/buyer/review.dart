@@ -30,16 +30,21 @@ class ReviewPage extends StatefulWidget {
 
 class _ReviewPageState extends State<ReviewPage> {
   double productRating = 0;
-  double sellerRating = 0;
-  double deliveryRating = 0;
-  
+  final TextEditingController commentController = TextEditingController();
+
+  @override
+  void dispose() {
+    commentController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     // Mendapatkan lebar layar
     final screenWidth = MediaQuery.of(context).size.width;
     // Menyesuaikan padding berdasarkan lebar layar
     final sidePadding = screenWidth < 350 ? 8.0 : 16.0;
-    
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
@@ -53,7 +58,7 @@ class _ReviewPageState extends State<ReviewPage> {
           'Review',
           style: TextStyle(
             color: Colors.black,
-            fontSize: 22, // Ukuran font sedikit dikurangi
+            fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -89,7 +94,7 @@ class _ReviewPageState extends State<ReviewPage> {
                           const Icon(
                             Icons.emoji_events,
                             color: Color(0xFFFFD700),
-                            size: 24, // Ukuran ikon sedikit dikurangi
+                            size: 24,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -110,7 +115,7 @@ class _ReviewPageState extends State<ReviewPage> {
                         builder: (context, constraints) {
                           // Menggunakan LayoutBuilder untuk menyesuaikan layout
                           final isNarrow = constraints.maxWidth < 260;
-                          
+
                           if (isNarrow) {
                             // Layout vertikal untuk layar yang sangat sempit
                             return Column(
@@ -253,9 +258,9 @@ class _ReviewPageState extends State<ReviewPage> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Product Score
               Container(
                 decoration: BoxDecoration(
@@ -286,7 +291,7 @@ class _ReviewPageState extends State<ReviewPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: List.generate(
                           5,
-                          (index) => GestureDetector(
+                              (index) => GestureDetector(
                             onTap: () {
                               setState(() {
                                 productRating = index + 1.0;
@@ -294,7 +299,7 @@ class _ReviewPageState extends State<ReviewPage> {
                             },
                             child: Padding(
                               padding: EdgeInsets.symmetric(
-                                horizontal: screenWidth < 350 ? 2.0 : 4.0
+                                  horizontal: screenWidth < 350 ? 2.0 : 4.0
                               ),
                               child: Icon(
                                 index < productRating ? Icons.star : Icons.star_border_outlined,
@@ -309,10 +314,10 @@ class _ReviewPageState extends State<ReviewPage> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
-              // Service Ratings
+
+              // Comment Box (replacing Service Ratings)
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -328,91 +333,45 @@ class _ReviewPageState extends State<ReviewPage> {
                 child: Padding(
                   padding: EdgeInsets.all(screenWidth < 350 ? 12.0 : 16.0),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Seller Service
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Seller Service',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Row(
-                            children: List.generate(
-                              5,
-                              (index) => GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    sellerRating = index + 1.0;
-                                  });
-                                },
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: screenWidth < 350 ? 0.5 : 1.0
-                                  ),
-                                  child: Icon(
-                                    index < sellerRating ? Icons.star : Icons.star_border_outlined,
-                                    color: const Color(0xFFFFD700),
-                                    size: screenWidth < 350 ? 20 : 24,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                      const Text(
+                        'Your Review',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      const SizedBox(height: 16),
-                      // Delivery Service
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Delivery Service',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
+                      const SizedBox(height: 12),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.grey[300]!),
+                        ),
+                        child: TextField(
+                          controller: commentController,
+                          maxLines: 5,
+                          decoration: const InputDecoration(
+                            hintText: 'Write your review here...',
+                            contentPadding: EdgeInsets.all(12),
+                            border: InputBorder.none,
                           ),
-                          Row(
-                            children: List.generate(
-                              5,
-                              (index) => GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    deliveryRating = index + 1.0;
-                                  });
-                                },
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: screenWidth < 350 ? 0.5 : 1.0
-                                  ),
-                                  child: Icon(
-                                    index < deliveryRating ? Icons.star : Icons.star_border_outlined,
-                                    color: const Color(0xFFFFD700),
-                                    size: screenWidth < 350 ? 20 : 24,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
-              
-              const SizedBox(height: 100), // Mengurangi ruang kosong
-              
+
+              const SizedBox(height: 100),
+
               // Submit Button
               Container(
                 width: double.infinity,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8D148), // Yellow color as shown in the design
+                  color: const Color(0xFFF8D148),
                   borderRadius: BorderRadius.circular(25),
                 ),
                 child: TextButton(
@@ -421,7 +380,7 @@ class _ReviewPageState extends State<ReviewPage> {
                     'Submit',
                     style: TextStyle(
                       color: Colors.black,
-                      fontSize: 16, // Ukuran font sedikit dikurangi
+                      fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

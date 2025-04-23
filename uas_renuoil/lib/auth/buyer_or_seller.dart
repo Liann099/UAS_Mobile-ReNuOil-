@@ -12,7 +12,7 @@ class BuyerOrSellerScreen extends StatelessWidget {
         decoration: const BoxDecoration(
           image: DecorationImage(
             image: AssetImage(Assets.imagesGroup306), // Use the same wave background image
-            fit: BoxFit.cover,
+              fit: BoxFit.fill
           ),
           color: Color(0xFFFFB35A), // Orange background color
         ),
