@@ -1,36 +1,118 @@
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Product Review',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        fontFamily: 'Roboto',
-      ),
-      home: const ReviewPage(),
-    );
-  }
-}
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_application_1/constants.dart';
 
 class ReviewPage extends StatefulWidget {
   const ReviewPage({Key? key}) : super(key: key);
 
   @override
-  State<ReviewPage> createState() => _ReviewPageState();
+  State<ReviewPage> createState() => _ProductReviewPageState();
 }
 
-class _ReviewPageState extends State<ReviewPage> {
+class _ProductReviewPageState extends State<ReviewPage> {
   double productRating = 0;
   final TextEditingController commentController = TextEditingController();
+  bool isLoading = false;
+  late int productId;
+  String? productName;
+  String? productOrigin;
+  double? productPrice;
+  String? productImageUrl;
+  String amount = "1 Liter";
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Extract the arguments from the current route settings
+    final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+
+    // Get the productId from the arguments
+    productId = args?['productId'] ?? 1;
+
+    if (productId == 0) {
+      // Handle missing productId
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error: Product ID is required')),
+      );
+      Future.delayed(Duration.zero, () {
+        Navigator.pop(context);
+      });
+    } else {
+      // Set up default product details or load them from API if needed
+      productName = args?['productName'] ?? "Coconut Oil - Renewable";
+      productOrigin = args?['productOrigin'] ?? "North Jakarta, Indonesia";
+      productPrice = args?['productPrice'] ?? 54699.0;
+      productImageUrl = args?['productImageUrl'];
+    }
+  }
+
+  Future<void> submitReview() async {
+    if (productRating == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please rate the product')),
+      );
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final storage = FlutterSecureStorage();
+      final token = await storage.read(key: 'access_token') ?? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ1Mzg3MDE5LCJpYXQiOjE3NDUzNzk4MTksImp0aSI6IjUxMDFiNWQ3OTdjMDRhNDVhZWVmNWE5NzQ3YWM1YTI3IiwidXNlcl9pZCI6MTF9.nq8pzIRP5QoelzOtWxnVd-KZZry4oXpqr7eDnJxt53w";
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/products/review/'),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          // Add authorization header if required
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'product': productId,
+          'star': productRating.toInt(),
+          'description': commentController.text.trim(),
+        }),
+      );
+
+      setState(() {
+        isLoading = false;
+      });
+
+      if (response.statusCode == 201) {
+        // Review submitted successfully
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Review submitted successfully')),
+        );
+
+        // Navigate back after successful submission
+        Navigator.pop(context);
+      } else {
+        // Handle errors
+        final errorData = jsonDecode(response.body);
+        String errorMessage = 'Failed to submit review';
+
+        if (errorData is Map && errorData.containsKey('detail')) {
+          errorMessage = errorData['detail'];
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage)),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -40,9 +122,8 @@ class _ReviewPageState extends State<ReviewPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Mendapatkan lebar layar
+    // Get screen width for responsive layout
     final screenWidth = MediaQuery.of(context).size.width;
-    // Menyesuaikan padding berdasarkan lebar layar
     final sidePadding = screenWidth < 350 ? 8.0 : 16.0;
 
     return Scaffold(
@@ -52,7 +133,7 @@ class _ReviewPageState extends State<ReviewPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.chevron_left, color: Colors.black),
-          onPressed: () {},
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Review',
@@ -60,6 +141,7 @@ class _ReviewPageState extends State<ReviewPage> {
             color: Colors.black,
             fontSize: 22,
             fontWeight: FontWeight.bold,
+            fontFamily: 'Poppins',
           ),
         ),
         centerTitle: true,
@@ -103,6 +185,7 @@ class _ReviewPageState extends State<ReviewPage> {
                               style: TextStyle(
                                 fontSize: screenWidth < 350 ? 16 : 18,
                                 fontWeight: FontWeight.bold,
+                                fontFamily: 'Poppins',
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -113,75 +196,82 @@ class _ReviewPageState extends State<ReviewPage> {
                       // Product info with image
                       LayoutBuilder(
                         builder: (context, constraints) {
-                          // Menggunakan LayoutBuilder untuk menyesuaikan layout
+                          // Adjust layout based on constraints
                           final isNarrow = constraints.maxWidth < 260;
 
                           if (isNarrow) {
-                            // Layout vertikal untuk layar yang sangat sempit
+                            // Vertical layout for narrow screens
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Image di tengah
+                                // Image centered
                                 Center(
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
                                     child: Container(
                                       width: 80,
                                       height: 80,
-                                      child: Image.asset(
-                                        'assets/images/cookingoil.png',
+                                      color: Colors.grey[300],
+                                      child: productImageUrl != null
+                                          ? Image.network(
+                                        productImageUrl!,
                                         fit: BoxFit.cover,
                                         errorBuilder: (context, error, stackTrace) {
-                                          return Container(
-                                            color: Colors.grey[300],
-                                            child: Center(
-                                              child: Icon(
-                                                Icons.image,
-                                                color: Colors.grey[500],
-                                              ),
-                                            ),
+                                          return Icon(
+                                            Icons.image,
+                                            color: Colors.grey[500],
                                           );
                                         },
+                                      )
+                                          : Icon(
+                                        Icons.image,
+                                        color: Colors.grey[500],
                                       ),
                                     ),
                                   ),
                                 ),
                                 const SizedBox(height: 12),
                                 // Product details
-                                const Text(
-                                  'Coconut Oil - Renewable',
-                                  style: TextStyle(
+                                Text(
+                                  productName ?? 'Product Name',
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
+                                    fontFamily: 'Poppins',
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'North Jakarta, Indonesia',
+                                  productOrigin ?? 'Origin',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey[600],
+                                    fontFamily: 'Poppins',
                                   ),
                                 ),
                                 const SizedBox(height: 6),
-                                const Text(
-                                  'Amount : 1 Liter',
-                                  style: TextStyle(
+                                Text(
+                                  'Amount: $amount',
+                                  style: const TextStyle(
                                     fontSize: 12,
+                                    fontFamily: 'Poppins',
                                   ),
                                 ),
                                 const SizedBox(height: 4),
-                                const Text(
-                                  'Rp54.699',
-                                  style: TextStyle(
+                                Text(
+                                  productPrice != null
+                                      ? 'Rp${productPrice!.toInt().toString()}'
+                                      : 'Price not available',
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
+                                    fontFamily: 'Poppins',
                                   ),
                                 ),
                               ],
                             );
                           } else {
-                            // Layout horizontal untuk layar yang lebih lebar
+                            // Horizontal layout for wider screens
                             return Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -191,20 +281,21 @@ class _ReviewPageState extends State<ReviewPage> {
                                   child: Container(
                                     width: screenWidth < 350 ? 70 : 84,
                                     height: screenWidth < 350 ? 70 : 84,
-                                    child: Image.asset(
-                                      'assets/images/cookingoil.png',
+                                    color: Colors.grey[300],
+                                    child: productImageUrl != null
+                                        ? Image.network(
+                                      productImageUrl!,
                                       fit: BoxFit.cover,
                                       errorBuilder: (context, error, stackTrace) {
-                                        return Container(
-                                          color: Colors.grey[300],
-                                          child: Center(
-                                            child: Icon(
-                                              Icons.image,
-                                              color: Colors.grey[500],
-                                            ),
-                                          ),
+                                        return Icon(
+                                          Icons.image,
+                                          color: Colors.grey[500],
                                         );
                                       },
+                                    )
+                                        : Icon(
+                                      Icons.image,
+                                      color: Colors.grey[500],
                                     ),
                                   ),
                                 ),
@@ -215,35 +306,41 @@ class _ReviewPageState extends State<ReviewPage> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'Coconut Oil - Renewable',
+                                        productName ?? 'Product Name',
                                         style: TextStyle(
                                           fontSize: screenWidth < 350 ? 14 : 16,
                                           fontWeight: FontWeight.bold,
+                                          fontFamily: 'Poppins',
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        'North Jakarta, Indonesia',
+                                        productOrigin ?? 'Origin',
                                         style: TextStyle(
                                           fontSize: screenWidth < 350 ? 12 : 14,
                                           color: Colors.grey[600],
+                                          fontFamily: 'Poppins',
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                       const SizedBox(height: 6),
                                       Text(
-                                        'Amount : 1 Liter',
+                                        'Amount: $amount',
                                         style: TextStyle(
                                           fontSize: screenWidth < 350 ? 12 : 14,
+                                          fontFamily: 'Poppins',
                                         ),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        'Rp54.699',
+                                        productPrice != null
+                                            ? 'Rp${productPrice!.toInt().toString()}'
+                                            : 'Price not available',
                                         style: TextStyle(
                                           fontSize: screenWidth < 350 ? 14 : 16,
                                           fontWeight: FontWeight.bold,
+                                          fontFamily: 'Poppins',
                                         ),
                                       ),
                                     ],
@@ -284,6 +381,7 @@ class _ReviewPageState extends State<ReviewPage> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          fontFamily: 'Poppins',
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -317,7 +415,7 @@ class _ReviewPageState extends State<ReviewPage> {
 
               const SizedBox(height: 16),
 
-              // Comment Box (replacing Service Ratings)
+              // Comment Box
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -340,6 +438,7 @@ class _ReviewPageState extends State<ReviewPage> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          fontFamily: 'Poppins',
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -356,7 +455,9 @@ class _ReviewPageState extends State<ReviewPage> {
                             hintText: 'Write your review here...',
                             contentPadding: EdgeInsets.all(12),
                             border: InputBorder.none,
+                            hintStyle: TextStyle(fontFamily: 'Poppins'),
                           ),
+                          style: const TextStyle(fontFamily: 'Poppins'),
                         ),
                       ),
                     ],
@@ -364,24 +465,34 @@ class _ReviewPageState extends State<ReviewPage> {
                 ),
               ),
 
-              const SizedBox(height: 100),
+              const SizedBox(height: 40),
 
               // Submit Button
               Container(
                 width: double.infinity,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8D148),
+                  color: const Color(0xFFFBD562),
                   borderRadius: BorderRadius.circular(25),
                 ),
                 child: TextButton(
-                  onPressed: () {},
-                  child: const Text(
+                  onPressed: isLoading ? null : submitReview,
+                  child: isLoading
+                      ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.black,
+                      strokeWidth: 3,
+                    ),
+                  )
+                      : const Text(
                     'Submit',
                     style: TextStyle(
                       color: Colors.black,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
+                      fontFamily: 'Poppins',
                     ),
                   ),
                 ),
