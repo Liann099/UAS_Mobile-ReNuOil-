@@ -7,6 +7,8 @@ import '../../constants.dart';
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 import 'package:flutter_application_1/Homepage/Buyer/detail.dart';
 import 'package:flutter_application_1/Homepage/Buyer/enterpin.dart';
+import 'package:flutter_application_1/Homepage/Buyer/cart.dart';
+import 'package:flutter_application_1/Homepage/Buyer/checkout.dart';
 
 class _PaymentOption extends StatelessWidget {
   final IconData icon;
@@ -37,54 +39,100 @@ class _PaymentOption extends StatelessWidget {
   }
 }
 
-class BankAccount {
-  final int id;
-  final String bankName;
-  final String accountHolder;
-  final String accountNumber;
-  final String? branchCode;
+class CheckoutService {
+  // Method to save items to the cart one by one
+  static Future<void> saveItemsToCart(
+      List<CartItem> products, String token) async {
+    for (var item in products) {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/cart/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'product': item.product.id,
+          'liters': item.quantity,
+        }),
+      );
 
-  BankAccount({
-    required this.id,
-    required this.bankName,
-    required this.accountHolder,
-    required this.accountNumber,
-    this.branchCode,
-  });
-
-  factory BankAccount.fromJson(Map<String, dynamic> json) {
-    return BankAccount(
-      id: json['id'],
-      bankName:
-          json['bank_name'], // Make sure these keys match your API response
-      accountHolder: json['account_holder'],
-      accountNumber: json['account_number'],
-      branchCode: json['branch_code'],
-    );
+      if (response.statusCode != 201) {
+        final responseData = json.decode(response.body);
+        throw Exception(
+            'Failed to save item to cart: ${responseData['detail'] ?? responseData}');
+      }
+    }
   }
-  @override
-  String toString() {
-    return 'BankAccount{id: $id, bankName: $bankName, accountNumber: $accountNumber}';
+
+  // Method to handle checkout
+  static Future<Map<String, dynamic>> checkoutMultiple({
+    required List<CartItem> products,
+    required String paymentMethod,
+    required String shippingMethod,
+    required String passcode,
+    String? voucherCode,
+  }) async {
+    final storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'access_token');
+
+    if (token == null) throw Exception('No access token found');
+
+    try {
+      // First, save items to the cart one by one
+      await saveItemsToCart(products, token);
+      print('ini dah masuk yg try yg checkout service');
+
+      // Prepare request for checkout
+      final request = {
+        'payment_method': paymentMethod,
+        'shipping_method': shippingMethod,
+        'delivery_fee': shippingMethod == 'grab' ? 11000 : 10000,
+        'passcode': passcode,
+        if (voucherCode != null && voucherCode.isNotEmpty)
+          'voucher': voucherCode,
+      };
+
+      print('ini yg final request dari checkout service $request');
+
+      // Checkout request
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/checkout/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(request),
+      );
+
+      // Handle response
+      final responseData = json.decode(response.body);
+      if (response.statusCode == 201) {
+        // Don't clear cart here - wait for confirmation
+        return responseData;
+      }
+
+      throw Exception(responseData['detail'] ?? 'Checkout failed');
+    } catch (e) {
+      print('Checkout error: $e');
+      rethrow;
+    }
   }
 }
 
-class CheckoutPage extends StatefulWidget {
-  final Product product;
-  final int initialQuantity;
+class CheckoutcPage extends StatefulWidget {
+  final List<CartItem> products;
 
-  const CheckoutPage({
+  const CheckoutcPage({
     Key? key,
-    required this.product,
-    this.initialQuantity = 1,
+    required this.products,
   }) : super(key: key);
 
   @override
-  State<CheckoutPage> createState() => _CheckoutPageState();
+  State<CheckoutcPage> createState() => _CheckoutcPageState();
 }
 
-class _CheckoutPageState extends State<CheckoutPage> {
+class _CheckoutcPageState extends State<CheckoutcPage> {
   final storage = const FlutterSecureStorage();
-  late int quantity;
   String? voucherCode;
   String paymentMethod = 'WALLET';
   String shippingMethod = 'gojek';
@@ -110,7 +158,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
   @override
   void initState() {
     super.initState();
-    quantity = widget.initialQuantity;
     fetchUserData();
     _fetchBankAccounts();
   }
@@ -308,18 +355,83 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
+  Widget _buildQuantityController(CartItem item, int index) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        InkWell(
+          onTap: () {
+            setState(() {
+              if (item.quantity > 1) {
+                CartManager.updateQuantity(
+                  item.product.id,
+                  item.quantity - 1,
+                );
+              } else {
+                CartManager.removeFromCart(item.product.id);
+              }
+            });
+          },
+          child: Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.grey),
+            ),
+            child: const Icon(Icons.remove, size: 16),
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE0E0E0),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            '${item.quantity}',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        InkWell(
+          onTap: () {
+            setState(() {
+              CartManager.updateQuantity(
+                item.product.id,
+                item.quantity + 1,
+              );
+            });
+          },
+          child: Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.grey),
+            ),
+            child: const Icon(Icons.add, size: 16),
+          ),
+        ),
+      ],
+    );
+  }
+
   void _showPinEntryScreen() {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => PasscodeScreen(
           onPinVerified: (pin) {
-            // PIN verified, proceed with checkout
             setState(() => _enteredPasscode = pin);
+            print('ini yg dari onPinVerified baru mau masuk ke process');
             _processCheckout();
+            print('ini yg dari onPinVerified kelarrr');
           },
           onCancel: () {
-            // User cancelled PIN entry
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Order cancelled')),
             );
@@ -332,76 +444,50 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   Future<void> _processCheckout() async {
     setState(() => isLoading = true);
-    final token = await storage.read(key: 'access_token');
+    print('ini dah masuk yg _processCheckout');
 
     try {
-      // Prepare request body
-      final Map<String, dynamic> requestBody = {
-        'product_id': widget.product.id.toString(),
-        'quantity': quantity,
-        'payment_method': paymentMethod,
-        'shipping_method': shippingMethod,
-        'passcode': _enteredPasscode, // This will be set from the PIN screen
-      };
-
-      // Only add voucher_code if not empty
-      if (_voucherController.text.isNotEmpty) {
-        requestBody['voucher'] = _voucherController.text;
+      if (_enteredPasscode == null || _enteredPasscode!.isEmpty) {
+        throw Exception('Please enter your passcode');
       }
 
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/1checkout/'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: json.encode(requestBody),
+      print('ini dah masuk yg tryyyy di yg proccess apa');
+
+      final response = await CheckoutService.checkoutMultiple(
+        products: widget.products,
+        paymentMethod: paymentMethod,
+        shippingMethod: shippingMethod,
+        passcode: _enteredPasscode!,
+        voucherCode:
+            _voucherController.text.isNotEmpty ? _voucherController.text : null,
       );
 
-      // Debug prints
-      print('Request Body: ${json.encode(requestBody)}');
-      print('Response Status: ${response.statusCode}');
-      print('Response Body: ${response.body}');
+      // Convert string values to double
+      double productTotalPrice = double.parse(response['product_total_price']);
+      double deliveryFee = double.parse(response['delivery_fee']);
+      double serviceFee = double.parse(response['service_fee']);
+      double grandTotal = double.parse(response['grand_total']);
 
-      if (response.statusCode == 201) {
-        final responseData = json.decode(response.body);
-        final double grandTotal = responseData['grand_total'];
-        final int voucherDiscountPercent =
-            responseData['voucher_discount_percent'] ?? 0;
+      print('ini yg response dari checkour progress apa $response');
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => OrderConfirmationPage(
-              grandTotal: grandTotal,
-              voucherDiscountPercent: voucherDiscountPercent,
-            ),
+      // Clear cart only after successful checkout
+      CartManager.clearCart();
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OrderConfirmationPage(
+            grandTotal: grandTotal,
+            voucherDiscountPercent: response['voucher_discount_percent'] ?? 0,
           ),
-        );
-      } else {
-        dynamic errorData;
-        try {
-          errorData = json.decode(response.body);
-        } catch (e) {
-          errorData = {'detail': 'Invalid server response'};
-        }
-
-        String errorMessage = errorData['detail'] ??
-            errorData['message'] ??
-            'Checkout failed (Status ${response.statusCode})';
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
-        );
-      }
-    } on http.ClientException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Network error: ${e.message}')),
+        ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unexpected error: ${e.toString()}')),
+        SnackBar(
+          content: Text('Checkout failed: ${e.toString()}'),
+          duration: const Duration(seconds: 3),
+        ),
       );
     } finally {
       setState(() => isLoading = false);
@@ -410,7 +496,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   @override
   Widget build(BuildContext context) {
-    final double productTotal = widget.product.pricePerLiter * quantity;
+    final double productTotal = widget.products.fold(
+        0, (sum, item) => sum + (item.product.pricePerLiter * item.quantity));
     final double deliveryFee = shippingMethod == 'grab' ? 11000.0 : 10000.0;
     final double serviceFee = 1200.0;
     final double grandTotal = productTotal + deliveryFee + serviceFee;
@@ -447,7 +534,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 child: Column(
                   children: [
                     _buildAddressSection(),
-                    _buildProductCard(),
+                    _buildProductsList(),
                     _buildVoucherSection(),
                     _buildShippingMethods(),
                     _buildTotalsSection(
@@ -488,6 +575,115 @@ class _CheckoutPageState extends State<CheckoutPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildProductsList() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.emoji_events, color: Color(0xFFFFD700)),
+              const SizedBox(width: 8),
+              Text(
+                "Renuoil_offi",
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Column(
+            children: widget.products.asMap().entries.map((entry) {
+              final index = entry.key;
+              final item = entry.value;
+              return _buildProductItem(item, index);
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductItem(CartItem item, int index) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: item.product.picture != null
+                ? Image.network(
+                    item.product.picture!,
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                  )
+                : Image.asset(
+                    Assets.imagesProductMilk,
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                  ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.product.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  item.product.address,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        'Rp${item.product.pricePerLiter.toStringAsFixed(2)}/liter',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildQuantityController(item, index),
+                          const SizedBox(width: 3),
+                          const Text('Liters'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -542,113 +738,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 ),
               ),
               // const Icon(Icons.keyboard_arrow_down, size: 20),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProductCard() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.emoji_events,
-                color: Color(0xFFFFD700),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                "Renuoil_offi",
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: widget.product.picture != null
-                    ? Image.network(
-                        widget.product.picture!,
-                        width: 80,
-                        height: 80,
-                        fit: BoxFit.cover,
-                      )
-                    : Image.asset(
-                        Assets.imagesProductMilk,
-                        width: 80,
-                        height: 80,
-                        fit: BoxFit.cover,
-                      ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.product.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      widget.product.address,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Rp${widget.product.pricePerLiter.toStringAsFixed(2)}/liter',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.remove),
-                              onPressed: quantity > 1
-                                  ? () => setState(() => quantity--)
-                                  : null,
-                            ),
-                            Text(
-                              '$quantity',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: () => setState(() => quantity++),
-                            ),
-                            const Text('Liters'),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
         ],
@@ -811,56 +900,129 @@ class _CheckoutPageState extends State<CheckoutPage> {
 class OrderConfirmationPage extends StatelessWidget {
   final double grandTotal;
   final int voucherDiscountPercent;
+  final List<Map<String, dynamic>>? items;
 
   const OrderConfirmationPage({
     Key? key,
     required this.grandTotal,
     required this.voucherDiscountPercent,
+    this.items,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 100),
-            const SizedBox(height: 20),
-            const Text(
-              'Order Confirmed!',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.green, size: 100),
+              const SizedBox(height: 20),
+              const Text(
+                'Order Confirmed!',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Grand Total: Rp${grandTotal.toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+              const SizedBox(height: 20),
+
+              // Show ordered items if available
+              if (items != null) ...[
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Ordered Items:',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ...items!
+                          .map((item) => ListTile(
+                                leading: item['photo_url'] != null
+                                    ? Image.network(item['photo_url'],
+                                        width: 50, height: 50)
+                                    : const Icon(Icons.shopping_basket),
+                                title: Text(item['product']),
+                                subtitle: Text('${item['liters']} liters'),
+                                trailing: Text('Rp${item['total']}'),
+                              ))
+                          .toList(),
+                    ],
+                  ),
+                ),
+              ],
+
+              // Show totals
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    _buildPriceRow(
+                      label: 'Product Total',
+                      value: 'Rp${grandTotal.toStringAsFixed(2)}',
+                    ),
+                    const SizedBox(height: 8),
+                    _buildPriceRow(
+                      label: 'Voucher Discount',
+                      value: '$voucherDiscountPercent%',
+                    ),
+                    const SizedBox(height: 16),
+                    _buildPriceRow(
+                      label: 'Grand Total',
+                      value: 'Rp${grandTotal.toStringAsFixed(2)}',
+                      isBold: true,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Voucher Discount: $voucherDiscountPercent%',
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
+
+              // Back to home button
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton(
+                  onPressed: () => Navigator.popUntil(
+                    context,
+                    (route) => route.isFirst,
+                  ),
+                  child: const Text('Back to Home'),
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => Navigator.popUntil(
-                context,
-                (route) => route.isFirst,
-              ),
-              child: const Text('Back to Home'),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPriceRow({
+    required String label,
+    required String value,
+    bool isBold = false,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ],
     );
   }
 }

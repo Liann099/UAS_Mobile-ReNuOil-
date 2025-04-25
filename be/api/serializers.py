@@ -149,11 +149,13 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = '__all__'
 
+# serializers.py
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
-        fields = '__all__'
-        read_only_fields = ['user']
+        fields = ['id', 'product', 'user', 'star', 'description', 'created_at', 'status']
+        read_only_fields = ['user', 'created_at', 'status']
+
 
 class CartSerializer(serializers.ModelSerializer):
     total_price = serializers.SerializerMethodField()
@@ -161,11 +163,20 @@ class CartSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cart
-        fields = ['id', 'user', 'product', 'product_name', 'liters', 'total_price']
-        read_only_fields = ['user']
+        fields = ['id', 'user', 'product', 'product_name', 'liters', 'total_price', 'status']
+        read_only_fields = ['user', 'status']
 
     def get_total_price(self, obj):
         return obj.total_price()
+    
+# serializers.py
+class ReviewListSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()
+
+    class Meta:
+        model = Review
+        fields = ['id', 'user', 'star', 'description', 'created_at']
+
 
 import json  # Make sure this is at the top of the file
 

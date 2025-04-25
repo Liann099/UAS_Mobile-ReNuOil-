@@ -1,7 +1,18 @@
+import 'dart:convert';
+import 'package:intl/intl.dart';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+import '../../constants.dart';
+import '../../home.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/generated/assets.dart';
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 import 'package:flutter_application_1/Homepage/Buyer/checkout.dart';
+import 'package:flutter_application_1/Homepage/Buyer/cart.dart';
 
 void main() {
   runApp(const MyApp());
@@ -23,6 +34,54 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class Review {
+  final int id;
+  final String user;
+  final int star;
+  final String description;
+  final DateTime createdAt;
+
+  Review({
+    required this.id,
+    required this.user,
+    required this.star,
+    required this.description,
+    required this.createdAt,
+  });
+
+  factory Review.fromJson(Map<String, dynamic> json) {
+    return Review(
+      id: json['id'],
+      user: json['user'],
+      star: json['star'],
+      description: json['description'],
+      createdAt: DateTime.parse(json['created_at']),
+    );
+  }
+}
+
+class ReviewStats {
+  final double averageRating;
+  final int totalReviews;
+  final List<Review> reviews;
+
+  ReviewStats({
+    required this.averageRating,
+    required this.totalReviews,
+    required this.reviews,
+  });
+
+  factory ReviewStats.fromJson(Map<String, dynamic> json) {
+    return ReviewStats(
+      averageRating: (json['average_rating'] as num).toDouble(),
+      totalReviews: json['total_reviews'],
+      reviews: (json['reviews'] as List)
+          .map((reviewJson) => Review.fromJson(reviewJson))
+          .toList(),
+    );
+  }
+}
+
 class CookingOilPage extends StatefulWidget {
   final Product product; // Add this line
 
@@ -34,7 +93,63 @@ class CookingOilPage extends StatefulWidget {
 }
 
 class _CookingOilPageState extends State<CookingOilPage> {
+  final storage = const FlutterSecureStorage();
+  Future<List<Product>>? _futureOtherProducts;
+
   int _quantity = 1;
+  late Future<ReviewStats> _reviewsFuture;
+  @override
+  void initState() {
+    super.initState();
+    _reviewsFuture = _fetchReviews();
+    _futureOtherProducts = fetchOtherProducts(); // Fetch other products
+  }
+
+// Fetch the first two other products
+  Future<List<Product>> fetchOtherProducts() async {
+    try {
+      String? token = await storage.read(key: 'access_token');
+      if (token == null) throw Exception('No access token found');
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/products/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        List<Product> allProducts =
+            data.map((json) => Product.fromJson(json)).toList();
+
+        // Filter out the current product and take up to 2 other products
+        return allProducts
+            .where((product) => product.id != widget.product.id)
+            .take(2)
+            .toList();
+      } else {
+        throw Exception('Failed to load products');
+      }
+    } catch (e) {
+      print('[ERROR] Exception occurred: $e');
+      rethrow;
+    }
+  }
+
+  Future<ReviewStats> _fetchReviews() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/products/${widget.product.id}/reviews/'),
+    );
+
+    if (response.statusCode == 200) {
+      return ReviewStats.fromJson(json.decode(response.body));
+    } else {
+      throw Exception('Failed to load reviews');
+    }
+  }
+  // int _quantity = 1;
 
   void _decreaseQuantity() {
     setState(() {
@@ -48,6 +163,89 @@ class _CookingOilPageState extends State<CookingOilPage> {
     setState(() {
       _quantity++;
     });
+  }
+
+  Widget _buildProductCard(Product product) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CookingOilPage(product: product),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 1,
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
+              child: Image.network(
+                product.picture ?? '',
+                height: 150,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Image.asset(
+                  Assets.imagesProductMilk,
+                  height: 150,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.name,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Rp${product.pricePerLiter.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  Text(
+                    product.address,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -69,12 +267,12 @@ class _CookingOilPageState extends State<CookingOilPage> {
                     child: widget.product.picture != null
                         ? Image.network(
                             widget.product.picture!,
-                            height: 350,
+                            height: 450,
                             fit: BoxFit.cover,
                           )
                         : Image.asset(
                             Assets.imagesProductMilk,
-                            height: 350,
+                            height: 450,
                             fit: BoxFit.fill,
                           ),
                   ),
@@ -93,7 +291,7 @@ class _CookingOilPageState extends State<CookingOilPage> {
                     ),
                     child: IconButton(
                       icon: const Icon(
-                        Icons.arrow_back,
+                        Icons.chevron_left,
                         size: 18,
                         color: Colors.white,
                       ),
@@ -120,13 +318,13 @@ class _CookingOilPageState extends State<CookingOilPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const Text(
-                    '35 sold',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
+                  // const Text(
+                  //   '35 sold',
+                  //   style: TextStyle(
+                  //     fontSize: 14,
+                  //     color: Colors.grey,
+                  //   ),
+                  // ),
                 ],
               ),
             ),
@@ -138,7 +336,7 @@ class _CookingOilPageState extends State<CookingOilPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    '41 Liters Stock',
+                    '100 Liters Stock',
                     style: TextStyle(
                       fontSize: 14,
                     ),
@@ -216,12 +414,32 @@ class _CookingOilPageState extends State<CookingOilPage> {
                       // Cart icon
                       Container(
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
+                          border: Border.all(color: Colors.white),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.shopping_cart_outlined),
-                          onPressed: () {},
+                          icon: const Icon(
+                            Icons.shopping_cart_outlined,
+                            size: 30,
+                          ),
+                          onPressed: () {
+                            // Create a CartItem with the current product and quantity
+                            final cartItem = CartItem(
+                              product: widget.product,
+                              quantity: _quantity,
+                            );
+
+                            // Add to cart (you'll need to manage your cart state, possibly with a provider)
+                            CartManager.addToCart(cartItem);
+
+                            // Navigate to cart page
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BasketScreen(),
+                              ),
+                            );
+                          },
                         ),
                       ),
 
@@ -326,94 +544,144 @@ class _CookingOilPageState extends State<CookingOilPage> {
             ),
 
             // Reviews section
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.only(top: 16.0, left: 12, right: 12),
-              decoration: const BoxDecoration(
-                color: Color(0xFFFCE38A),
-                borderRadius: BorderRadius.all(Radius.circular(20)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Rating header
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: const [
-                        Icon(Icons.star, size: 20, color: Colors.black),
-                        SizedBox(width: 4),
-                        Text(
-                          '4.89 • 31 reviews',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+            // Replace your existing Reviews section with this:
 
-                  // Review content in rounded container
-                  Container(
-                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFF3C4),
-                      borderRadius: BorderRadius.circular(15),
+            FutureBuilder<ReviewStats>(
+              future: _reviewsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Container(
+                    width: double.infinity,
+                    margin:
+                        const EdgeInsets.only(top: 16.0, left: 12, right: 12),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFCE38A),
+                      borderRadius: BorderRadius.all(Radius.circular(20)),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Reviewer info
-                        Row(
-                          children: const [
+                    child: const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text('Error loading reviews'),
+                    ),
+                  );
+                } else if (!snapshot.hasData ||
+                    snapshot.data!.reviews.isEmpty) {
+                  return Container(
+                    width: double.infinity,
+                    margin:
+                        const EdgeInsets.only(top: 16.0, left: 12, right: 12),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFCE38A),
+                      borderRadius: BorderRadius.all(Radius.circular(20)),
+                    ),
+                    child: const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text('No reviews yet'),
+                    ),
+                  );
+                }
+
+                final stats = snapshot.data!;
+                final sortedReviews = stats.reviews
+                    .toList() // Create a copy of the list to avoid modifying the original
+                  ..sort((a, b) => b.createdAt
+                      .compareTo(a.createdAt)); // Sort in descending order
+
+                // Get the latest review (first item in sorted list)
+                final latestReview = sortedReviews.first;
+
+                return Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(top: 16.0, left: 12, right: 12),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFCE38A),
+                    borderRadius: BorderRadius.all(Radius.circular(20)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Rating summary
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.star,
+                                size: 20, color: Colors.black),
+                            const SizedBox(width: 4),
                             Text(
-                              'Hansel Richie Gunawan',
-                              style: TextStyle(
+                              '${stats.averageRating.toStringAsFixed(2)} • ${stats.totalReviews} reviews',
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                                fontSize: 18,
                               ),
                             ),
-                            SizedBox(width: 4),
-                            Text('•'),
-                            SizedBox(width: 4),
+                          ],
+                        ),
+                      ),
+
+                      // Most recent review
+                      Container(
+                        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF3C4),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Reviewer + time
+                            Row(
+                              children: [
+                                Text(
+                                  latestReview.user,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Text('•'),
+                                const SizedBox(width: 4),
+                                Text(
+                                  DateFormat('yyyy-MM-dd').format(latestReview
+                                      .createdAt), // Customize this format as needed
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 10),
+
+                            // Description
                             Text(
-                              'January 2025',
-                              style: TextStyle(
-                                fontSize: 14,
+                              '"${latestReview.description}"',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+
+                            const SizedBox(height: 10),
+
+                            // Star rating
+                            Row(
+                              children: List.generate(
+                                5,
+                                (index) => Icon(
+                                  Icons.star,
+                                  size: 16,
+                                  color: index < latestReview.star
+                                      ? Colors.black
+                                      : Colors.grey,
+                                ),
                               ),
                             ),
                           ],
                         ),
-
-                        const SizedBox(height: 10),
-
-                        // Review text
-                        const Text(
-                          '"I\'ve been using this coconut oil for months, and it\'s amazing! The quality is top-notch—light, pure, and with a subtle coconut scent. I love that it\'s versatile; I use it for cooking, skincare, and even as a natural hair treatment. Plus, the fact that it\'s renewable makes it an eco-friendly choice. Definitely a great buy!"',
-                          style: TextStyle(
-                            fontSize: 14,
-                          ),
-                        ),
-
-                        const SizedBox(height: 10),
-
-                        // Rating stars
-                        Row(
-                          children: const [
-                            Icon(Icons.star, size: 16, color: Colors.black),
-                            Icon(Icons.star, size: 16, color: Colors.black),
-                            Icon(Icons.star, size: 16, color: Colors.black),
-                            Icon(Icons.star, size: 16, color: Colors.black),
-                            Icon(Icons.star, size: 16, color: Colors.black),
-                          ],
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
 
             // About the oil
@@ -421,19 +689,20 @@ class _CookingOilPageState extends State<CookingOilPage> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
+                children: [
+                  const Text(
                     'About the oil',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
-                    'This high-quality coconut oil is versatile and renewable. Perfect for cooking, skincare, and industrial use, it retains nutrients and purity. It can be reused through refining or filtering, making it an eco-friendly choice. Lightweight with a mild coconut aroma, it\'s a sustainable and efficient solution.',
-                    style: TextStyle(
+                    widget.product.description,
+                    style: const TextStyle(
                       fontSize: 14,
+                      fontWeight: FontWeight.normal,
                     ),
                   ),
                 ],
@@ -454,82 +723,47 @@ class _CookingOilPageState extends State<CookingOilPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildProductCard(
-                          'ABC Cooking Oil - Used',
-                          Assets.imagesProductMilk,
-                          'Rp39,999',
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildProductCard(
-                          'Chef\'s Oil - Used',
-                          Assets.imagesProductMilk,
-                          'Rp46,999',
-                        ),
-                      ),
-                    ],
+                  FutureBuilder<List<Product>>(
+                    future: _futureOtherProducts,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Center(
+                            child: Text('No other products available'));
+                      } else {
+                        final otherProducts = snapshot.data!;
+
+                        return otherProducts.isNotEmpty
+                            ? Row(
+                                children: [
+                                  if (otherProducts.length >= 1)
+                                    Expanded(
+                                      child:
+                                          _buildProductCard(otherProducts[0]),
+                                    ),
+                                  if (otherProducts.length >= 2)
+                                    const SizedBox(width: 12),
+                                  if (otherProducts.length >= 2)
+                                    Expanded(
+                                      child:
+                                          _buildProductCard(otherProducts[1]),
+                                    ),
+                                ],
+                              )
+                            : const Center(
+                                child: Text('No similar products available'));
+                      }
+                    },
                   ),
-                  SizedBox(
-                    height: 16,
-                  )
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildProductCard(String title, String imagePath, String price) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Product image
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.asset(
-              imagePath,
-              height: 120,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-          ),
-
-          // Product info
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  price,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

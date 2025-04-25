@@ -319,7 +319,7 @@ class _SellerPage extends State<SellerPage> {
                         ),
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 10),
 
                       // Body - Using Expanded + ListView instead of SingleChildScrollView to handle overflow
                       Expanded(

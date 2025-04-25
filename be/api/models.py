@@ -357,21 +357,50 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+from datetime import date
+from datetime import date, timedelta
+from django.db import models
+from django.utils.timezone import now
+from django.conf import settings
+from decimal import Decimal
+import json
+import logging
 
+from django.utils import timezone
 
 class Review(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('success', 'Success'),
+    ]
+
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     star = models.IntegerField()
     description = models.TextField(blank=True)
+    created_at = models.DateTimeField(default=timezone.now, null=True, blank=True)  # ✅ updated
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='pending',
+    )
 
 class Cart(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('success', 'Success'),
+    ]
+
+    user = models.ForeignKey(CustomUser , on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     liters = models.DecimalField(max_digits=6, decimal_places=2)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', blank=True, null=True)
 
     def total_price(self):
         return self.liters * self.product.price_per_liter
+
+    def __str__(self):
+        return f"{self.user.username}'s cart - {self.product.name} ({self.liters}L) - {self.get_status_display()}"
 
 class Promotion(models.Model):
     code = models.CharField(max_length=20, unique=True)
@@ -414,7 +443,10 @@ SHIPPING_CHOICES = [
     ('grab', 'Grab'),
 ]
 
-from datetime import date
+
+
+logger = logging.getLogger(__name__)
+
 
 class Checkout(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
@@ -441,7 +473,7 @@ class Checkout(models.Model):
             self.delivery_fee = Decimal("11000") if self.shipping_method == "grab" else Decimal("10000")
         super().save(*args, **kwargs)
 
-    def finalize_checkout(self):
+    def finalize_checkout(self, request):
         from .models import CheckoutHistory, TransactionHistory
         try:
             cart_items = self.items.all()
@@ -450,28 +482,41 @@ class Checkout(models.Model):
             for item in cart_items:
                 product = item.product
                 items_data.append({
+                    "id": product.id if product else None,  # Add product ID
                     "product": product.name if product else "Unknown",
                     "photo_url": product.picture.url if product and product.picture else None,
-                    "quantity": item.quantity,
-                    "price_per_unit": str(product.price if product else 0),
-                    "total": str(item.total_price() if hasattr(item, 'total_price') else 0)
+                    "quantity": float(item.liters),  # Convert liters to float
+                    "price_per_unit": float(product.price_per_liter) if product else 0.0,  # Convert to float
+                    "total": float(item.total_price()) if hasattr(item, 'total_price') else 0.0  # Convert to float
                 })
 
             CheckoutHistory.objects.create(
                 user=self.user,
-                items=json.dumps(items_data),
-                product_total_price=self.product_total_price,
-                delivery_fee=self.delivery_fee,
-                service_fee=self.service_fee,
-                grand_total=self.grand_total,
+                items=json.dumps(items_data),  # This should now work without error
+                product_total_price=float(self.product_total_price),  # Convert to float
+                delivery_fee=float(self.delivery_fee),  # Convert to float
+                service_fee=float(self.service_fee),  # Convert to float
+                grand_total=float(self.grand_total),  # Convert to float
                 payment_method=self.payment_method,
                 voucher_code=self.voucher.code if self.voucher else None
+            )
+
+            # Log the request data
+            logger.debug(f"Request data: {request.data}")
+
+            from_location = "North Jakarta"
+            Tracker.objects.create(
+                user=self.user,
+                items=json.dumps(items_data),  # This should now work without error
+                from_location=from_location,
+                tanggal_from=date.today(),
+                tanggal_to=date.today() + timedelta(days=1),
             )
 
             TransactionHistory.objects.create(
                 user=self.user,
                 transaction_type='sale',
-                amount=self.grand_total
+                amount=float(self.grand_total)  # Convert to float
             )
 
             logger.debug(f"Checkout berhasil - User: {self.user.email}, Total: {self.grand_total}")
@@ -517,8 +562,8 @@ class CheckoutHistory(models.Model):
 from django.utils import timezone
 
 class Tracker(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    product_name = models.CharField(max_length=100)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tracker")
+    items = models.TextField(null=True, blank=True)  # Simpan JSON/cart info sebagai string
     from_location = models.CharField(max_length=255, null=True, blank=True)
     tanggal_from = models.DateField(null=True, blank=True)
     tanggal_to = models.DateField(null=True, blank=True)

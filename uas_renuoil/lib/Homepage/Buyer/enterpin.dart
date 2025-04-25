@@ -170,7 +170,12 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
               children: [
                 // Back button
                 TextButton.icon(
-                  onPressed: widget.onCancel,
+                  onPressed: () {
+                    if (widget.onCancel != null) {
+                      widget.onCancel!(); // Jalankan callback jika tersedia
+                    }
+                    Navigator.pop(context); // Tutup halaman saat ini
+                  },
                   icon: const Icon(Icons.chevron_left,
                       color: Colors.black, size: 20),
                   label: const Text(

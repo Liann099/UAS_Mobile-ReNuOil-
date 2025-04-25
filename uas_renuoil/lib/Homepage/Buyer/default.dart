@@ -14,7 +14,7 @@ import 'package:flutter_application_1/Homepage/Buyer/detail.dart';
 import 'package:flutter_application_1/Homepage/Buyer/whitdraw.dart';
 import 'package:flutter_application_1/Homepage/Buyer/balancebuy.dart';
 import 'package:flutter_application_1/Homepage/Buyer/historybuyer.dart';
-
+import 'package:flutter_application_1/Homepage/Buyer/track2.dart';
 
 import 'package:flutter_application_1/Seller/transaction_history.dart';
 import 'package:flutter_application_1/generated/assets.dart';
@@ -392,7 +392,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          const TransactionHistoryScreen()),
+                                          const OrderTrackingScreen()),
                                 );
                               },
                             ),
@@ -400,7 +400,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                         ),
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 0),
 
                       // Main content section
                       Expanded(

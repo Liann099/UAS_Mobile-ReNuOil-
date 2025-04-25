@@ -23,6 +23,7 @@ import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 import 'package:flutter_application_1/Homepage/Buyer/whitdraw.dart';
 import 'package:flutter_application_1/Homepage/Buyer/balancebuy.dart';
 import 'package:flutter_application_1/Homepage/Buyer/historybuyer.dart';
+import 'package:flutter_application_1/Homepage/Buyer/track2.dart';
 
 class RnoPayApps extends StatefulWidget {
   const RnoPayApps({super.key});
@@ -277,7 +278,7 @@ class _RnoPayAppsState extends State<RnoPayApps> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          const TransactionHistoryScreen()),
+                                          const OrderTrackingScreen()),
                                 );
                               },
                             ),

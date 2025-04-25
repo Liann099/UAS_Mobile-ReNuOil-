@@ -22,6 +22,7 @@ import 'package:flutter_application_1/Homepage/Buyer/detail.dart';
 import 'package:flutter_application_1/Homepage/Buyer/whitdraw.dart';
 import 'package:flutter_application_1/Homepage/Buyer/balancebuy.dart';
 import 'package:flutter_application_1/Homepage/Buyer/historybuyer.dart';
+import 'package:flutter_application_1/Homepage/Buyer/track2.dart';
 
 class SellerWithdrawsPage extends StatefulWidget {
   const SellerWithdrawsPage({super.key});
@@ -422,8 +423,7 @@ class _SellerWithdrawsPageState extends State<SellerWithdrawsPage> {
                           children: [
                             _NavIcon(
                               icon: 'assets/icons/iconhome.png',
-                              active: true,
-                              showUnderline: true,
+                        
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -470,7 +470,7 @@ class _SellerWithdrawsPageState extends State<SellerWithdrawsPage> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          const TransactionHistoryScreen()),
+                                          const OrderTrackingScreen()),
                                 );
                               },
                             ),

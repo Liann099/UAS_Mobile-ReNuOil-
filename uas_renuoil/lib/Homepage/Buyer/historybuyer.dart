@@ -12,6 +12,8 @@ import 'package:flutter_application_1/Homepage/Buyer/whitdraw.dart';
 import 'package:flutter_application_1/Homepage/Buyer/balancebuy.dart';
 import 'package:flutter_application_1/Homepage/Buyer/detail.dart';
 import 'package:flutter_application_1/Homepage/Buyer/checkout.dart';
+import 'package:flutter_application_1/Homepage/Buyer/track2.dart';
+import 'package:flutter_application_1/Homepage/Buyer/review.dart';
 
 import 'package:flutter_application_1/Seller/transaction_history.dart';
 import 'package:flutter_application_1/balance.dart';
@@ -151,27 +153,8 @@ class _HistoryScreenState extends State<BuyerHistoryScreen>
 
   Widget _buildHistoryCard(Map<String, dynamic> history) {
     final items = history['items'] as List? ?? [];
-    final firstItem = items.isNotEmpty ? items[0] : null;
     final date = DateTime.parse(history['created_at']);
     final formattedDate = DateFormat('MMM dd, yyyy').format(date);
-
-    // Get the first photo URL if available
-    String? photoUrl;
-    if (firstItem != null) {
-      // Handle case where photo_url might be in different formats
-      if (firstItem['photo_url'] is String) {
-        photoUrl = firstItem['photo_url'];
-      } else if (firstItem['photo_url'] is Map) {
-        photoUrl =
-            firstItem['photo_url']['url'] ?? firstItem['photo_url']['path'];
-      }
-      // Prepend the base URL if the photoUrl is a relative path
-      if (photoUrl != null && !photoUrl.startsWith('http')) {
-        photoUrl = '$baseUrl$photoUrl'; // Ensure baseUrl is defined
-      }
-      print('Photo URL: $photoUrl'); // Before loading the image
-    }
-
 
     return Container(
       margin: const EdgeInsets.all(16),
@@ -220,111 +203,126 @@ class _HistoryScreenState extends State<BuyerHistoryScreen>
               ],
             ),
             const SizedBox(height: 16),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: photoUrl != null
-                      ? Image.network(
-                          photoUrl,
-                          width: 70,
-                          height: 70,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Container(
+            ...items.map((item) {
+              // Get the photo URL for each item
+              String? photoUrl;
+              if (item != null) {
+                // Handle case where photo_url might be in different formats
+                if (item['photo_url'] is String) {
+                  photoUrl = item['photo_url'];
+                } else if (item['photo_url'] is Map) {
+                  photoUrl =
+                      item['photo_url']['url'] ?? item['photo_url']['path'];
+                }
+                // Prepend the base URL if the photoUrl is a relative path
+                if (photoUrl != null && !photoUrl.startsWith('http')) {
+                  photoUrl = '$baseUrl$photoUrl'; // Ensure baseUrl is defined
+                }
+              }
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: photoUrl != null
+                          ? Image.network(
+                              photoUrl,
                               width: 70,
                               height: 70,
-                              color: Colors.grey[200],
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  value: loadingProgress.expectedTotalBytes !=
-                                          null
-                                      ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
-                                      : null,
-                                ),
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
+                              fit: BoxFit.cover,
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  width: 70,
+                                  height: 70,
+                                  color: Colors.grey[200],
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      value:
+                                          loadingProgress.expectedTotalBytes !=
+                                                  null
+                                              ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  loadingProgress
+                                                      .expectedTotalBytes!
+                                              : null,
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 70,
+                                  height: 70,
+                                  color: Colors.grey[200],
+                                  child: const Icon(Icons.image_not_supported),
+                                );
+                              },
+                            )
+                          : Image.asset(
+                              'images/campuran.png',
                               width: 70,
                               height: 70,
-                              color: Colors.grey[200],
-                              child: const Icon(Icons.image_not_supported),
-                            );
-                          },
-                        )
-                      : Container(
-                          width: 70,
-                          height: 70,
-                          color: Colors.grey[200],
-                          child: const Icon(Icons.image_not_supported),
-                        ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        firstItem != null
-                            ? firstItem['product']?.toString() ??
-                                'Unknown Product'
-                            : 'Unknown Product',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      Text(
-                        '${items.length} ${items.length == 1 ? 'item' : 'items'}',
-                        style: TextStyle(
-                          fontSize: 8,
-                          color: Colors.black.withOpacity(0.6),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
+                              fit: BoxFit.cover,
+                            ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Rp${NumberFormat('#,###').format(double.parse(history['grand_total'].toString()))}',
+                            item != null
+                                ? item['product']?.toString() ??
+                                    'Unknown Product'
+                                : 'Unknown Product',
                             style: const TextStyle(
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            "North Jakarta, Indonesia",
+                            style: TextStyle(
+                              fontSize: 8,
+                              color: Colors.black.withOpacity(0.6),
                             ),
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const SizedBox(height: 18),
-                    _buildActionButton('Review'),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: () {
-                        // Navigator.push(
-                        //   // context,
-                        //   // MaterialPageRoute(
-                        //   //   builder: (context) => CheckoutPage(
-                        //   //     product: product,
-                        //   //     initialQuantity: 1,
-                        //   //   ),
-                        //   // ),
-                        // );
-                      },
-                      child: _buildActionButton('Buy Again'),
                     ),
+                    _buildActionButton('Review', item),
                   ],
                 ),
-              ],
+              );
+            }).toList(),
+            // Show grand total at the bottom
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${items.length} ${items.length == 1 ? 'item' : 'items'}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.black.withOpacity(0.6),
+                    ),
+                  ),
+                  Text(
+                    'Total: Rp${NumberFormat('#,###').format(double.parse(history['grand_total'].toString()))}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -332,21 +330,79 @@ class _HistoryScreenState extends State<BuyerHistoryScreen>
     );
   }
 
-  Widget _buildActionButton(String text) {
-    return Container(
-      width: 75,
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
-      decoration: BoxDecoration(
-        color: primaryYellow,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Colors.black,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
+  final Set<int> reviewedProductIds = <int>{};
+  Widget _buildActionButton(String text, Map<String, dynamic> item) {
+    // Debug print to see the complete item structure
+    print('Full item structure: ${jsonEncode(item)}');
+
+    // Try different ways to extract the product ID
+    final productId = item['id'] ??
+        item['product_id'] ??
+        (item['product'] is Map ? item['product']['id'] : null) ??
+        (item['product_details'] is Map
+            ? item['product_details']['id']
+            : null) ??
+        0;
+
+    final bool isReviewed = reviewedProductIds.contains(productId);
+
+    // Rest of your existing code for name and image URL...
+    final productName = item['product'] is String
+        ? item['product']
+        : (item['product'] is Map ? item['product']['name'] : null) ??
+            'Unknown Product';
+
+    var photoUrl = item['photo_url'] ??
+        (item['product'] is Map ? item['product']['photo_url'] : null);
+
+    if (photoUrl is Map) {
+      photoUrl = photoUrl['url'] ?? photoUrl['path'];
+    }
+    if (photoUrl != null && !photoUrl.startsWith('http')) {
+      photoUrl = '$baseUrl$photoUrl';
+    }
+
+    return GestureDetector(
+      onTap: isReviewed
+          ? null
+          : () async {
+              final reviewSubmitted = await Navigator.push<bool>(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ReviewPage(),
+                  settings: RouteSettings(
+                    arguments: {
+                      'productId': productId,
+                      'productName': productName,
+                      'productPrice': item['price'] ?? 0,
+                      'productImageUrl': photoUrl,
+                      'productOrigin': "North Jakarta, Indonesia",
+                    },
+                  ),
+                ),
+              );
+
+              if (reviewSubmitted == true) {
+                setState(() {
+                  reviewedProductIds.add(productId); // Mark as reviewed
+                });
+              }
+            },
+    child: Container(
+        width: 75,
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+        decoration: BoxDecoration(
+          color: isReviewed ? Colors.grey[400] : primaryYellow,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          isReviewed ? 'Reviewed' : text,
+          style: TextStyle(
+            color: isReviewed ? Colors.white : Colors.black,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
@@ -519,7 +575,7 @@ class _HistoryScreenState extends State<BuyerHistoryScreen>
                             context,
                             MaterialPageRoute(
                                 builder: (context) =>
-                                    const TransactionHistoryScreen()),
+                                    const OrderTrackingScreen()),
                           );
                         },
                       ),

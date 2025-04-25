@@ -218,6 +218,10 @@ class CheckoutHistoryListView(generics.ListAPIView):
 
     def get_queryset(self):
         return CheckoutHistory.objects.filter(user=self.request.user).order_by('-created_at')
+    
+    # def get_checkout_history(request):
+    #     checkouts = CheckoutHistory.objects.filter(user=request.user)
+    #     return JsonResponse(list(checkouts.values()), safe=False)
 
 class MyLeaderboardView(APIView):
     permission_classes = [IsAuthenticated]
@@ -349,7 +353,38 @@ class ReviewCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        serializer.save(user=self.request.user, status='success')
+        
+# views.py
+from rest_framework import generics
+from django.db.models import Avg, Count
+from .models import Review
+from .serializers import ReviewListSerializer
+from rest_framework.response import Response
+
+class ProductReviewListView(generics.ListAPIView):
+    serializer_class = ReviewListSerializer
+
+    def get_queryset(self):
+        product_id = self.kwargs['product_id']
+        return Review.objects.filter(product_id=product_id).order_by('-created_at')
+
+    def list(self, request, *args, **kwargs):
+        product_id = self.kwargs['product_id']
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+
+        stats = queryset.aggregate(
+            average_rating=Avg('star'),
+            total_reviews=Count('id')
+        )
+
+        return Response({
+            'reviews': serializer.data,
+            'average_rating': round(stats['average_rating'] or 0, 2),
+            'total_reviews': stats['total_reviews']
+        })
+
 
 class CartListCreateView(generics.ListCreateAPIView):
     serializer_class = CartSerializer
@@ -390,6 +425,8 @@ from rest_framework import status
 from decimal import Decimal
 from .models import Checkout, Product, OrderItem, Promotion, UserPromoUsage
 from .serializers import SingleProductCheckoutSerializer
+from datetime import date, timedelta
+from .models import Tracker
 
 class CheckoutSingleProductView(APIView):
     permission_classes = [IsAuthenticated]
@@ -478,6 +515,8 @@ class CheckoutSingleProductView(APIView):
         CheckoutHistory.objects.create(
             user=request.user,
             items=json.dumps([{
+                 "id": product.id if product else None,  # Add product ID
+
                 "product": product.name,
                 "photo_url": product.picture.url if product.picture else None,
                 "quantity": data['quantity'],
@@ -497,7 +536,21 @@ class CheckoutSingleProductView(APIView):
             transaction_type='sale',
             amount=grand_total
         )
+        Tracker.objects.create(
+            user=request.user,
+            items=json.dumps([{
+                "id": product.id if product else None,  # Add product ID
 
+                "product": product.name,
+                "photo_url": product.picture.url if product.picture else None,
+                "quantity": data['quantity'],
+                "price_per_unit": str(product.price_per_liter),
+                "total": str(product_total)
+            }]),
+            from_location=product.location if hasattr(product, 'location') else "Unknown",
+            tanggal_from=date.today(),
+            tanggal_to=date.today() + timedelta(days=1)
+        )
         # Mark voucher as used if applicable
         if promo:
             # Use get_or_create to avoid duplicate entries
@@ -527,7 +580,7 @@ class CheckoutCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = self.request.user
-        cart_items = Cart.objects.filter(user=user)
+        cart_items = Cart.objects.filter(user=user, status='pending')
 
         if not cart_items.exists():
             raise ValidationError("Cart kosong!")
@@ -584,7 +637,7 @@ class CheckoutCreateView(generics.CreateAPIView):
 
         # Hitung grand total
         grand_total = product_total_price + service_fee + delivery_fee - discount
-
+        print("Grand Total Calculation:", grand_total)
         # Metode pembayaran
         payment_method = self.request.data.get("payment_method", "BCA")
 
@@ -594,6 +647,17 @@ class CheckoutCreateView(generics.CreateAPIView):
                 raise ValidationError("Saldo wallet tidak cukup.")
             user.balance -= grand_total
             user.save()
+
+        checkout = Checkout.objects.create(
+            user=user,
+            product_total_price=product_total_price,
+            delivery_fee=delivery_fee,
+            service_fee=service_fee,
+            grand_total=grand_total,
+            payment_method=payment_method,
+            # Add items to the checkout
+        )
+        checkout.items.set(cart_items) 
 
         # Simpan checkout
         checkout = serializer.save(
@@ -607,9 +671,11 @@ class CheckoutCreateView(generics.CreateAPIView):
         )
 
         # Simpan item cart ke checkout dan kosongkan cart
-        checkout.items.set(cart_items)
-        checkout.finalize_checkout()
-        cart_items.delete()
+        checkout.items.set(cart_items)  # For ManyToMany relationship
+        # Cart.objects.filter(id__in=[item.id for item in cart_items]).delete() 
+
+        checkout.finalize_checkout(self.request)
+        cart_items.update(status='success')
 
         # Opsional: Hapus voucher
         if promo:
@@ -622,12 +688,23 @@ class CheckoutCreateView(generics.CreateAPIView):
             promo.save()
                     # promo.delete()  # atau promo.is_active = False; promo.save()
 
+        cart_items_data = []
+        for item in cart_items:
+            product = item.product
+            cart_items_data.append({
+                'product': product.name,
+                "photo_url": product.picture.url if product.picture else None,
+                'quantity': str(item.liters),
+                'price_per_liter': str(product.price_per_liter),
+                'total': str(item.total_price())
+            })
+
         return Response({
                 'status': 'success',
                 'checkout_id': checkout.id,
                 'grand_total': grand_total,
-                'voucher_discount_percent': promo.discount_percent if promo else 0
-
+                'voucher_discount_percent': promo.discount_percent if promo else 0,
+                'cart_items': cart_items_data  # Include cart items data in response
             }, status=status.HTTP_201_CREATED)
 
 
@@ -643,8 +720,7 @@ class TrackerListView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         # Waktu sekarang dikurangi 2 jam
-        two_hours_ago = timezone.now() - timedelta(hours=2)
-        # Hanya tampilkan tracker yang dibuat kurang dari 2 jam lalu
+        two_hours_ago = timezone.now() - timedelta(hours=24)
         return Tracker.objects.filter(user=self.request.user, created_at__gte=two_hours_ago)
 
     def perform_create(self, serializer):

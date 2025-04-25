@@ -43,6 +43,7 @@ urlpatterns = [
     path('promotion/', PromotionListView.as_view(), name='promotion'),  # API view (DRF)
     path('promotion/<int:pk>/claim/', ClaimPromotionView.as_view(), name='claim-promotion'),
 
+    path('products/<int:product_id>/reviews/', ProductReviewListView.as_view(), name='product-reviews'),
 
 
     path('cart/<int:pk>/delete/', CartDeleteView.as_view(), name='cart-delete'),
