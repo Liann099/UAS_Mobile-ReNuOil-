@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/generated/assets.dart';
-import 'package:material_symbols_icons/symbols.dart';
 
 class RankingListPage extends StatelessWidget {
   const RankingListPage({super.key});

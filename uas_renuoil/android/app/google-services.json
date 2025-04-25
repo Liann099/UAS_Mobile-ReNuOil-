@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "613482172357",
+    "project_id": "renuoil-d9855",
+    "storage_bucket": "renuoil-d9855.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:613482172357:android:0f2be1c6e09e0ed62b85ac",
+        "android_client_info": {
+          "package_name": "com.example.uas_renuoil"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChMyuEp31B4haFsN4zXdaIgzOIvxn6QI8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

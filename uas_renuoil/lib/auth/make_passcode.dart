@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/generated/assets.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_application_1/generated/assets.dart';
+import 'package:local_auth/local_auth.dart';
 
 class MakePasscodeScreen extends StatefulWidget {
   const MakePasscodeScreen({super.key});
@@ -12,22 +13,20 @@ class MakePasscodeScreen extends StatefulWidget {
 class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
   final List<TextEditingController> _controllers = List.generate(
     4,
-        (index) => TextEditingController(),
+    (index) => TextEditingController(),
   );
   final List<FocusNode> _focusNodes = List.generate(
     4,
-        (index) => FocusNode(),
+    (index) => FocusNode(),
   );
   String _passcode = '';
 
   @override
   void initState() {
     super.initState();
-    // Add listener to each controller
     for (int i = 0; i < 4; i++) {
       _controllers[i].addListener(() {
         _updatePasscode();
-        // Move to next field when current is filled
         if (_controllers[i].text.isNotEmpty && i < 3) {
           _focusNodes[i + 1].requestFocus();
         }
@@ -37,7 +36,6 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
 
   @override
   void dispose() {
-    // Clean up controllers and focus nodes
     for (int i = 0; i < 4; i++) {
       _controllers[i].dispose();
       _focusNodes[i].dispose();
@@ -51,14 +49,40 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
     });
   }
 
-  void _useFaceID() {
-    // Simulate Face ID authentication
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Face ID authentication initiated'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+  void _useFaceID() async {
+    final LocalAuthentication auth = LocalAuthentication();
+
+    bool canAuthenticate =
+        await auth.canCheckBiometrics || await auth.isDeviceSupported();
+
+    if (!canAuthenticate) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Biometric authentication not available')),
+      );
+      return;
+    }
+
+    try {
+      final bool didAuthenticate = await auth.authenticate(
+        localizedReason: 'Please authenticate to continue',
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: true,
+        ),
+      );
+
+      if (didAuthenticate) {
+        _showCongratulationsDialog();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Authentication failed')),
+        );
+      }
+    } on Exception catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
   }
 
   @override
@@ -68,10 +92,10 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage(Assets.imagesGroup306), // Use the same wave background image
-              fit: BoxFit.fill
+            image: AssetImage(Assets.imagesGroup306),
+            fit: BoxFit.fill,
           ),
-          color: Color(0xFFFFB35A), // Orange background color
+          color: Color(0xFFFFB35A),
         ),
         child: SafeArea(
           child: Padding(
@@ -79,13 +103,11 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Back button and logo
                 Padding(
                   padding: const EdgeInsets.only(top: 20.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Back button
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
                         child: const Icon(
@@ -94,8 +116,6 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
                           size: 24,
                         ),
                       ),
-
-                      // Logo
                       Container(
                         width: 50,
                         height: 50,
@@ -105,7 +125,7 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
                         ),
                         child: ClipOval(
                           child: Image.asset(
-                            'assets/images/mascot.png', // Replace with your actual logo asset
+                            'assets/images/mascot.png',
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -113,10 +133,7 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 60),
-
-                // Title
                 const Center(
                   child: Text(
                     'Make a passcode',
@@ -135,10 +152,7 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 16),
-
-                // Subtitle
                 const Center(
                   child: Text(
                     'Please enter 4 digit code',
@@ -149,21 +163,15 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 60),
-
-                // Passcode input fields
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: List.generate(
                     4,
-                        (index) => _buildPasscodeField(index),
+                    (index) => _buildPasscodeField(index),
                   ),
                 ),
-
                 const SizedBox(height: 80),
-
-                // Or Face ID text
                 const Center(
                   child: Text(
                     'Or Face ID',
@@ -182,20 +190,14 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
-                // Face ID icon
                 GestureDetector(
                   onTap: _useFaceID,
                   child: Center(
                     child: Image.asset(Assets.imagesFaceId, height: 50),
                   ),
                 ),
-
                 const Spacer(),
-
-                // Save button
                 Padding(
                   padding: const EdgeInsets.only(bottom: 40.0),
                   child: SizedBox(
@@ -203,10 +205,9 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
                     child: ElevatedButton(
                       onPressed: _passcode.length == 4
                           ? () {
-                        // Handle save action
-                        print('Passcode: $_passcode');
-                        _showCongratulationsDialog();
-                      }
+                              print('Passcode: $_passcode');
+                              _showCongratulationsDialog();
+                            }
                           : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
@@ -244,10 +245,8 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
       builder: (BuildContext context) {
         return CongratulationsDialog(
           onContinue: () {
-            // Navigate to the next screen or close the dialog
-            Navigator.of(context).pop(); // Close dialog
+            Navigator.of(context).pop();
             Navigator.pushNamed(context, '/');
-            // Add navigation to next screen if needed
           },
         );
       },
@@ -259,7 +258,7 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
       width: 70,
       height: 70,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7C0), // Light yellow background
+        color: const Color(0xFFFFF7C0),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -289,21 +288,12 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
             border: InputBorder.none,
             counterText: '',
           ),
-          onChanged: (value) {
-            if (value.isNotEmpty && index < 3) {
-              _focusNodes[index + 1].requestFocus();
-            }
-          },
         ),
       ),
     );
   }
 }
 
-
-// Congratulations Dialog Widget
-
-// Congratulations Dialog Widget
 class CongratulationsDialog extends StatelessWidget {
   final VoidCallback onContinue;
 
@@ -325,7 +315,7 @@ class CongratulationsDialog extends StatelessWidget {
           gradient: const LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFF8E8A0), Color(0xFFFFF176)], // Gradient from light yellow to darker yellow
+            colors: [Color(0xFFF8E8A0), Color(0xFFFFF176)],
           ),
           borderRadius: BorderRadius.circular(25),
           boxShadow: [
@@ -340,28 +330,25 @@ class CongratulationsDialog extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Logo with sparkles
             Stack(
               clipBehavior: Clip.none,
               children: [
-                // Main logo
                 Container(
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFF0A3250), // Dark blue background
+                    color: const Color(0xFF0A3250),
                     border: Border.all(color: Colors.white, width: 2),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Image.asset(
-                      'assets/images/mascot.png', // Replace with your logo asset
+                      'assets/images/mascot.png',
                       fit: BoxFit.contain,
                     ),
                   ),
                 ),
-                // Sparkle 1
                 Positioned(
                   top: -10,
                   right: -15,
@@ -371,7 +358,6 @@ class CongratulationsDialog extends StatelessWidget {
                     size: 30,
                   ),
                 ),
-                // Sparkle 2
                 Positioned(
                   top: 10,
                   right: -30,
@@ -383,23 +369,17 @@ class CongratulationsDialog extends StatelessWidget {
                 ),
               ],
             ),
-
             const SizedBox(height: 30),
-
-            // Text
             const Text(
               'Congratulations!',
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF8D6E63), // Brown text color
+                color: Color(0xFF8D6E63),
                 fontFamily: 'Poppins',
               ),
             ),
-
             const SizedBox(height: 40),
-
-            // Continue button
             GestureDetector(
               onTap: onContinue,
               child: Container(
@@ -409,14 +389,14 @@ class CongratulationsDialog extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: Colors.transparent,
                   border: Border.all(
-                    color: const Color(0xFF8D6E63), // Brown border
+                    color: Color(0xFF8D6E63),
                     width: 4,
                   ),
                 ),
                 child: const Center(
                   child: Icon(
                     Icons.arrow_forward_ios,
-                    color: Color(0xFF8D6E63), // Brown icon
+                    color: Color(0xFF8D6E63),
                     size: 30,
                   ),
                 ),

@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "corsheaders",
     'api',
     'shops',
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 REST_FRAMEWORK = {
@@ -156,9 +157,13 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
+GOOGLE_SIGN_IN_CLIENT_ID = "632481002126-op4bd8pj88nesku7v9qeic8nk4quh9ug.apps.googleusercontent.com" ##I DONT KNOW HOW THIS WORK BUT THIS IS FROM MINE (GERALD)
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'api.CustomUser' #our_app_name' with the actual name of your app
+
+
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

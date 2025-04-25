@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="default_web_client_id" translatable="false" tools:ignore="MissingTranslation">
+        632481002126-op4bd8pj88nesku7v9qeic8nk4quh9ug.apps.googleusercontent.com
+    </string>
+</resources>

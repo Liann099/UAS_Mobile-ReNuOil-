@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/generated/assets.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
-  const OrderTrackingScreen({Key? key}) : super(key: key);
+  const OrderTrackingScreen({super.key});
 
 class MyApp extends StatelessWidget {
   @override
@@ -23,8 +23,8 @@ class TrackOrderPage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context),
-            _buildTitleSection(),
+            buildHeader(context),
+            buildTitleSection(),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -35,9 +35,9 @@ class TrackOrderPage extends StatelessWidget {
                           _isTimelineVisible = !_isTimelineVisible;
                         });
                       },
-                      child: _buildOrderCard(context),
+                      child: buildOrderCard(context),
                     ),
-                    if (_isTimelineVisible) _buildTrackingTimeline(),
+                    if (_isTimelineVisible) buildTrackingTimeline(),
                   ],
                 ),
               ),
@@ -49,7 +49,7 @@ class TrackOrderPage extends StatelessWidget {
   }
 
   // Header section with search bar and navigation
-  Widget _buildHeader(BuildContext context) {
+  Widget buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(
           defaultPadding,
@@ -66,16 +66,16 @@ class TrackOrderPage extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _buildSearchBar(),
+          buildSearchBar(),
           const SizedBox(height: 24),
-          _buildNavigation(),
+          buildNavigation(),
         ],
       ),
     );
   }
 
   // Search bar widget
-  Widget _buildSearchBar() {
+  Widget buildSearchBar() {
     return Container(
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: defaultPadding),
@@ -119,21 +119,21 @@ class TrackOrderPage extends StatelessWidget {
   }
 
   // Bottom navigation bar
-  Widget _buildNavigation() {
+  Widget buildNavigation() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _buildNavItem(Icons.home_outlined, 'Home'),
-        _buildNavItem(Icons.account_balance_wallet_outlined, 'Balance'),
-        _buildNavItem(Icons.sync_alt, 'Withdraw'),
-        _buildNavItem(Icons.history, 'History'),
-        _buildNavItem(Icons.local_shipping_outlined, 'Track', isSelected: true),
+        buildNavItem(Icons.home_outlined, 'Home'),
+        buildNavItem(Icons.account_balance_wallet_outlined, 'Balance'),
+        buildNavItem(Icons.sync_alt, 'Withdraw'),
+        buildNavItem(Icons.history, 'History'),
+        buildNavItem(Icons.local_shipping_outlined, 'Track', isSelected: true),
       ],
     );
   }
 
   // Page title section
-  Widget _buildTitleSection() {
+  Widget buildTitleSection() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: defaultPadding),
@@ -154,7 +154,7 @@ class TrackOrderPage extends StatelessWidget {
   }
 
   // Order card with progress
-  Widget _buildOrderCard(BuildContext context) {
+  Widget buildOrderCard(BuildContext context) {
     return Container(
       margin: const EdgeInsets.all(defaultPadding),
       padding: const EdgeInsets.all(defaultPadding),
@@ -171,18 +171,18 @@ class TrackOrderPage extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _buildOrderHeader(),
+          buildOrderHeader(),
           const SizedBox(height: 16),
-          _buildOrderDates(),
+          buildOrderDates(),
           const SizedBox(height: 24),
-          _buildProgressBar(context),
+          buildProgressBar(context),
         ],
       ),
     );
   }
 
   // Order number and title with logo
-  Widget _buildOrderHeader() {
+  Widget buildOrderHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -229,7 +229,7 @@ class TrackOrderPage extends StatelessWidget {
   }
 
   // Origin and destination dates
-  Widget _buildOrderDates() {
+  Widget buildOrderDates() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -288,7 +288,7 @@ class TrackOrderPage extends StatelessWidget {
   }
 
   // Progress bar with truck
-  Widget _buildProgressBar(BuildContext context) {
+  Widget buildProgressBar(BuildContext context) {
     // Calculate progress width - about 45% of available width based on the image
     final progressWidth = MediaQuery.of(context).size.width * 0.45;
 
@@ -364,7 +364,7 @@ class TrackOrderPage extends StatelessWidget {
   }
 
   // Timeline section
-  Widget _buildTrackingTimeline() {
+  Widget buildTrackingTimeline() {
     return Container(
       margin: const EdgeInsets.fromLTRB(
           defaultPadding,
@@ -394,13 +394,13 @@ class TrackOrderPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  _buildTimelineDate('21 Feb, 25', '10:45 AM', true),
+                  buildTimelineDate('21 Feb, 25', '10:45 AM', true),
                   const SizedBox(height: 60),
-                  _buildTimelineDate('21 Feb, 25', '7:00 PM', true),
+                  buildTimelineDate('21 Feb, 25', '7:00 PM', true),
                   const SizedBox(height: 60),
-                  _buildTimelineDate('22 Feb, 25', '-', false),
+                  buildTimelineDate('22 Feb, 25', '-', false),
                   const SizedBox(height: 60),
-                  _buildTimelineDate('24 - 25 Feb, 25', '-', false),
+                  buildTimelineDate('24 - 25 Feb, 25', '-', false),
                 ],
               ),
             ),
@@ -408,7 +408,7 @@ class TrackOrderPage extends StatelessWidget {
             // Middle - timeline connector with dots
             Padding(
               padding: const EdgeInsets.only(left: 16, right: 16),
-              child: _buildContinuousTimeline(),
+              child: buildContinuousTimeline(),
             ),
 
             // Right side - location info
@@ -416,13 +416,13 @@ class TrackOrderPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTimelineInfo('Drop Off', 'Silambat Surabaya', true),
+                  buildTimelineInfo('Drop Off', 'Silambat Surabaya', true),
                   const SizedBox(height: 60),
-                  _buildTimelineInfo('Sorting Center', 'DC Surabaya', true),
+                  buildTimelineInfo('Sorting Center', 'DC Surabaya', true),
                   const SizedBox(height: 60),
-                  _buildTimelineInfo('Sorting Center', 'DC BSD', false),
+                  buildTimelineInfo('Sorting Center', 'DC BSD', false),
                   const SizedBox(height: 60),
-                  _buildTimelineInfo('Home', 'B Residence BSD City', false),
+                  buildTimelineInfo('Home', 'B Residence BSD City', false),
                 ],
               ),
             ),
@@ -433,7 +433,7 @@ class TrackOrderPage extends StatelessWidget {
   }
 
   // Navigation item
-  Widget _buildNavItem(IconData icon, String label, {bool isSelected = false}) {
+  Widget buildNavItem(IconData icon, String label, {bool isSelected = false}) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -463,7 +463,7 @@ class TrackOrderPage extends StatelessWidget {
   }
 
   // Timeline date and time element
-  Widget _buildTimelineDate(String date, String time, bool isCompleted) {
+  Widget buildTimelineDate(String date, String time, bool isCompleted) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -488,7 +488,7 @@ class TrackOrderPage extends StatelessWidget {
   }
 
   // Timeline location info
-  Widget _buildTimelineInfo(String title, String subtitle, bool isCompleted) {
+  Widget buildTimelineInfo(String title, String subtitle, bool isCompleted) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -513,7 +513,7 @@ class TrackOrderPage extends StatelessWidget {
   }
 
   // Continuous timeline with dots
-  Widget _buildContinuousTimeline() {
+  Widget buildContinuousTimeline() {
     return Stack(
       children: [
         // Vertical line
@@ -536,13 +536,13 @@ class TrackOrderPage extends StatelessWidget {
         // Dots
         Column(
           children: [
-            _buildTimelineDot(true),
+            buildTimelineDot(true),
             const SizedBox(height: 60),
-            _buildTimelineDot(true),
+            buildTimelineDot(true),
             const SizedBox(height: 60),
-            _buildTimelineDot(false),
+            buildTimelineDot(false),
             const SizedBox(height: 60),
-            _buildTimelineDot(false),
+            buildTimelineDot(false),
           ],
         ),
       ],
@@ -550,7 +550,7 @@ class TrackOrderPage extends StatelessWidget {
   }
 
   // Individual timeline dot
-  Widget _buildTimelineDot(bool isActive) {
+  Widget buildTimelineDot(bool isActive) {
     return Container(
       width: 16,
       height: 16,

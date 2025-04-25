@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/maps/location_map.dart';
+import 'package:flutter_application_1/controller/google_login_cubit.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 // Auth
 import 'package:flutter_application_1/auth/address_input.dart';
@@ -56,7 +58,17 @@ import 'package:flutter_application_1/Seller/sellerwithdraw.dart';
 import 'package:flutter_application_1/Seller/QRseller.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiBlocProvider(
+      providers: [
+        BlocProvider<GoogleSignInCubit>(
+          create: (context) => GoogleSignInCubit(),
+        ),
+        // Add other cubits here if needed
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -119,6 +131,7 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
 
 class RouteButtonsScreen extends StatelessWidget {
   const RouteButtonsScreen({super.key});

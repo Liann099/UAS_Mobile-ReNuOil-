@@ -24,15 +24,29 @@ class PasscodeScreen extends StatefulWidget {
 }
 
 class _PasscodeScreenState extends State<PasscodeScreen> {
-  final String _passcode = '';
+  String _passcode = '';
+
+  void _onKeyTap(String value) {
+    if (_passcode.length < 6) {
+      setState(() {
+        _passcode += value;
+      });
+    }
+  }
+
+  void _onBackspace() {
+    if (_passcode.isNotEmpty) {
+      setState(() {
+        _passcode = _passcode.substring(0, _passcode.length - 1);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Mendapatkan ukuran layar untuk adaptasi
     final size = MediaQuery.of(context).size;
     final isSmallScreen = size.width < 360;
-    
-    // Ukuran yang adaptif berdasarkan layar
+
     final double circleDiameter = isSmallScreen ? 30 : 40;
     final double circleMargin = isSmallScreen ? 6 : 8;
     final double titleFontSize = isSmallScreen ? 20 : 24;
@@ -40,13 +54,12 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
     final double smallSpacing = isSmallScreen ? 6 : 8;
     final double faceIdSize = isSmallScreen ? 60 : 80;
     final double buttonHeight = isSmallScreen ? 45 : 50;
-    
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFFD700), // Yellow background
+      backgroundColor: const Color(0xFFFFD700),
       body: SafeArea(
         child: Column(
           children: [
-            // Back button
             Align(
               alignment: Alignment.topLeft,
               child: IconButton(
@@ -54,14 +67,13 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ),
-
             Expanded(
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
-                    minHeight: size.height - 
-                        MediaQuery.of(context).padding.top - 
+                    minHeight: size.height -
+                        MediaQuery.of(context).padding.top -
                         kToolbarHeight,
                   ),
                   child: Padding(
@@ -69,7 +81,6 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Title
                         Text(
                           'Enter Passcode',
                           style: TextStyle(
@@ -78,7 +89,6 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                           ),
                         ),
                         SizedBox(height: smallSpacing),
-                        // Subtitle
                         const Text(
                           'Please enter 6 digit code',
                           style: TextStyle(
@@ -86,21 +96,24 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                           ),
                         ),
                         SizedBox(height: defaultSpacing),
-
-                        // Passcode circles
                         FittedBox(
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: List.generate(6, (index) {
                               return Container(
-                                margin: EdgeInsets.symmetric(horizontal: circleMargin),
+                                margin:
+                                    EdgeInsets.symmetric(horizontal: circleMargin),
                                 width: circleDiameter,
                                 height: circleDiameter,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: index < _passcode.length ? Colors.black : Colors.white,
+                                  color: index < _passcode.length
+                                      ? Colors.black
+                                      : Colors.white,
                                   border: Border.all(
-                                    color: index < _passcode.length ? Colors.black : Colors.grey,
+                                    color: index < _passcode.length
+                                        ? Colors.black
+                                        : Colors.grey,
                                     width: 2,
                                   ),
                                 ),
@@ -109,8 +122,6 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                           ),
                         ),
                         SizedBox(height: defaultSpacing),
-
-                        // Or Face ID section
                         const Text(
                           'Or',
                           style: TextStyle(color: Colors.black87),
@@ -141,15 +152,14 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                           ),
                         ),
                         SizedBox(height: defaultSpacing),
-
-                        // Confirm button
+                        buildKeyboard(),
+                        SizedBox(height: defaultSpacing),
                         SizedBox(
                           width: double.infinity,
                           height: buttonHeight,
                           child: ElevatedButton(
-                            onPressed: _passcode.length == 6 
+                            onPressed: _passcode.length == 6
                                 ? () {
-                                    // Handle confirmation
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text('Passcode entered: $_passcode'),
@@ -158,8 +168,8 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                                   }
                                 : null,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: _passcode.length == 6 
-                                  ? Colors.black 
+                              backgroundColor: _passcode.length == 6
+                                  ? Colors.black
                                   : Colors.grey,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -181,6 +191,65 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildKeyboard() {
+    return Column(
+      children: [
+        for (var row in [
+          ['1', '2', '3'],
+          ['4', '5', '6'],
+          ['7', '8', '9'],
+          ['', '0', '<']
+        ])
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: row.map((key) {
+              if (key == '') {
+                return _buildKey('', enabled: false);
+              } else if (key == '<') {
+                return _buildKey(
+                  '⌫',
+                  onTap: _onBackspace,
+                  isBackspace: true,
+                );
+              } else {
+                return _buildKey(
+                  key,
+                  onTap: () => _onKeyTap(key),
+                );
+              }
+            }).toList(),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildKey(String label,
+      {VoidCallback? onTap, bool enabled = true, bool isBackspace = false}) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: GestureDetector(
+        onTap: enabled ? onTap : null,
+        child: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: enabled ? Colors.black : Colors.grey.shade400,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: isBackspace ? 22 : 20,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
       ),
     );

@@ -10,7 +10,7 @@ class PickupPage extends StatefulWidget {
 
 class _PickupPageState extends State<PickupPage> {
   final TextEditingController _amountController = TextEditingController();
-  String _selectedCourier = '';
+  final String _selectedCourier = '';
   String _pickupLocationText = 'Fetching Location...'; // State for location text
 
   @override

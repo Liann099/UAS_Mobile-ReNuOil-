@@ -20,15 +20,30 @@ from .serializers import (
 from rest_framework.exceptions import ValidationError
 
 
+from rest_framework import permissions
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from .authentication import CustomJWTAuthentication
+
+
+
+# Google Sign-In Imports
+from google.oauth2 import id_token
+from google.auth.transport import requests
+from django.conf import settings
+from django.contrib.auth import authenticate, login
+from django.shortcuts import get_object_or_404
 
 
 class UserDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get_object(self):
         return self.request.user
-    
+
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
@@ -38,7 +53,6 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         user = self.request.user
         profile, created = UserProfile.objects.get_or_create(user=user)  # Buat jika belum ada
         return profile
-    
 
 
 class TransactionListView(generics.ListAPIView):
@@ -47,7 +61,6 @@ class TransactionListView(generics.ListAPIView):
 
     def get_queryset(self):
         return Transaction.objects.filter(user=self.request.user)
-    
 
 
 class OilSaleCreateView(generics.CreateAPIView):
@@ -62,12 +75,11 @@ class PromotionListView(generics.ListAPIView):
     queryset = Promotion.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PromotionSerializer
-    
+
     def get_queryset(self):
         user = self.request.user
         used_promos = UserPromoUsage.objects.filter(user=user).values_list('promo_id', flat=True)
         return Promotion.objects.exclude(id__in=used_promos)
-
 
 
 class BankAccountView(generics.ListCreateAPIView):
@@ -87,7 +99,6 @@ class PickUpOrderCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-
 
 
 class TopUpCreateView(generics.CreateAPIView):
@@ -197,7 +208,7 @@ class LeaderboardView(APIView):
                 PickUpOrder.objects.filter(user=user, timestamp__gte=first_day_this_month)
                 .aggregate(total=Sum('liters'))['total'] or 0
             )
-            
+
             last_month_total_price = (
                 OilSale.objects.filter(user=user, timestamp__range=(first_day_last_month, last_day_last_month))
                 .aggregate(total=Sum('total_price'))['total'] or 0
@@ -205,7 +216,7 @@ class LeaderboardView(APIView):
                 PickUpOrder.objects.filter(user=user, timestamp__range=(first_day_last_month, last_day_last_month))
                 .aggregate(total=Sum('total_price'))['total'] or 0
             )
-            
+
             leaderboard_data.append({
                 "username": user.username,
                 "collected_this_month": collected_this_month,
@@ -222,7 +233,7 @@ class LeaderboardView(APIView):
                 user["tier"] = "Runner-up"
 
         return Response(leaderboard_data)
-    
+
 
 # views_ecommerce.py
 from rest_framework import generics, permissions
@@ -394,3 +405,82 @@ class LocationView(APIView):
         locations = Location.objects.all()  # Fetch all locations from the database
         serializer = LocationSerializer(locations, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+# Google Sign-In View (Added here)
+class GoogleSignInView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        token = request.data.get('idToken')
+        if not token:
+            return Response({'error': 'Google ID token not provided.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Specify the CLIENT_ID of your Flutter app (obtained from Firebase or Google Cloud)
+            CLIENT_ID = settings.GOOGLE_SIGN_IN_CLIENT_ID
+            if not CLIENT_ID:
+                return Response({'error': 'Google Sign-In Client ID not configured in Django settings.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            idinfo = id_token.verify_oauth2_token(token, requests.Request(), CLIENT_ID)
+
+            if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+                raise ValueError('Wrong issuer.')
+
+            email = idinfo.get('email')
+            name = idinfo.get('name')
+            # You can also get 'given_name', 'family_name', and 'picture' if needed
+
+            if not email:
+                return Response({'error': 'Email not found in Google ID token.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                user = CustomUser.objects.get(email=email)
+            except CustomUser.DoesNotExist:
+                # Create a new user
+                username = email.split('@')[0]  # Use the part before '@' as a default username
+                user = CustomUser.objects.create_user(email=email, username=username, first_name=name)
+                UserProfile.objects.create(user=user) # Create a user profile if you use it
+
+            # Log the user in (you might need to adjust this based on your authentication mechanism)
+            request.session['user_id'] = user.id
+            # Or, if you are using Django Rest Framework with token-based authentication:
+            # from rest_framework.authtoken.models import Token
+            # token, created = Token.objects.get_or_create(user=user)
+            # return Response({'token': token.key, 'user': UserSerializer(user).data}, status=status.HTTP_200_OK)
+
+            return Response({'message': 'Google sign-in successful.', 'user': UserSerializer(user).data}, status=status.HTTP_200_OK)
+
+        except ValueError as e:
+            return Response({'error': f'Invalid Google ID token: {e}'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': f'Something went wrong during Google sign-in: {e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    
+        
+class LogoutView(APIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    authentication_classes = [JWTAuthentication]
+
+
+    def post(self, request):
+
+        try:
+
+            token = request.auth
+
+            BlacklistedToken.objects.create(token=token)
+
+            return Response(status=205)  # HTTP 205 Reset Content
+
+        except Exception as e:
+
+            return Response({'error': str(e)}, status=400)
+
+
+class LogoutView(APIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    authentication_classes = [CustomJWTAuthentication]
