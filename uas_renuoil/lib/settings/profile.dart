@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/chatboth/chat_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:material_symbols_icons/material_symbols_icons.dart';
@@ -163,6 +164,14 @@ class ProfilePage extends StatelessWidget {
               icon: Icons.article_outlined,
               title: 'Privacy Policy',
               onTap: () => Navigator.pushNamed(context, '/privacy-policy'),
+            ),
+            SettingsItem(
+              icon: Icons.article_outlined,
+              title: 'Privacy Policy',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ChatPage()),
+              ),
             ),
             const SizedBox(height: 20),
             Padding(
