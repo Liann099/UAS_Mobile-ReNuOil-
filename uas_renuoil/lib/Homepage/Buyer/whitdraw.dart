@@ -464,7 +464,7 @@ class _SellerWithdrawsPageState extends State<SellerWithdrawsPage> {
                               },
                             ),
                             _NavIcon(
-                              icon: 'icons/trackfix.png',
+                              icon: 'assets/icons/trackfix.png',
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -690,7 +690,7 @@ class _SellerWithdrawsPageState extends State<SellerWithdrawsPage> {
                                                     SizedBox(
                                                       // Added SizedBox here
                                                       height:
-                                                          100, // Fixed height for all cards
+                                                          110, // Fixed height for all cards
                                                       child: _BankCard(
                                                         bankName:
                                                             _bankAccounts[i]

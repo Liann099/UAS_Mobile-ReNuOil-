@@ -701,7 +701,7 @@ class _SellerWithdrawPageState extends State<SellerWithdrawPage> {
                                                     SizedBox(
                                                       // Added SizedBox here
                                                       height:
-                                                          100, // Fixed height for all cards
+                                                          110, // Fixed height for all cards
                                                       child: _BankCard(
                                                         bankName:
                                                             _bankAccounts[i]

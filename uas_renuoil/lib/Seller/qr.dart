@@ -14,6 +14,7 @@ import 'package:flutter_application_1/Seller/pickup.dart';
 import 'package:flutter_application_1/Seller/QRseller.dart';
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 import 'package:flutter_application_1/Seller/seller.dart';
+import 'package:flutter_application_1/Seller/transaction_history.dart';
 
 class QRPage extends StatefulWidget {
   const QRPage({super.key});
@@ -184,7 +185,7 @@ class _QRPageState extends State<QRPage> {
                         ),
                         const SizedBox(height: 10),
                         Image.asset(
-                          'images/qrr.png',
+                          'assets/images/qrr.png',
                           width: 200,
                           height: 200,
                           fit: BoxFit.contain,
@@ -487,7 +488,7 @@ class _QRPageState extends State<QRPage> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          const ProfilePage()),
+                                          const TransactionHistoryScreen()),
                                 );
                               },
                             ),

@@ -157,6 +157,7 @@ class _SellerPage extends State<SellerPage> {
                 final username = usernameData['username'] ?? 'Guest User';
 
                 return SafeArea(
+                  
                   child: Column(
                     children: [
                       // Header with profile picture
@@ -757,207 +758,122 @@ class _SellerPage extends State<SellerPage> {
                               ),
                             ),
 
-                            const SizedBox(height: 15),
+                           const SizedBox(height: 20),
 
-                            // Why should you recycle with horizontal scroll
-                            const Text(
-                              "Why should you recycle ReNuOil?",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w600, fontSize: 16),
+                          // Why Recycle Section (Fixed Version)
+                          const Text(
+                            "Why should you recycle ReNuOil?",
+                            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                          ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            height: 340, // Adjusted height
+                            child: ListView(
+                              scrollDirection: Axis.horizontal,
+                              children: [
+                                _buildRecycleCard(
+                                  image: 'assets/images/Money Laundering.png',
+                                  title: "Easy Money",
+                                  description: "Reselling and making money from what you have used sounds interesting...",
+                                ),
+                                _buildRecycleCard(
+                                  image: 'assets/images/image 14.png',
+                                  title: "Save oil, save the planet!",
+                                  description: "Save Oil, Save the Planet! 🌍♻️...",
+                                ),
+                                _buildRecycleCard(
+                                  image: 'assets/images/image 15.png',
+                                  title: "Protect your health!",
+                                  description: "Used cooking oil can harm the environment...",
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 10),
-                            SizedBox(
-                              height: 385,
-                              child: ListView(
-                                scrollDirection: Axis.horizontal,
-                                children: [
-                                  // Card 1 - Easy Money
-                                  Container(
-                                    width: 282,
-                                    margin: const EdgeInsets.only(right: 12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.05),
-                                          blurRadius: 4,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius:
-                                              const BorderRadius.vertical(
-                                                  top: Radius.circular(16)),
-                                          child: Image.asset(
-                                            'assets/images/Money Laundering.png',
-                                            height: 282,
-                                            width: double.infinity,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
-                                        Container(
-                                          width: double.infinity,
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: const BoxDecoration(
-                                            color: Color(0xFFFFD75E),
-                                            borderRadius: BorderRadius.vertical(
-                                                bottom: Radius.circular(16)),
-                                          ),
-                                          child: Column(
-                                            children: const [
-                                              Text(
-                                                "Easy Money",
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                              SizedBox(height: 6),
-                                              Text(
-                                                "Reselling and making money from what you have used sounds interesting, right? So, save the used cooking oil that you have used and sell it! 🤑💰",
-                                                style: TextStyle(fontSize: 10),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-
-                                  // Card 2 (MODIFIED)
-                                  Container(
-                                    width: 282,
-                                    margin: const EdgeInsets.only(right: 12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.05),
-                                          blurRadius: 4,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius:
-                                              const BorderRadius.vertical(
-                                                  top: Radius.circular(16)),
-                                          child: Image.asset(
-                                            'assets/images/image 14.png',
-                                            height: 282,
-                                            width: double.infinity,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
-                                        Container(
-                                          width: double.infinity,
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: const BoxDecoration(
-                                            color: Color(0xFFFFD75E),
-                                            borderRadius: BorderRadius.vertical(
-                                                bottom: Radius.circular(16)),
-                                          ),
-                                          child: Column(
-                                            children: const [
-                                              Text(
-                                                "Save oil, save the planet!",
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                              SizedBox(height: 6),
-                                              Text(
-                                                "Save Oil, Save the Planet! 🌍♻️ Used cooking oil isn't trash—it's a valuable resource! Instead of pouring it down the drain, recycle it into biodiesel or other sustainable products. 🌱✨",
-                                                style: TextStyle(fontSize: 10),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-
-                                  // Card 3 (MODIFIED)
-                                  Container(
-                                    width: 282,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.05),
-                                          blurRadius: 4,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius:
-                                              const BorderRadius.vertical(
-                                                  top: Radius.circular(16)),
-                                          child: Image.asset(
-                                            'assets/images/image 15.png',
-                                            height: 282,
-                                            width: double.infinity,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
-                                        Container(
-                                          width: double.infinity,
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: const BoxDecoration(
-                                            color: Color(0xFFFFD75E),
-                                            borderRadius: BorderRadius.vertical(
-                                                bottom: Radius.circular(16)),
-                                          ),
-                                          child: Column(
-                                            children: const [
-                                              Text(
-                                                "Protect your health!",
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                              SizedBox(height: 6),
-                                              Text(
-                                                "Used cooking oil can harm the environment and your health if not disposed of properly. 🚫🌍 Recycling it helps prevent clogged drains, reduces pollution, and creates cleaner biofuels.",
-                                                style: TextStyle(fontSize: 10),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            const SizedBox(height: 20),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              },
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+  );
+}
+
+Widget _buildRecycleCard({
+    required String image,
+    required String title,
+    required String description,
+  }) {
+    return SizedBox(
+      width: 250,
+      height: 380, // Fixed total height for all cards
+      child: Container(
+        margin: const EdgeInsets.only(right: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-    );
-  }
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Image section with fixed height
+            Container(
+              height: 220, // Fixed image height
+              decoration: BoxDecoration(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
+                image: DecorationImage(
+                  image: AssetImage(image),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            // Text section that fills remaining space
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFFD75E),
+                  borderRadius:
+                      BorderRadius.vertical(bottom: Radius.circular(16)),
+                ),
+                    child: Column(
+                mainAxisAlignment: MainAxisAlignment.center, // Vertical center
+                crossAxisAlignment: CrossAxisAlignment.center, // Horizontal center
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.center, // Center text alignment
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    description,
+                    style: const TextStyle(fontSize: 12),
+                    textAlign: TextAlign.center, // Center text alignment
+                    maxLines: 3, // Limit to 3 lines
+                    overflow: TextOverflow.ellipsis, // Add ellipsis if text is too long
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 }
 
 class _NavIcon extends StatelessWidget {

@@ -181,10 +181,10 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
                             fontFamily: 'Poppins',
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 10),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 4),
+                              horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: status.toLowerCase() == 'success'
                                 ? Colors.black
@@ -492,7 +492,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
                         ),
                       ),
 
-                      const SizedBox(height: 20),
+                      // const SizedBox(height: 20),
 
                       // Tab bar for RNO Deposit and Withdrawal
                       Container(

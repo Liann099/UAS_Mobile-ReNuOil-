@@ -14,7 +14,7 @@ class Assets {
       'assets/images/american_express.png';
   static const String imagesApple = 'assets/images/apple.png';
   static const String imagesArcticonsOvo = 'assets/images/arcticons_ovo.png';
-  static const String imagesPromoCodeMascot = 'images/promo_code_mascot.png';
+  static const String imagesPromoCodeMascot = 'assets/images/promo_code_mascot.png';
   static const String imagesBg = 'assets/images/bg.png';
   static const String imagesBiBank = 'assets/images/bi_bank.png';
   static const String imagesBtc = 'assets/images/btc.png';
@@ -39,6 +39,6 @@ class Assets {
   static const String imagesWin2 = 'assets/images/win2.png';
   static const String imagesWin3 = 'assets/images/win3.png';
   static const String imagesIndustrialOil = 'images/industrial_oil.png';
-  static const String imagesMotorOil = 'images/motor_oil.png';
-  static const String imagesProductMilk = 'images/product_milk.png';
+  static const String imagesMotorOil = 'assets/images/motor_oil.png';
+  static const String imagesProductMilk = 'assets/images/product_milk.png';
 }

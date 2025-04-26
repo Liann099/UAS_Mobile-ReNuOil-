@@ -289,7 +289,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                         },
                       ),
                       _NavIcon(
-                        icon: 'icons/trackfix.png',
+                        icon: 'assets/icons/trackfix.png',
                         active: true,
                         showUnderline: true,
                         onTap: () {},
@@ -420,7 +420,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                     width: 40,
                     height: 40,
                     child: Image.asset(
-                      'images/handimage.png', // Ganti path ini sesuai lokasi aset kamu
+                      'assets/images/handimage.png', // Ganti path ini sesuai lokasi aset kamu
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Icon(Icons.shopping_bag,
@@ -544,7 +544,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
                 Positioned(
                   left: MediaQuery.of(context).size.width * 0.45 - 40,
                   child: Image.asset(
-                    'images/truck_delivery.png',
+                    'assets/images/truck_delivery.png',
                     width: 80,
                     height: 80,
                     fit: BoxFit.scaleDown,
@@ -759,7 +759,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen>
             left: progressWidth -
                 40, // Adjusted to center truck on progress point
             child: Image.asset(
-              'images/truck_delivery.png',
+              'assets/images/truck_delivery.png',
               width: 80,
               height: 80,
               fit: BoxFit.scaleDown,

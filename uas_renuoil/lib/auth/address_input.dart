@@ -46,9 +46,11 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
             children: [
               // Header with title and close button
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+                  border:
+                      Border(bottom: BorderSide(color: Colors.grey.shade300)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -130,6 +132,7 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
         decoration: const BoxDecoration(
           image: DecorationImage(
             image: AssetImage(Assets.imagesGroup306),
+            fit: BoxFit.cover,
           ),
           color: Color(0xFFFFB35A),
         ),
@@ -238,9 +241,11 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       hintText: 'City',
-                      hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                      hintStyle:
+                          TextStyle(color: Colors.white.withOpacity(0.7)),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 16),
                     ),
                   ),
                 ),
@@ -258,9 +263,11 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       hintText: 'Address',
-                      hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                      hintStyle:
+                          TextStyle(color: Colors.white.withOpacity(0.7)),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 16),
                     ),
                   ),
                 ),
@@ -270,7 +277,8 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
                 // ZIP code input
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade500.withOpacity(0.7), // Grey for ZIP code
+                    color: Colors.grey.shade500
+                        .withOpacity(0.7), // Grey for ZIP code
                     borderRadius: BorderRadius.circular(30),
                   ),
                   child: TextField(
@@ -278,9 +286,11 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       hintText: 'ZIP code',
-                      hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                      hintStyle:
+                          TextStyle(color: Colors.white.withOpacity(0.7)),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 16),
                     ),
                     keyboardType: TextInputType.number,
                   ),
@@ -350,7 +360,8 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 80), // Extra space at bottom for scrolling
+                const SizedBox(
+                    height: 80), // Extra space at bottom for scrolling
               ],
             ),
           ),

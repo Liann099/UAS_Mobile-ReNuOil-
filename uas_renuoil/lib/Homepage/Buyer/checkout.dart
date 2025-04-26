@@ -265,7 +265,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                         isSelected:
                                             paymentMethod == bank.bankName,
                                         onTap: () => setState(() =>
-                                            paymentMethod = bank.bankName),
+                                            paymentMethod =
+                                                bank.bankName.toLowerCase()),
                                       ))
                                   .toList(),
                             ),
@@ -820,7 +821,6 @@ class OrderConfirmationPage extends StatelessWidget {
     required this.voucherDiscountPercent,
   }) : super(key: key);
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -836,7 +836,7 @@ class OrderConfirmationPage extends StatelessWidget {
               children: [
                 // Success badge image
                 Image.asset(
-                  'images/verified.png',
+                  'assets/images/verified.png',
                   width: 120,
                   height: 120,
                 ),
@@ -891,7 +891,7 @@ class OrderConfirmationPage extends StatelessWidget {
 
                 // Fox mascot image
                 Image.asset(
-                  'images/mascot.png',
+                  'assets/images/mascot.png',
                   width: 100,
                   height: 100,
                 ),
@@ -903,7 +903,7 @@ class OrderConfirmationPage extends StatelessWidget {
                   width: double.infinity,
                   height: 56,
                   margin: const EdgeInsets.only(bottom: 16),
-                   child: ElevatedButton(
+                  child: ElevatedButton(
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -940,7 +940,6 @@ class OrderConfirmationPage extends StatelessWidget {
                             builder: (context) => const OrderTrackingScreen()),
                       );
                     },
-          
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: Colors.black,

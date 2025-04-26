@@ -624,7 +624,7 @@ class DriverConfirmationPage extends StatelessWidget {
                       // Scooter icon
                       Center(
                         child: Image.asset(
-                          'images/motor.png',
+                          'assets/images/motor.png',
                           width: 300,
                           height: 200,
                         ),

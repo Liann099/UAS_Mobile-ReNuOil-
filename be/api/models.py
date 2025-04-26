@@ -433,7 +433,7 @@ logger = logging.getLogger(__name__)
 
 PAYMENT_CHOICES = [
     ('bca', 'BCA'),
-    ('OCBC', 'OCBC'),
+    ('ocbc', 'OCBC'),
     ('bni', 'BNI'),
     ('mandiri', 'mandiri'),
     ('WALLET', 'RenuOil Wallet'),

@@ -139,7 +139,7 @@ class _BasketScreenState extends State<BasketScreen> {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final containerWidth = isSmallScreen
-                  ? screenSize.width * 0.95
+                  ? screenSize.width * 1
                   : screenSize.width > 800
                       ? 600.0
                       : screenSize.width * 0.75;
@@ -147,7 +147,7 @@ class _BasketScreenState extends State<BasketScreen> {
               return Container(
                 width: containerWidth,
                 constraints: BoxConstraints(
-                  maxHeight: screenSize.height * 0.9,
+                  maxHeight: screenSize.height * 1,
                 ),
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -185,6 +185,9 @@ class _BasketScreenState extends State<BasketScreen> {
                       child: Row(
                         children: [
                           IconButton(
+                            padding:
+                                EdgeInsets.zero, // <-- Hapus padding default
+
                             icon: Container(
                               width: 48, // Set the desired width
                               height: 48, // Set the desired height
@@ -551,7 +554,7 @@ class _BasketScreenState extends State<BasketScreen> {
                         ),
                       ),
                     ),
-
+                    SizedBox(height: 20), 
                     // Checkout button (only shown if cart has items)
                     if (cartItems.isNotEmpty)
                       Padding(
@@ -608,6 +611,8 @@ class _BasketScreenState extends State<BasketScreen> {
                           ),
                         ),
                       ),
+                    SizedBox(
+                        height: 20), // Adjust the height as needed for spacing
                   ],
                 ),
               );

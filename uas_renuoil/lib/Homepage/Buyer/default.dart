@@ -393,7 +393,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                               },
                             ),
                             _NavIcon(
-                              icon: 'icons/trackfix.png',
+                              icon: 'assets/icons/trackfix.png',
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -424,7 +424,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                                     width: 100,
                                     height: 100,
                                     child: Image.asset(
-                                      'images/mascot.png',
+                                      'assets/images/mascot.png',
                                       fit: BoxFit.contain,
                                     ),
                                   ),
@@ -843,7 +843,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                       const BorderRadius.vertical(top: Radius.circular(12)),
                   child: Container(
                     height: 120,
-                    color: Colors.grey[200],
+                    color: const Color.fromARGB(255, 255, 255, 255),
                     child: product.picture != null &&
                             product.picture!.isNotEmpty
                         ? Image.network(

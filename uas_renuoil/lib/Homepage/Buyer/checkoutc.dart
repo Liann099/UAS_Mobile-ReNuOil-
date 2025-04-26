@@ -311,7 +311,8 @@ class _CheckoutcPageState extends State<CheckoutcPage> {
                                         isSelected:
                                             paymentMethod == bank.bankName,
                                         onTap: () => setState(() =>
-                                            paymentMethod = bank.bankName),
+                                            paymentMethod =
+                                                bank.bankName.toLowerCase()),
                                       ))
                                   .toList(),
                             ),
@@ -898,7 +899,6 @@ class _CheckoutcPageState extends State<CheckoutcPage> {
   }
 }
 
-
 class OrderConfirmationPage extends StatelessWidget {
   final double grandTotal;
   final int voucherDiscountPercent;
@@ -926,7 +926,7 @@ class OrderConfirmationPage extends StatelessWidget {
               children: [
                 // Success badge image
                 Image.asset(
-                  'images/verified.png',
+                  'assets/images/verified.png',
                   width: 120,
                   height: 120,
                 ),
@@ -981,7 +981,7 @@ class OrderConfirmationPage extends StatelessWidget {
 
                 // Fox mascot image
                 Image.asset(
-                  'images/mascot.png',
+                  'assets/images/mascot.png',
                   width: 100,
                   height: 100,
                 ),
@@ -1054,7 +1054,6 @@ class OrderConfirmationPage extends StatelessWidget {
     );
   }
 }
-
 
 // class OrderConfirmationPage extends StatelessWidget {
 //   final double grandTotal;

@@ -601,7 +601,7 @@ class _HistoryScreenState extends State<BuyerHistoryScreen>
                         onTap: () {},
                       ),
                       _NavIcon(
-                        icon: 'icons/trackfix.png',
+                        icon: 'assets/icons/trackfix.png',
                         onTap: () {
                           Navigator.push(
                             context,
