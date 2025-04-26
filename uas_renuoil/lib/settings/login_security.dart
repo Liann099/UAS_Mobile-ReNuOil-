@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/generated/assets.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:flutter_application_1/auth/forgot_password.dart';
 
 class LoginSecurityScreen extends StatelessWidget {
   const LoginSecurityScreen({super.key});
@@ -84,7 +85,13 @@ class LoginSecurityScreen extends StatelessWidget {
                       ),
                       TextButton(
                         onPressed: () {
-                          // Update password action
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const ForgotPasswordScreen(),
+                            ),
+                          );
                         },
                         child: const Text(
                           'Update',
@@ -114,9 +121,7 @@ class LoginSecurityScreen extends StatelessWidget {
                       SizedBox(
                         width: 40,
                         height: 40,
-                        child: SvgPicture.asset(
-                          Assets.iconsSecurityIcon
-                        ),
+                        child: SvgPicture.asset(Assets.iconsSecurityIcon),
                       ),
                       const SizedBox(height: 15),
                       const Text(

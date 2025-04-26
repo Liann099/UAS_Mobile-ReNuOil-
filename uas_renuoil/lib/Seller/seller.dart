@@ -8,7 +8,6 @@ import '../constants.dart';
 import '../generated/assets.dart';
 import '../home.dart';
 
-
 import 'package:flutter_application_1/balance.dart';
 import 'package:flutter_application_1/settings/profile.dart';
 import 'package:flutter_application_1/Seller/sellerwithdraw.dart';
@@ -18,6 +17,34 @@ import 'package:flutter_application_1/Seller/ranking_list_page.dart';
 
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 import 'package:flutter_application_1/Seller/transaction_history.dart';
+
+import 'package:location/location.dart' as loc;
+import 'package:latlong2/latlong.dart';
+import 'package:flutter_map/flutter_map.dart';
+
+import 'package:flutter_application_1/maps/location_map.dart';
+
+// Lokasi mesin-mesin ReNuOil
+final List<ReNuOilLocation> renuoilMachineLocations = [
+  ReNuOilLocation(
+      name: 'B Residence BSD City', location: LatLng(-6.3038, 106.6525)),
+  ReNuOilLocation(
+      name: 'Residence 8 Senopati', location: LatLng(-6.2244, 106.8021)),
+  ReNuOilLocation(
+      name: 'Apartment Orchard Surabaya', location: LatLng(-7.2839, 112.7937)),
+  ReNuOilLocation(
+      name: 'Hilltops Luxury Apartment Singapore',
+      location: LatLng(1.313996, 103.796363)),
+  ReNuOilLocation(
+      name: 'Beachwalk Shopping Center Bali',
+      location: LatLng(-8.7090, 115.1691)),
+];
+
+class ReNuOilLocation {
+  final String name;
+  final LatLng location;
+  ReNuOilLocation({required this.name, required this.location});
+}
 
 class SellerPage extends StatefulWidget {
   const SellerPage({super.key});
@@ -35,6 +62,55 @@ class _SellerPage extends State<SellerPage> {
   String? profilePictureUrl;
   final Map<String, TextEditingController> controllers = {};
   final Map<String, bool> isEditing = {};
+  LatLng? _currentLocation;
+  String _nearestLocationText = "Nearest ReNuOil";
+
+  Future<void> getUserLocationAndNearest() async {
+    final loc.Location locationService = loc.Location();
+
+    bool serviceEnabled = await locationService.serviceEnabled();
+    if (!serviceEnabled) {
+      serviceEnabled = await locationService.requestService();
+    }
+
+    loc.PermissionStatus permissionGranted =
+        await locationService.hasPermission();
+    if (permissionGranted == loc.PermissionStatus.denied) {
+      permissionGranted = await locationService.requestPermission();
+    }
+
+    final loc.LocationData locationData = await locationService.getLocation();
+
+    if (locationData.latitude != null && locationData.longitude != null) {
+      _currentLocation =
+          LatLng(locationData.latitude!, locationData.longitude!);
+      _calculateNearest();
+    }
+  }
+
+  void _calculateNearest() {
+    if (_currentLocation == null) return;
+    final Distance distance = const Distance();
+    double minDistance = double.infinity;
+    String nearestName = '';
+
+    for (var machine in renuoilMachineLocations) {
+      double km = distance.as(
+        LengthUnit.Kilometer,
+        _currentLocation!,
+        machine.location,
+      );
+      if (km < minDistance) {
+        minDistance = km;
+        nearestName = machine.name;
+      }
+    }
+
+    setState(() {
+      _nearestLocationText =
+          "Nearest ReNuOil (${minDistance.toStringAsFixed(2)} km)";
+    });
+  }
 
   Future<List<Map<String, dynamic>>> fetchUserData() async {
     try {
@@ -127,6 +203,7 @@ class _SellerPage extends State<SellerPage> {
     // Change: Initialize _futureUserData in initState
     _futureUserData = fetchUserData();
     fetchLeaderboardData(); // Add this line
+    getUserLocationAndNearest(); // <-- Tambahkan ini
   }
 
   @override
@@ -157,7 +234,6 @@ class _SellerPage extends State<SellerPage> {
                 final username = usernameData['username'] ?? 'Guest User';
 
                 return SafeArea(
-                  
                   child: Column(
                     children: [
                       // Header with profile picture
@@ -398,55 +474,184 @@ class _SellerPage extends State<SellerPage> {
                             // const SizedBox(height: 10),
                             Align(
                               alignment: Alignment.centerRight,
-                              child: const Text(
-                                "Nearest ReNuOil(1.98km)",
-                                style: TextStyle(
-                                    fontSize: 10, fontWeight: FontWeight.w600),
+                              child: Text(
+                                _nearestLocationText,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 5),
 
-                            // Map Section
                             ClipRRect(
                               borderRadius: BorderRadius.circular(20),
-                              child: Container(
-                                height: 180,
-                                width: double.infinity,
-                                color: Colors.grey.shade300,
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    Image.asset(
-                                      'assets/images/map_placeholder.png',
-                                      width: double.infinity,
-                                      height: double.infinity,
-                                      fit: BoxFit.cover,
-                                    ),
-                                    Positioned(
-                                      bottom: 10,
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 15, vertical: 8),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black,
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                        ),
-                                        child: const Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(Icons.map,
-                                                color: Colors.white, size: 16),
-                                            SizedBox(width: 5),
-                                            Text("Map",
-                                                style: TextStyle(
+                              child: InkWell(
+                                onTap: () {
+                                  // Navigator.pushNamed(
+                                  //     context, '/location_map'); // Sudah benar
+                                },
+                                child: Container(
+                                  height: 180,
+                                  width: double.infinity,
+                                  color: Colors.grey.shade300,
+                                  child: Stack(
+                                    children: [
+                                      _currentLocation != null
+                                          ? FlutterMap(
+                                              options: MapOptions(
+                                                initialCenter:
+                                                    _currentLocation!,
+                                                initialZoom: 13,
+                                                interactionOptions:
+                                                    const InteractionOptions(
+                                                  flags: InteractiveFlag.all,
+                                                ),
+                                              ),
+                                              children: [
+                                                TileLayer(
+                                                  urlTemplate:
+                                                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                                  userAgentPackageName:
+                                                      'com.example.app',
+                                                ),
+                                                MarkerLayer(
+                                                  markers: [
+                                                    // Lokasi User
+                                                    Marker(
+                                                      point: _currentLocation!,
+                                                      width: 80,
+                                                      height: 80,
+                                                      child: Column(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: const [
+                                                          Icon(
+                                                            Icons.location_pin,
+                                                            size: 30,
+                                                            color: Colors.red,
+                                                          ),
+                                                          Text(
+                                                            'You',
+                                                            style: TextStyle(
+                                                              fontSize: 10,
+                                                              color:
+                                                                  Colors.black,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    // Lokasi mesin ReNuOil
+                                                    ...renuoilMachineLocations
+                                                        .map((location) {
+                                                      return Marker(
+                                                        point:
+                                                            location.location,
+                                                        width: 100,
+                                                        height: 100,
+                                                        child: Column(
+                                                          mainAxisSize:
+                                                              MainAxisSize.min,
+                                                          children: [
+                                                            const Icon(
+                                                              Icons
+                                                                  .location_pin,
+                                                              size: 30,
+                                                              color:
+                                                                  Colors.blue,
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 2),
+                                                            Container(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .symmetric(
+                                                                      horizontal:
+                                                                          4,
+                                                                      vertical:
+                                                                          2),
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                color: Colors
+                                                                    .white,
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            4),
+                                                                boxShadow: [
+                                                                  BoxShadow(
+                                                                    color: Colors
+                                                                        .black26,
+                                                                    blurRadius:
+                                                                        2,
+                                                                    offset:
+                                                                        Offset(
+                                                                            0,
+                                                                            1),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              child: Text(
+                                                                location.name,
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                                style:
+                                                                    const TextStyle(
+                                                                  fontSize: 8,
+                                                                  color: Colors
+                                                                      .black,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                    }).toList(),
+                                                  ],
+                                                ),
+                                              ],
+                                            )
+                                          : const Center(
+                                              child:
+                                                  CircularProgressIndicator()),
+
+                                      // Centered MAP Text
+                                      Positioned(
+                                        bottom: 10,
+                                        left: 0,
+                                        right: 0,
+                                        child: Center(
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 15, vertical: 8),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black,
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            child: const Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(Icons.map,
                                                     color: Colors.white,
-                                                    fontSize: 12)),
-                                          ],
+                                                    size: 16),
+                                                SizedBox(width: 5),
+                                                Text(
+                                                  "Map",
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -692,7 +897,6 @@ class _SellerPage extends State<SellerPage> {
                               ),
                             ),
 
-
                             const SizedBox(height: 15),
 
                             const Text(
@@ -758,49 +962,53 @@ class _SellerPage extends State<SellerPage> {
                               ),
                             ),
 
-                           const SizedBox(height: 20),
+                            const SizedBox(height: 20),
 
-                          // Why Recycle Section (Fixed Version)
-                          const Text(
-                            "Why should you recycle ReNuOil?",
-                            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-                          ),
-                          const SizedBox(height: 10),
-                          SizedBox(
-                            height: 340, // Adjusted height
-                            child: ListView(
-                              scrollDirection: Axis.horizontal,
-                              children: [
-                                _buildRecycleCard(
-                                  image: 'assets/images/Money Laundering.png',
-                                  title: "Easy Money",
-                                  description: "Reselling and making money from what you have used sounds interesting...",
-                                ),
-                                _buildRecycleCard(
-                                  image: 'assets/images/image 14.png',
-                                  title: "Save oil, save the planet!",
-                                  description: "Save Oil, Save the Planet! 🌍♻️...",
-                                ),
-                                _buildRecycleCard(
-                                  image: 'assets/images/image 15.png',
-                                  title: "Protect your health!",
-                                  description: "Used cooking oil can harm the environment...",
-                                ),
-                              ],
+                            // Why Recycle Section (Fixed Version)
+                            const Text(
+                              "Why should you recycle ReNuOil?",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w600, fontSize: 16),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              height: 340, // Adjusted height
+                              child: ListView(
+                                scrollDirection: Axis.horizontal,
+                                children: [
+                                  _buildRecycleCard(
+                                    image: 'assets/images/Money Laundering.png',
+                                    title: "Easy Money",
+                                    description:
+                                        "Reselling and making money from what you have used sounds interesting...",
+                                  ),
+                                  _buildRecycleCard(
+                                    image: 'assets/images/image 14.png',
+                                    title: "Save oil, save the planet!",
+                                    description:
+                                        "Save Oil, Save the Planet! 🌍♻️...",
+                                  ),
+                                  _buildRecycleCard(
+                                    image: 'assets/images/image 15.png',
+                                    title: "Protect your health!",
+                                    description:
+                                        "Used cooking oil can harm the environment...",
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-  );
-}
+                    ],
+                  ),
+                );
+              },
+            ),
+    );
+  }
 
-Widget _buildRecycleCard({
+  Widget _buildRecycleCard({
     required String image,
     required String title,
     required String description,
@@ -845,35 +1053,38 @@ Widget _buildRecycleCard({
                   borderRadius:
                       BorderRadius.vertical(bottom: Radius.circular(16)),
                 ),
-                    child: Column(
-                mainAxisAlignment: MainAxisAlignment.center, // Vertical center
-                crossAxisAlignment: CrossAxisAlignment.center, // Horizontal center
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                child: Column(
+                  mainAxisAlignment:
+                      MainAxisAlignment.center, // Vertical center
+                  crossAxisAlignment:
+                      CrossAxisAlignment.center, // Horizontal center
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      textAlign: TextAlign.center, // Center text alignment
                     ),
-                    textAlign: TextAlign.center, // Center text alignment
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    description,
-                    style: const TextStyle(fontSize: 12),
-                    textAlign: TextAlign.center, // Center text alignment
-                    maxLines: 3, // Limit to 3 lines
-                    overflow: TextOverflow.ellipsis, // Add ellipsis if text is too long
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      description,
+                      style: const TextStyle(fontSize: 12),
+                      textAlign: TextAlign.center, // Center text alignment
+                      maxLines: 3, // Limit to 3 lines
+                      overflow: TextOverflow
+                          .ellipsis, // Add ellipsis if text is too long
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 class _NavIcon extends StatelessWidget {

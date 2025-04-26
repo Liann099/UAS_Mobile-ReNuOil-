@@ -113,6 +113,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Edit $key'),
+        backgroundColor: Colors.black, // <- Warna latar belakang hitam
         content: TextField(
           controller: controller,
           decoration: InputDecoration(

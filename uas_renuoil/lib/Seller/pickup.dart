@@ -15,7 +15,38 @@ import 'package:flutter_application_1/Seller/QRseller.dart';
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 import 'package:flutter_application_1/Seller/seller.dart';
 import 'package:flutter_application_1/Seller/transaction_history.dart';
+import 'package:location/location.dart' as loc;
+import 'package:latlong2/latlong.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
+class ReNuOilLocation {
+  final String name;
+  final LatLng location;
+
+  ReNuOilLocation({required this.name, required this.location});
+}
+
+LatLng? _currentLocation;
+ReNuOilLocation? _nearestLocation;
+
+final List<ReNuOilLocation> renuoilMachineLocations = [
+  ReNuOilLocation(
+      name: 'B Residence BSD City', location: LatLng(-6.3000, 106.6500)),
+  ReNuOilLocation(
+      name: 'Residence 8 Senopati', location: LatLng(-6.2249, 106.8083)),
+  ReNuOilLocation(
+      name: 'Apartment Orchard Surabaya', location: LatLng(-7.2903, 112.7271)),
+  ReNuOilLocation(
+      name: 'Hilltops Luxury Apartment Singapore',
+      location: LatLng(1.2931, 103.7858)),
+  ReNuOilLocation(
+      name: 'Beachwalk Shopping Center Bali',
+      location: LatLng(-8.7090, 115.1694)),
+];
+
+String _pickupLocationText = 'Fetching Location...';
 
 class PickupPage extends StatefulWidget {
   const PickupPage({super.key});
@@ -28,12 +59,75 @@ class _PickupPageState extends State<PickupPage> {
   final storage = const FlutterSecureStorage();
   Future<List<Map<String, dynamic>>>? _futureUserData;
   final TextEditingController _amountController = TextEditingController();
-
+  String? selectedCourier;
   bool isLoading = true;
   Map<String, String> userData = {};
   String? profilePictureUrl;
   final Map<String, TextEditingController> controllers = {};
   final Map<String, bool> isEditing = {};
+
+  Future<void> _fetchCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      await Geolocator.openLocationSettings();
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error('Location permissions are permanently denied.');
+    }
+
+    final Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+
+    List<Placemark> placemarks = await placemarkFromCoordinates(
+      position.latitude,
+      position.longitude,
+    );
+
+    Placemark place = placemarks[0];
+
+    setState(() {
+      _pickupLocationText =
+          "${place.name}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
+      _currentLocation = LatLng(position.latitude, position.longitude);
+    });
+
+    _findNearestMachine();
+  }
+
+  void _findNearestMachine() {
+    double minDistance = double.infinity;
+    ReNuOilLocation? nearest;
+
+    for (var location in renuoilMachineLocations) {
+      final distance = Distance().as(
+        LengthUnit.Kilometer,
+        _currentLocation!,
+        location.location,
+      );
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearest = location;
+      }
+    }
+
+    setState(() {
+      _nearestLocation = nearest;
+    });
+  }
 
   Future<List<Map<String, dynamic>>> fetchUserData() async {
     try {
@@ -100,6 +194,13 @@ class _PickupPageState extends State<PickupPage> {
         return;
       }
 
+      if (_currentLocation == null || _nearestLocation == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location data is not ready yet')),
+        );
+        return;
+      }
+
       final response = await http.post(
         Uri.parse('$baseUrl/api/pick-up/'),
         headers: {
@@ -107,34 +208,31 @@ class _PickupPageState extends State<PickupPage> {
           'Content-Type': 'application/json',
         },
         body: json.encode({
-          'pick_up_location': 'BMW Astra Serpong', // You can make this dynamic
-          'drop_location': 'Nearest ReNuOil (@ Residence BSD City)',
+          'pick_up_location':
+              '${_currentLocation!.latitude},${_currentLocation!.longitude}',
+          'drop_location': _nearestLocation!.name,
           'liters': _amountController.text,
-          'courier': 'gojek', // You can make this selectable
-          'transport_mode': 'car', // You can make this selectable
+          'courier': selectedCourier?.toLowerCase() ??
+              'gojek', // use selected value or default to 'gojek'
+          'transport_mode': 'car',
         }),
       );
 
       if (response.statusCode == 201) {
-        // Success - show success message and navigate
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Pickup order created successfully!')),
         );
-        // Navigate to confirmation page or back to seller home
         Navigator.push(
           context,
           MaterialPageRoute(
               builder: (context) => const DriverConfirmationPage()),
         ).then((_) {
-          // This runs after the driver confirmation page is closed (popped)
-          // Navigate back to seller home
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const SellerPage()),
           );
         });
       } else {
-        // Handle error
         final errorData = json.decode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -153,6 +251,7 @@ class _PickupPageState extends State<PickupPage> {
   void initState() {
     super.initState();
     _futureUserData = fetchUserData();
+    _fetchCurrentLocation(); // Tambahkan ini supaya langsung ambil lokasi saat buka halaman
   }
 
   @override
@@ -339,215 +438,376 @@ class _PickupPageState extends State<PickupPage> {
                           ],
                         ),
                       ),
-
-                      // Map Area
                       Expanded(
-                        child: Stack(
-                          children: [
-                            // Map placeholder - in a real app, replace with actual map widget
-                            Image.asset(
-                              'assets/images/map_with_route.png',
-                              width: double.infinity,
-                              height: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Bottom Form Section
-                      Container(
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          borderRadius:
-                              BorderRadius.vertical(top: Radius.circular(30)),
-                        ),
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Source Location
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.grey.shade300),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
-                              child: Row(
-                                children: const [
-                                  Icon(Icons.home, color: Colors.black),
-                                  SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      'BMW Astra Serpong',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                  Icon(Icons.keyboard_arrow_down),
-                                ],
-                              ),
-                            ),
-
-                            const SizedBox(height: 12),
-
-                            // Destination Location
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.grey.shade300),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 12,
-                                    backgroundColor: Colors.grey.shade200,
-                                    child: Image.asset(
-                                      'assets/images/handimage.png',
-                                      width: 16,
-                                      height: 16,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Expanded(
-                                    child: Text(
-                                      'Nearest ReNuOil (@ Residence BSD City)',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            // Amount Field
-                            Row(
-                              children: [
-                                const Text(
-                                  'Amount  : ',
-                                  style: TextStyle(fontWeight: FontWeight.w500),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  width: 60,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    border:
-                                        Border.all(color: Colors.grey.shade400),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: TextField(
-                                    controller: _amountController,
-                                    keyboardType: TextInputType.number,
-                                    textAlign: TextAlign.center,
-                                    decoration: const InputDecoration(
-                                      border: InputBorder.none,
-                                      contentPadding:
-                                          EdgeInsets.symmetric(vertical: 8),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                const Text(
-                                  'Liters',
-                                  style: TextStyle(fontWeight: FontWeight.w500),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            // Oil Type
-                            Row(
-                              children: const [
-                                Text(
-                                  'Type of oil : ',
-                                  style: TextStyle(fontWeight: FontWeight.w500),
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  '-',
-                                  style: TextStyle(fontWeight: FontWeight.w500),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            // Courier Selection
-                            Row(
-                              children: [
-                                const Text(
-                                  'Courier : ',
-                                  style: TextStyle(fontWeight: FontWeight.w500),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              // Map Area
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: InkWell(
+                                  onTap: () {
+                                    // Navigator.pushNamed(context, '/location_map'); // Uncomment if needed
+                                  },
                                   child: Container(
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                          color: Colors.grey.shade400),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 8),
-                                    child: Row(
+                                    height: 350,
+                                    width: double.infinity,
+                                    color: Colors.grey.shade300,
+                                    child: Stack(
                                       children: [
-                                        Expanded(
-                                          child: Container(
-                                            height: 6,
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey.shade300,
-                                              borderRadius:
-                                                  BorderRadius.circular(3),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        const Icon(Icons.keyboard_arrow_down),
+                                        _currentLocation != null &&
+                                                _nearestLocation != null
+                                            ? FlutterMap(
+                                                options: MapOptions(
+                                                  initialCenter:
+                                                      _currentLocation!,
+                                                  initialZoom: 13,
+                                                  interactionOptions:
+                                                      const InteractionOptions(
+                                                    flags: InteractiveFlag.all,
+                                                  ),
+                                                ),
+                                                children: [
+                                                  TileLayer(
+                                                    urlTemplate:
+                                                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                                    userAgentPackageName:
+                                                        'com.example.app',
+                                                  ),
+                                                  PolylineLayer(
+                                                    polylines: [
+                                                      Polyline(
+                                                        points: [
+                                                          _currentLocation!, // Start point (your location)
+                                                          _nearestLocation!
+                                                              .location, // Destination point
+                                                        ],
+                                                        strokeWidth: 4.0,
+                                                        color: Colors
+                                                            .blue, // Line color
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  MarkerLayer(
+                                                    markers: [
+                                                      // Your current location marker
+                                                      Marker(
+                                                        point:
+                                                            _currentLocation!,
+                                                        width: 80,
+                                                        height: 80,
+                                                        child: Column(
+                                                          mainAxisSize:
+                                                              MainAxisSize.min,
+                                                          children: const [
+                                                            Icon(
+                                                              Icons
+                                                                  .location_pin,
+                                                              size: 30,
+                                                              color: Colors.red,
+                                                            ),
+                                                            Text(
+                                                              'You',
+                                                              style: TextStyle(
+                                                                fontSize: 10,
+                                                                color: Colors
+                                                                    .black,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      // Nearest machine location marker
+                                                      Marker(
+                                                        point: _nearestLocation!
+                                                            .location,
+                                                        width: 80,
+                                                        height: 80,
+                                                        child: Column(
+                                                          mainAxisSize:
+                                                              MainAxisSize.min,
+                                                          children: [
+                                                            const Icon(
+                                                              Icons
+                                                                  .location_pin,
+                                                              size: 30,
+                                                              color:
+                                                                  Colors.blue,
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 2),
+                                                            Container(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .symmetric(
+                                                                      horizontal:
+                                                                          4,
+                                                                      vertical:
+                                                                          2),
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                color: Colors
+                                                                    .white,
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            4),
+                                                                boxShadow: [
+                                                                  BoxShadow(
+                                                                    color: Colors
+                                                                        .black26,
+                                                                    blurRadius:
+                                                                        2,
+                                                                    offset:
+                                                                        Offset(
+                                                                            0,
+                                                                            1),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                              child: Text(
+                                                                _nearestLocation!
+                                                                    .name,
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                                style:
+                                                                    const TextStyle(
+                                                                  fontSize: 8,
+                                                                  color: Colors
+                                                                      .black,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              )
+                                            : const Center(
+                                                child:
+                                                    CircularProgressIndicator()),
                                       ],
                                     ),
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
 
-                            const SizedBox(height: 20),
-
-                            // Request Button
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: _submitPickupOrder,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFFFD75E),
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 15),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  elevation: 0,
+                              // Bottom Form Section
+                              Container(
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.vertical(
+                                      top: Radius.circular(30)),
                                 ),
-                                child: const Text(
-                                  'Request',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 16,
-                                  ),
+                                padding: const EdgeInsets.all(20),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Source Location (Current Location)
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                            color: Colors.grey.shade300),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 12),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.home,
+                                              color: Colors.black),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              'Your Location: $_pickupLocationText',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 12),
+
+                                    // Destination Location
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                            color: Colors.grey.shade300),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 12),
+                                      child: Row(
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 12,
+                                            backgroundColor:
+                                                Colors.grey.shade200,
+                                            child: Image.asset(
+                                              'assets/images/handimage.png',
+                                              width: 16,
+                                              height: 16,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              'Nearest ReNuOil: ${_nearestLocation?.name ?? 'Loading...'}',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 20),
+
+                                    // Amount Field
+                                    Row(
+                                      children: [
+                                        const Text(
+                                          'Amount  : ',
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w500),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          width: 60,
+                                          height: 36,
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                                color: Colors.grey.shade400),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: TextField(
+                                            controller: _amountController,
+                                            keyboardType: TextInputType.number,
+                                            textAlign: TextAlign.center,
+                                            decoration: const InputDecoration(
+                                              border: InputBorder.none,
+                                              contentPadding:
+                                                  EdgeInsets.symmetric(
+                                                      vertical: 8),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Text(
+                                          'Liters',
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w500),
+                                        ),
+                                      ],
+                                    ),
+
+                                    // const SizedBox(height: 16),
+
+                                    // // Oil Type
+                                    // Row(
+                                    //   children: const [
+                                    //     Text(
+                                    //       'Type of oil : ',
+                                    //       style: TextStyle(fontWeight: FontWeight.w500),
+                                    //     ),
+                                    //     SizedBox(width: 8),
+                                    //     Text(
+                                    //       '-',
+                                    //       style: TextStyle(fontWeight: FontWeight.w500),
+                                    //     ),
+                                    //   ],
+                                    // ),
+
+                                    const SizedBox(height: 16),
+
+                                    // Courier Selection
+                                    Row(
+                                      children: [
+                                        const Text(
+                                          'Courier : ',
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w500),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              border: Border.all(
+                                                  color: Colors.grey.shade400),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 16),
+                                            child: DropdownButtonHideUnderline(
+                                              child: DropdownButton<String>(
+                                                value: selectedCourier,
+                                                hint: const Text(
+                                                    'Select Courier'),
+                                                items: ['Gojek', 'Grab']
+                                                    .map((courier) {
+                                                  return DropdownMenuItem(
+                                                    value: courier,
+                                                    child: Text(courier),
+                                                  );
+                                                }).toList(),
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    selectedCourier = value;
+                                                  });
+                                                },
+                                                icon: const Icon(
+                                                    Icons.keyboard_arrow_down),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+
+                                    const SizedBox(height: 60),
+
+                                    // Request Button
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: ElevatedButton(
+                                        onPressed: _submitPickupOrder,
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              const Color(0xFFFFD75E),
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 15),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                          elevation: 0,
+                                        ),
+                                        child: const Text(
+                                          'Request',
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ],

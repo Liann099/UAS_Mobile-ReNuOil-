@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/maps/location_map.dart';
+import 'package:flutter_application_1/controller/google_login_cubit.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 // Auth
 import 'package:flutter_application_1/auth/address_input.dart';
@@ -54,7 +57,17 @@ import 'package:flutter_application_1/Seller/sellerwithdraw.dart';
 import 'package:flutter_application_1/Seller/QRseller.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiBlocProvider(
+      providers: [
+        BlocProvider<GoogleSignInCubit>(
+          create: (context) => GoogleSignInCubit(),
+        ),
+        // Add other cubits here if needed
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -103,6 +116,8 @@ class MyApp extends StatelessWidget {
         '/add-payout-method': (context) => AddPayoutMethodScreen(),
         '/payout-setup': (context) => PayoutSetupScreen(),
         '/earnings': (context) => EarningsScreen(),
+
+        '/location-map': (context) => const LocationMapScreen(),
 
         //Buyer
         '/buyer-default': (context) => const BuyerHomePage(),
@@ -165,12 +180,14 @@ class RouteButtonsScreen extends StatelessWidget {
       '/pickup': 'Pickup Page',
       '/seller-withdraw': 'Seller Withdraw',
       '/qr-seller': 'QR Seller',
+
+      '/location-map': 'Live Location Map',
     };
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Navigation Test'),
-        backgroundColor: Colors.deepPurpleAccent,
+        backgroundColor: Colors.black,
         foregroundColor: Colors.white,
       ),
       body: ListView.separated(
@@ -181,7 +198,7 @@ class RouteButtonsScreen extends StatelessWidget {
           final entry = routes.entries.elementAt(index);
           return ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepPurpleAccent,
+              backgroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
             onPressed: () => Navigator.pushNamed(context, entry.key),

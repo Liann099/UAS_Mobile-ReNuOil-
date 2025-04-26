@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:flutter_application_1/Seller/transaction_history.dart';
+import 'package:flutter_application_1/Homepage/Buyer/historybuyer.dart';
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});
@@ -42,7 +44,11 @@ class HistoryScreen extends StatelessWidget {
                 title: 'Your buy history',
                 subtitle: 'Click here to see your buy history',
                 onTap: () {
-                  // Navigate to buy history
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const BuyerHistoryScreen()),
+                  );
                 },
               ),
 
@@ -56,7 +62,11 @@ class HistoryScreen extends StatelessWidget {
                 title: 'Load more',
                 subtitle: 'Click here to see your sell history',
                 onTap: () {
-                  // Navigate to sell history
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const TransactionHistoryScreen()),
+                  );
                 },
               ),
             ],

@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'dart:convert';
 import '../constants.dart';
+import 'package:flutter_application_1/chatboth/chat_page.dart';
+
 
 final storage = FlutterSecureStorage();
 Future<Map<String, dynamic>> fetchUsername() async {
@@ -143,8 +145,10 @@ class ProfilePage extends StatelessWidget {
             SettingsItem(
               icon: Icons.help_outline,
               title: 'Visit the Help Center',
-              onTap: () => Navigator.pushNamed(context, '/help-center'),
-            ),
+onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ChatPage()),
+              ),            ),
             SettingsItem(
               icon: Icons.edit_outlined,
               title: 'Give us feedback',

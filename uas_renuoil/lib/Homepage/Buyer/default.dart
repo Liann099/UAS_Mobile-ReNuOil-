@@ -58,7 +58,6 @@ class Product {
   }
 }
 
-
 class BuyerHomePage extends StatefulWidget {
   const BuyerHomePage({super.key});
 
@@ -487,11 +486,21 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                               // Eco Oil Banner
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(20),
-                                child: Image.asset(
-                                  Assets.images2,
-                                  fit: BoxFit.cover,
+                                child: InkWell(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => HomePage()),
+                                    );
+                                  },
+                                  child: Image.asset(
+                                    Assets.images2,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
+
                               const SizedBox(height: 25),
 
                               // Promotion section
