@@ -15,6 +15,8 @@ urlpatterns = [
     # re_path(r'^auth/', include('djoser.urls.authtoken')),
     re_path(r'^auth/', include('djoser.urls.jwt')),
     path('api/', include('api.urls')),
+    
+   
 ]
 
 if settings.DEBUG:

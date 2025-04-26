@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/maps/location_map.dart';
-import 'package:flutter_application_1/controller/google_login_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'firebase_options.dart';
 
 // Auth
 import 'package:flutter_application_1/auth/address_input.dart';
@@ -41,8 +44,6 @@ import 'package:flutter_application_1/settings/privacy_sharing.dart';
 import 'package:flutter_application_1/settings/profile.dart';
 import 'package:flutter_application_1/settings/translation.dart';
 
-
-
 // Support
 import 'package:flutter_application_1/support/feedback_form.dart';
 import 'package:flutter_application_1/support/help_center.dart';
@@ -57,18 +58,13 @@ import 'package:flutter_application_1/Seller/pickup.dart';
 import 'package:flutter_application_1/Seller/sellerwithdraw.dart';
 import 'package:flutter_application_1/Seller/QRseller.dart';
 
-void main() {
-  runApp(
-    MultiBlocProvider(
-      providers: [
-        BlocProvider<GoogleSignInCubit>(
-          create: (context) => GoogleSignInCubit(),
-        ),
-        // Add other cubits here if needed
-      ],
-      child: const MyApp(),
-    ),
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
   );
+  
+  runApp(const MyApp()); 
 }
 
 class MyApp extends StatelessWidget {
@@ -103,9 +99,15 @@ class MyApp extends StatelessWidget {
         '/delete-account': (context) => DeleteAccountPage(),
         '/payment-methods': (context) => PaymentMethodsScreen(),
         '/forgot-password': (context) => ForgotPasswordScreen(),
-        '/verify-email': (context) =>
+        '/verify-email': (context) => 
             VerifyEmailScreen(email: 'email@example.com'),
-        '/create-new-password': (context) => CreateNewPasswordScreen(),
+        '/create-new-password': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, String>;
+          final email = args['email']!;
+          final resetCode = args['resetCode']!;
+          
+          return CreateNewPasswordScreen(email: email, resetCode: resetCode);
+        },
         '/address-input': (context) => AddressInputScreen(),
         '/buyer-or-seller': (context) => BuyerOrSellerScreen(),
         '/how-did-you-know': (context) => HowDidYouKnowScreen(),
@@ -131,7 +133,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
 
 class RouteButtonsScreen extends StatelessWidget {
   const RouteButtonsScreen({super.key});

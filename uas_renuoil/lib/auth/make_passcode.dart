@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+
 import 'package:flutter/services.dart';
+
 import 'package:flutter_application_1/generated/assets.dart';
+
 import 'package:local_auth/local_auth.dart';
 
 class MakePasscodeScreen extends StatefulWidget {
@@ -15,18 +18,22 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
     4,
     (index) => TextEditingController(),
   );
+
   final List<FocusNode> _focusNodes = List.generate(
     4,
     (index) => FocusNode(),
   );
+
   String _passcode = '';
 
   @override
   void initState() {
     super.initState();
+
     for (int i = 0; i < 4; i++) {
       _controllers[i].addListener(() {
         _updatePasscode();
+
         if (_controllers[i].text.isNotEmpty && i < 3) {
           _focusNodes[i + 1].requestFocus();
         }
@@ -38,8 +45,10 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
   void dispose() {
     for (int i = 0; i < 4; i++) {
       _controllers[i].dispose();
+
       _focusNodes[i].dispose();
     }
+
     super.dispose();
   }
 
@@ -59,6 +68,7 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Biometric authentication not available')),
       );
+
       return;
     }
 
@@ -206,6 +216,7 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
                       onPressed: _passcode.length == 4
                           ? () {
                               print('Passcode: $_passcode');
+
                               _showCongratulationsDialog();
                             }
                           : null,
@@ -246,6 +257,7 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
         return CongratulationsDialog(
           onContinue: () {
             Navigator.of(context).pop();
+
             Navigator.pushNamed(context, '/');
           },
         );
@@ -297,10 +309,7 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
 class CongratulationsDialog extends StatelessWidget {
   final VoidCallback onContinue;
 
-  const CongratulationsDialog({
-    super.key,
-    required this.onContinue,
-  });
+  const CongratulationsDialog({super.key, required this.onContinue});
 
   @override
   Widget build(BuildContext context) {
@@ -339,7 +348,6 @@ class CongratulationsDialog extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: const Color(0xFF0A3250),
-                    border: Border.all(color: Colors.white, width: 2),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),

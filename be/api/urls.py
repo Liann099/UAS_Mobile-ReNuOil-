@@ -1,8 +1,10 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import *
+from django.contrib.auth import views as auth_views
 
 router = DefaultRouter()
+
 # router.register(r'auth', AuthViewSet, basename='auth')
 # router.register(r'profiles', UserProfileViewSet, basename='profile')
 
@@ -26,7 +28,11 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     
     
-   path('auth/send-reset-code/', SendResetCodeView.as_view()),
+    
+    path('forgot-password/', forgot_password), 
+    
+
+    
 
 
 ]

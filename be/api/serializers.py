@@ -4,6 +4,8 @@ from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 from .models import Transaction, OilSale, Promotion, BankAccount, PickUpOrder, TopUp, Withdraw, TransactionHistory, CheckoutHistory
 import json
 
+from django.contrib.auth import get_user_model
+
 
 class UserCreateSerializer(BaseUserCreateSerializer):
     class Meta(BaseUserCreateSerializer.Meta):
@@ -179,3 +181,15 @@ class TrackerSerializer(serializers.ModelSerializer):
         model = Tracker
         fields = '__all__'
         read_only_fields = ['user']
+
+
+
+User = get_user_model()
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField(max_length=6, min_length=6)
+    new_password = serializers.CharField(required=False, min_length=8, write_only=True)
