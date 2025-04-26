@@ -20,10 +20,13 @@ urlpatterns = [
     path('transaction-history/', TransactionHistoryListView.as_view(), name='transaction-history'),
     path('rankings/', LeaderboardView.as_view(), name='ranking-list'),
     path('locations/', LocationView.as_view(), name='location-list'),
-    path('auth/google/', GoogleSignInView.as_view(), name='google-signin'),
     
+    path('auth/google/', GoogleSignInView.as_view(), name='google-signin'),
+    path('auth/google/', GoogleLoginView.as_view(), name='google-login'),
     path('logout/', LogoutView.as_view(), name='logout'),
-   
+    
+    
+   path('auth/send-reset-code/', SendResetCodeView.as_view()),
 
 
 ]

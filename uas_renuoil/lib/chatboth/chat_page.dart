@@ -20,8 +20,8 @@ class _ChatPageState extends State<ChatPage> {
   final ChatUser _gptChatUser = 
       ChatUser(id: '2', firstName: 'Chat', lastName: 'GPT');
 
-  List<ChatMessage> _messages = <ChatMessage>[];
-  List<ChatUser> _typingUsers = <ChatUser>[];
+  final List<ChatMessage> _messages = <ChatMessage>[];
+  final List<ChatUser> _typingUsers = <ChatUser>[];
 
   @override
   void initState() {

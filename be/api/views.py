@@ -19,7 +19,7 @@ from .serializers import (
 
 from rest_framework.exceptions import ValidationError
 
-
+#Some sign in handler
 from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -27,6 +27,16 @@ from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .authentication import CustomJWTAuthentication
 
+#Google SIgn in/login
+from rest_framework_simplejwt.tokens import RefreshToken
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+from django.contrib.auth import get_user_model
+
+#Forgot password
+import random
+from django.core.mail import send_mail
+from django.core.cache import cache 
 
 
 # Google Sign-In Imports
@@ -484,3 +494,60 @@ class LogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     authentication_classes = [CustomJWTAuthentication]
+   
+   
+   
+    
+class GoogleLoginView(APIView):
+    def post(self, request):
+        token = request.data.get("id_token")
+        try:
+            idinfo = id_token.verify_oauth2_token(token, google_requests.Request())
+            email = idinfo['email']
+            name = idinfo.get('name')
+
+            User = get_user_model()
+            user, _ = User.objects.get_or_create(email=email, defaults={'name': name})
+
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            })
+        except Exception as e:
+            return Response({'detail': str(e)}, status=400)
+
+
+
+
+
+
+
+User = get_user_model()
+
+class SendResetCodeView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        code = random.randint(100000, 999999)
+        cache.set(f'reset_code_{email}', code, timeout=300)  # 5 minutes
+
+        send_mail(
+            'Password Reset Code',
+            f'Your verification code is: {code}',
+            'noreply@yourapp.com',
+            [email],
+            fail_silently=False,
+        )
+
+        return Response({"message": "Reset code sent"}, status=status.HTTP_200_OK)
+
+
+

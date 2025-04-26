@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -14,14 +15,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _acceptTerms = false;
 
   final String signupUrl = '$baseUrl/auth/users/';
+  final String loginUrl = '$baseUrl/auth/jwt/create/';
+  final storage = const FlutterSecureStorage(); // Secure storage for token
 
   @override
   void dispose() {
@@ -38,11 +40,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
 
-    // Validation
-    if (username.isEmpty ||
-        email.isEmpty ||
-        password.isEmpty ||
-        confirmPassword.isEmpty) {
+    if (username.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       _showError('Please fill in all fields');
       return;
     }
@@ -75,19 +73,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
           'username': username,
           'email': email,
           'password': password,
-          're_password': confirmPassword, // Tambahkan ini
+          're_password': confirmPassword,
         }),
       );
 
       if (response.statusCode == 201) {
-        _showSuccessDialog();
+        // Automatically login
+        await _loginAfterSignUp(email, password);
       } else {
         final responseBody = jsonDecode(response.body);
         String errorMessage = 'Registration failed';
         if (responseBody is Map && responseBody.containsKey('email')) {
           errorMessage = responseBody['email'][0];
-        } else if (responseBody is Map &&
-            responseBody.containsKey('username')) {
+        } else if (responseBody is Map && responseBody.containsKey('username')) {
           errorMessage = responseBody['username'][0];
         }
         _showError(errorMessage);
@@ -99,13 +97,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
+  Future<void> _loginAfterSignUp(String email, String password) async {
+    try {
+      final response = await http.post(
+        Uri.parse(loginUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        await storage.write(key: 'access', value: data['access']);
+        await storage.write(key: 'refresh', value: data['refresh']);
+
+        _showSuccessDialog(); // Login successful, continue
+      } else {
+        _showError('Login after signup failed');
+        print("Login Error: ${response.statusCode} - ${response.body}");
+      }
+    } catch (e) {
+      _showError('Login Error: ${e.toString()}');
+    }
+  }
+
   void _showSuccessDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Text(
             "Berhasil!",
             style: TextStyle(
@@ -121,13 +144,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Close dialog
+                Navigator.pop(context);
                 Navigator.pushNamed(context, '/address-input');
               },
               child: const Text(
                 "Lanjut",
-                style: TextStyle(
-                    fontFamily: 'Poppins', fontWeight: FontWeight.w600),
+                style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -172,8 +194,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       onTap: () => Navigator.pop(context),
                       child: const Row(
                         children: [
-                          Icon(Icons.arrow_back_ios,
-                              color: Colors.white, size: 20),
+                          Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
                           SizedBox(width: 8),
                           Text('Back to login',
                               style: TextStyle(
@@ -185,7 +206,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 120),
                   const Text(
                     'Sign Up',
@@ -195,18 +215,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Poppins',
                       shadows: [
-                        Shadow(
-                            color: Colors.black26,
-                            offset: Offset(2, 2),
-                            blurRadius: 4),
+                        Shadow(color: Colors.black26, offset: Offset(2, 2), blurRadius: 4),
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 30),
-
-                  _buildInputField(
-                      _usernameController, 'Username', Icons.person),
+                  _buildInputField(_usernameController, 'Username', Icons.person),
                   const SizedBox(height: 20),
                   _buildInputField(_emailController, 'Email', Icons.email,
                       keyboardType: TextInputType.emailAddress),
@@ -216,17 +230,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     setState(() => _obscurePassword = !_obscurePassword);
                   }),
                   const SizedBox(height: 20),
-                  _buildInputField(_confirmPasswordController,
-                      'Confirm Password', Icons.lock,
-                      obscureText: _obscureConfirmPassword,
-                      toggleVisibility: () {
-                    setState(() =>
-                        _obscureConfirmPassword = !_obscureConfirmPassword);
+                  _buildInputField(_confirmPasswordController, 'Confirm Password', Icons.lock,
+                      obscureText: _obscureConfirmPassword, toggleVisibility: () {
+                    setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
                   }),
-
                   const SizedBox(height: 20),
-
-                  // Centered Terms Checkbox
                   Center(
                     child: Container(
                       constraints: const BoxConstraints(maxWidth: 400),
@@ -237,16 +245,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             value: _acceptTerms,
                             onChanged: (value) =>
                                 setState(() => _acceptTerms = value ?? false),
-                            fillColor: WidgetStateProperty.resolveWith<Color>(
-                                (states) {
+                            fillColor: WidgetStateProperty.resolveWith<Color>((states) {
                               if (states.contains(WidgetState.selected)) {
                                 return Colors.white;
                               }
                               return Colors.white.withOpacity(0.5);
                             }),
                             checkColor: Colors.brown,
-                            side: BorderSide(
-                                color: Colors.white.withOpacity(0.7)),
+                            side: BorderSide(color: Colors.white.withOpacity(0.7)),
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(50)),
                           ),
@@ -262,16 +268,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 40),
-
                   Center(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 100, vertical: 15),
+                        padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 15),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30)),
                         elevation: 4,
@@ -298,8 +301,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  Widget _buildInputField(
-      TextEditingController controller, String hint, IconData icon,
+  Widget _buildInputField(TextEditingController controller, String hint, IconData icon,
       {TextInputType keyboardType = TextInputType.text,
       bool obscureText = false,
       VoidCallback? toggleVisibility}) {
@@ -319,15 +321,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
           prefixIcon: Icon(icon, color: Colors.white),
           suffixIcon: toggleVisibility != null
               ? IconButton(
-                  icon: Icon(
-                      obscureText ? Icons.visibility_off : Icons.visibility,
+                  icon: Icon(obscureText ? Icons.visibility_off : Icons.visibility,
                       color: Colors.white),
                   onPressed: toggleVisibility,
                 )
               : null,
           border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         ),
       ),
     );

@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:material_symbols_icons/symbols.dart';
 
 class VerifyEmailScreen extends StatefulWidget {
@@ -15,15 +17,10 @@ class VerifyEmailScreen extends StatefulWidget {
 }
 
 class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
-  final List<TextEditingController> _codeControllers = List.generate(
-      4,
-          (_) => TextEditingController()
-  );
+  final List<TextEditingController> _codeControllers =
+      List.generate(4, (_) => TextEditingController());
 
-  final List<FocusNode> _focusNodes = List.generate(
-      4,
-          (_) => FocusNode()
-  );
+  final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
 
   bool _isLoading = false;
 
@@ -39,7 +36,6 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   }
 
   void _resendCode() {
-    // Clear current code fields
     for (var controller in _codeControllers) {
       controller.clear();
     }
@@ -48,7 +44,6 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       _isLoading = true;
     });
 
-    // Simulate API call
     Future.delayed(const Duration(seconds: 1), () {
       setState(() {
         _isLoading = false;
@@ -63,8 +58,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     });
   }
 
-  void _verifyCode() {
-    // Get the combined code
+  void _verifyCode() async {
     final code = _codeControllers.map((c) => c.text).join();
 
     if (code.length != 4) {
@@ -81,31 +75,45 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       _isLoading = true;
     });
 
-    // Simulate API verification
-    Future.delayed(const Duration(seconds: 2), () {
+    try {
+      final response = await http.post(
+        Uri.parse('http://192.168.156.40:8000/auth/verify-reset-code/'),
+        headers: {'Content-Type': 'application/json'},
+        
+        body: jsonEncode({
+          'email': widget.email,
+          'code': code,
+          
+        }),
+      );
+
+      final responseData = jsonDecode(response.body);
+
       setState(() {
         _isLoading = false;
       });
 
-      // Show success dialog
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Email Verified'),
-          content: const Text('Your email has been successfully verified.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/create-new-password');
-                // Navigate to password reset or home screen
-              },
-              child: const Text('OK'),
-            ),
-          ],
+      if (response.statusCode == 200) {
+        Navigator.pushNamed(context, '/create-new-password');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(responseData['detail'] ?? 'Invalid code'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('An error occurred. Please try again.'),
+          backgroundColor: Colors.red,
         ),
       );
-    });
+    }
   }
 
   @override
@@ -127,14 +135,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Back button
                   Padding(
                     padding: const EdgeInsets.only(top: 100.0),
                     child: InkWell(
                       onTap: () => Navigator.pop(context),
                       child: Row(
                         children: [
-                          const Icon(Symbols.arrow_back_ios, color: Colors.white, size: 20),
+                          const Icon(Symbols.arrow_back_ios,
+                              color: Colors.white, size: 20),
                           const SizedBox(width: 8),
                           Text(
                             'Back to login',
@@ -149,10 +157,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       ),
                     ),
                   ),
-            
                   const SizedBox(height: 40),
-            
-                  // Title
                   const Center(
                     child: Text(
                       'Verify your Email',
@@ -171,16 +176,13 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       ),
                     ),
                   ),
-            
                   const SizedBox(height: 40),
-            
-                  // Email icon in circle
                   Center(
                     child: Container(
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF7E4A5), // Light yellow
+                        color: const Color(0xFFF7E4A5),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -199,10 +201,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       ),
                     ),
                   ),
-            
                   const SizedBox(height: 60),
-            
-                  // Description text
                   const Center(
                     child: Text(
                       'Please Enter The 4 Digit Code Sent To\nYour Email',
@@ -215,15 +214,12 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       ),
                     ),
                   ),
-            
                   const SizedBox(height: 40),
-            
-                  // Code input boxes
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: List.generate(
                       4,
-                          (index) => SizedBox(
+                      (index) => SizedBox(
                         width: 70,
                         height: 70,
                         child: Container(
@@ -266,10 +262,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       ),
                     ),
                   ),
-            
                   const SizedBox(height: 30),
-            
-                  // Resend code button
                   Center(
                     child: TextButton(
                       onPressed: _isLoading ? null : _resendCode,
@@ -285,10 +278,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       ),
                     ),
                   ),
-            
                   const SizedBox(height: 30),
-            
-                  // Verify button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -304,19 +294,19 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       ),
                       child: _isLoading
                           ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(),
-                      )
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(),
+                            )
                           : const Text(
-                        'Verify',
-                        style: TextStyle(
-                          fontSize: 24,
-                          color: Color(0xFF775873),
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
+                              'Verify',
+                              style: TextStyle(
+                                fontSize: 24,
+                                color: Color(0xFF775873),
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
                     ),
                   ),
                 ],
