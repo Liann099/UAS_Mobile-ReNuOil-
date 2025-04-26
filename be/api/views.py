@@ -370,7 +370,51 @@ class ProductReviewListView(generics.ListAPIView):
         return Review.objects.filter(product_id=product_id).order_by('-created_at')
 
     def list(self, request, *args, **kwargs):
-        product_id = self.kwargs['product_id']
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+
+        stats = queryset.aggregate(
+            average_rating=Avg('star'),
+            total_reviews=Count('id')
+        )
+
+        return Response({
+            'reviews': serializer.data,
+            'average_rating': round(stats['average_rating'] or 0, 2),
+            'total_reviews': stats['total_reviews']
+        })
+
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+class CheckReviewStatusView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        product_id = request.query_params.get('product')
+        if not product_id:
+            return Response({'error': 'Missing product ID'}, status=400)
+
+        reviews = Review.objects.filter(product_id=product_id, user=request.user, status='success')
+        return Response([{
+            'id': r.id,
+            'product': r.product.id,
+            'status': r.status,
+        } for r in reviews])
+    
+
+from rest_framework import generics
+from rest_framework.response import Response
+from django.db.models import Avg, Count
+
+class AllProductReviewListView(generics.ListAPIView):
+    serializer_class = ReviewListSerializer
+
+    def get_queryset(self):
+        return Review.objects.all().order_by('-created_at')
+
+    def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
 
@@ -444,6 +488,14 @@ class CheckoutSingleProductView(APIView):
             product = Product.objects.get(id=data['product_id'])
         except Product.DoesNotExist:
             raise NotFound("Product not found")
+        
+        if product.stock < data['quantity']:
+            raise ValidationError(f"Stock tidak mencukupi. Stock tersedia: {product.stock}")
+
+        # Update stock and sold
+        product.stock -= data['quantity']
+        product.sold += data['quantity']
+        product.save()
 
         # Calculate totals
         product_total = product.price_per_liter * data['quantity']

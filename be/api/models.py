@@ -347,7 +347,8 @@ class Product(models.Model):
     price_per_liter = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField()
     picture = models.ImageField(upload_to='product/', null=True, blank=True)
-    
+    stock = models.IntegerField(default=500)  # ← harus sejajar dengan field lain
+    sold = models.IntegerField(default=0)
     # Add the category field with choices
     category = models.CharField(
         max_length=2,
@@ -481,6 +482,18 @@ class Checkout(models.Model):
 
             for item in cart_items:
                 product = item.product
+                if product:
+                    # ✅ Update stock and sold
+                    liters_sold = float(item.liters)
+
+                    if product.stock is not None:
+                        product.stock = max(0, product.stock - int(liters_sold))  # prevent stock from being negative
+
+                    if product.sold is not None:
+                        product.sold = (product.sold or 0) + int(liters_sold)
+
+                product.save()
+
                 items_data.append({
                     "id": product.id if product else None,  # Add product ID
                     "product": product.name if product else "Unknown",

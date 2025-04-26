@@ -9,6 +9,7 @@ import 'package:flutter_application_1/Homepage/Buyer/detail.dart';
 import 'package:flutter_application_1/Homepage/Buyer/enterpin.dart';
 import 'package:flutter_application_1/Homepage/Buyer/cart.dart';
 import 'package:flutter_application_1/Homepage/Buyer/checkout.dart';
+import 'package:flutter_application_1/Homepage/Buyer/track2.dart';
 
 class _PaymentOption extends StatelessWidget {
   final IconData icon;
@@ -897,6 +898,7 @@ class _CheckoutcPageState extends State<CheckoutcPage> {
   }
 }
 
+
 class OrderConfirmationPage extends StatelessWidget {
   final double grandTotal;
   final int voucherDiscountPercent;
@@ -912,117 +914,274 @@ class OrderConfirmationPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const Icon(Icons.check_circle, color: Colors.green, size: 100),
-              const SizedBox(height: 20),
-              const Text(
-                'Order Confirmed!',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+      body: Container(
+        width: double.infinity,
+        color: const Color(0xFFFCD34D), // Yellow background color
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Success badge image
+                Image.asset(
+                  'images/verified.png',
+                  width: 120,
+                  height: 120,
                 ),
-              ),
-              const SizedBox(height: 20),
 
-              // Show ordered items if available
-              if (items != null) ...[
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Ordered Items:',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                const SizedBox(height: 40),
+
+                // Order Confirmed text
+                const Text(
+                  'Order Confirmed',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Grand total
+                Text(
+                  'Grand Total: Rp${grandTotal.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: Colors.black87,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // Voucher discount
+                Text(
+                  'Voucher discount: ${voucherDiscountPercent}%',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: Colors.black87,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Thank you message
+                const Text(
+                  'Thank you for shopping with us!',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
+                // Fox mascot image
+                Image.asset(
+                  'images/mascot.png',
+                  width: 100,
+                  height: 100,
+                ),
+
+                const SizedBox(height: 60),
+
+                // Back to Homepage button
+                Container(
+                  width: double.infinity,
+                  height: 56,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const BuyerHomePage()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      const SizedBox(height: 8),
-                      ...items!
-                          .map((item) => ListTile(
-                                leading: item['photo_url'] != null
-                                    ? Image.network(item['photo_url'],
-                                        width: 50, height: 50)
-                                    : const Icon(Icons.shopping_basket),
-                                title: Text(item['product']),
-                                subtitle: Text('${item['liters']} liters'),
-                                trailing: Text('Rp${item['total']}'),
-                              ))
-                          .toList(),
-                    ],
+                    ),
+                    child: const Text(
+                      'Back to Homepage',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Track Your Order button
+                Container(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const OrderTrackingScreen()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Track Your Order',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
               ],
-
-              // Show totals
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    _buildPriceRow(
-                      label: 'Product Total',
-                      value: 'Rp${grandTotal.toStringAsFixed(2)}',
-                    ),
-                    const SizedBox(height: 8),
-                    _buildPriceRow(
-                      label: 'Voucher Discount',
-                      value: '$voucherDiscountPercent%',
-                    ),
-                    const SizedBox(height: 16),
-                    _buildPriceRow(
-                      label: 'Grand Total',
-                      value: 'Rp${grandTotal.toStringAsFixed(2)}',
-                      isBold: true,
-                    ),
-                  ],
-                ),
-              ),
-
-              // Back to home button
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: ElevatedButton(
-                  onPressed: () => Navigator.popUntil(
-                    context,
-                    (route) => route.isFirst,
-                  ),
-                  child: const Text('Back to Home'),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
-
-  Widget _buildPriceRow({
-    required String label,
-    required String value,
-    bool isBold = false,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ],
-    );
-  }
 }
+
+
+// class OrderConfirmationPage extends StatelessWidget {
+//   final double grandTotal;
+//   final int voucherDiscountPercent;
+//   final List<Map<String, dynamic>>? items;
+
+//   const OrderConfirmationPage({
+//     Key? key,
+//     required this.grandTotal,
+//     required this.voucherDiscountPercent,
+//     this.items,
+//   }) : super(key: key);
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       body: SafeArea(
+//         child: SingleChildScrollView(
+//           child: Column(
+//             children: [
+//               const Icon(Icons.check_circle, color: Colors.green, size: 100),
+//               const SizedBox(height: 20),
+//               const Text(
+//                 'Order Confirmed!',
+//                 style: TextStyle(
+//                   fontSize: 24,
+//                   fontWeight: FontWeight.bold,
+//                 ),
+//               ),
+//               const SizedBox(height: 20),
+
+//               // Show ordered items if available
+//               if (items != null) ...[
+//                 Padding(
+//                   padding: const EdgeInsets.all(16.0),
+//                   child: Column(
+//                     crossAxisAlignment: CrossAxisAlignment.start,
+//                     children: [
+//                       const Text(
+//                         'Ordered Items:',
+//                         style: TextStyle(
+//                           fontSize: 18,
+//                           fontWeight: FontWeight.bold,
+//                         ),
+//                       ),
+//                       const SizedBox(height: 8),
+//                       ...items!
+//                           .map((item) => ListTile(
+//                                 leading: item['photo_url'] != null
+//                                     ? Image.network(item['photo_url'],
+//                                         width: 50, height: 50)
+//                                     : const Icon(Icons.shopping_basket),
+//                                 title: Text(item['product']),
+//                                 subtitle: Text('${item['liters']} liters'),
+//                                 trailing: Text('Rp${item['total']}'),
+//                               ))
+//                           .toList(),
+//                     ],
+//                   ),
+//                 ),
+//               ],
+
+//               // Show totals
+//               Padding(
+//                 padding: const EdgeInsets.all(16.0),
+//                 child: Column(
+//                   children: [
+//                     _buildPriceRow(
+//                       label: 'Product Total',
+//                       value: 'Rp${grandTotal.toStringAsFixed(2)}',
+//                     ),
+//                     const SizedBox(height: 8),
+//                     _buildPriceRow(
+//                       label: 'Voucher Discount',
+//                       value: '$voucherDiscountPercent%',
+//                     ),
+//                     const SizedBox(height: 16),
+//                     _buildPriceRow(
+//                       label: 'Grand Total',
+//                       value: 'Rp${grandTotal.toStringAsFixed(2)}',
+//                       isBold: true,
+//                     ),
+//                   ],
+//                 ),
+//               ),
+
+//               // Back to home button
+//               Padding(
+//                 padding: const EdgeInsets.all(16.0),
+//                 child: ElevatedButton(
+//                   onPressed: () => Navigator.popUntil(
+//                     context,
+//                     (route) => route.isFirst,
+//                   ),
+//                   child: const Text('Back to Home'),
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+
+//   Widget _buildPriceRow({
+//     required String label,
+//     required String value,
+//     bool isBold = false,
+//   }) {
+//     return Row(
+//       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//       children: [
+//         Text(
+//           label,
+//           style: TextStyle(
+//             fontSize: 16,
+//             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+//           ),
+//         ),
+//         Text(
+//           value,
+//           style: TextStyle(
+//             fontSize: 16,
+//             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+// }

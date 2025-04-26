@@ -331,10 +331,7 @@ class _HistoryScreenState extends State<BuyerHistoryScreen>
   }
 
   final Set<int> reviewedProductIds = <int>{};
-  Widget _buildActionButton(String text, Map<String, dynamic> item) {
-    // Debug print to see the complete item structure
-    print('Full item structure: ${jsonEncode(item)}');
-
+ Widget _buildActionButton(String text, Map<String, dynamic> item) {
     // Try different ways to extract the product ID
     final productId = item['id'] ??
         item['product_id'] ??
@@ -344,68 +341,103 @@ class _HistoryScreenState extends State<BuyerHistoryScreen>
             : null) ??
         0;
 
-    final bool isReviewed = reviewedProductIds.contains(productId);
+    // Use FutureBuilder to handle the async review status check
+    return FutureBuilder<bool>(
+      future: _checkReviewStatus(productId),
+      builder: (context, snapshot) {
+        final isReviewed = snapshot.data ?? false;
 
-    // Rest of your existing code for name and image URL...
-    final productName = item['product'] is String
-        ? item['product']
-        : (item['product'] is Map ? item['product']['name'] : null) ??
-            'Unknown Product';
+        // Rest of your existing code for name and image URL...
+        final productName = item['product'] is String
+            ? item['product']
+            : (item['product'] is Map ? item['product']['name'] : null) ??
+                'Unknown Product';
 
-    var photoUrl = item['photo_url'] ??
-        (item['product'] is Map ? item['product']['photo_url'] : null);
+        var photoUrl = item['photo_url'] ??
+            (item['product'] is Map ? item['product']['photo_url'] : null);
 
-    if (photoUrl is Map) {
-      photoUrl = photoUrl['url'] ?? photoUrl['path'];
-    }
-    if (photoUrl != null && !photoUrl.startsWith('http')) {
-      photoUrl = '$baseUrl$photoUrl';
-    }
+        if (photoUrl is Map) {
+          photoUrl = photoUrl['url'] ?? photoUrl['path'];
+        }
+        if (photoUrl != null && !photoUrl.startsWith('http')) {
+          photoUrl = '$baseUrl$photoUrl';
+        }
 
-    return GestureDetector(
-      onTap: isReviewed
-          ? null
-          : () async {
-              final reviewSubmitted = await Navigator.push<bool>(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ReviewPage(),
-                  settings: RouteSettings(
-                    arguments: {
-                      'productId': productId,
-                      'productName': productName,
-                      'productPrice': item['price'] ?? 0,
-                      'productImageUrl': photoUrl,
-                      'productOrigin': "North Jakarta, Indonesia",
-                    },
-                  ),
-                ),
-              );
+        return GestureDetector(
+          onTap: isReviewed
+              ? null
+              : () async {
+                  final reviewSubmitted = await Navigator.push<bool>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ReviewPage(),
+                      settings: RouteSettings(
+                        arguments: {
+                          'productId': productId,
+                          'productName': productName,
+                          'productPrice': item['price'] ?? 0,
+                          'productImageUrl': photoUrl,
+                          'productOrigin': "North Jakarta, Indonesia",
+                        },
+                      ),
+                    ),
+                  );
 
-              if (reviewSubmitted == true) {
-                setState(() {
-                  reviewedProductIds.add(productId); // Mark as reviewed
-                });
-              }
-            },
-    child: Container(
-        width: 75,
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
-        decoration: BoxDecoration(
-          color: isReviewed ? Colors.grey[400] : primaryYellow,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          isReviewed ? 'Reviewed' : text,
-          style: TextStyle(
-            color: isReviewed ? Colors.white : Colors.black,
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
+                  if (reviewSubmitted == true) {
+                    // Trigger a rebuild to refresh the review status
+                    if (mounted) {
+                      setState(() {});
+                    }
+                  }
+                },
+          child: Container(
+            width: 75,
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+            decoration: BoxDecoration(
+              color: isReviewed ? Colors.grey[400] : primaryYellow,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              isReviewed ? 'Reviewed' : text,
+              style: TextStyle(
+                color: isReviewed ? Colors.white : Colors.black,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
+  }
+
+  Future<bool> _checkReviewStatus(int productId) async {
+    try {
+      String? token = await storage.read(key: 'access_token');
+      if (token == null) return false;
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/review/?product=$productId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data is List && data.isNotEmpty) {
+          // Assuming the API returns a list of reviews for this product
+          // Check if any review has status 'success'
+          return data.any((review) => review['status'] == 'success');
+        }
+      }
+      return false;
+    } catch (e) {
+      print('Error checking review status: $e');
+      return false;
+    }
   }
 
   @override

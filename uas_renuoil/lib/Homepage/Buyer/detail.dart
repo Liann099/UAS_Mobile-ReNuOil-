@@ -318,13 +318,13 @@ class _CookingOilPageState extends State<CookingOilPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  // const Text(
-                  //   '35 sold',
-                  //   style: TextStyle(
-                  //     fontSize: 14,
-                  //     color: Colors.grey,
-                  //   ),
-                  // ),
+                  Text(
+                    '${widget.product.sold} sold',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -335,9 +335,9 @@ class _CookingOilPageState extends State<CookingOilPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    '100 Liters Stock',
-                    style: TextStyle(
+                  Text(
+                    '${widget.product.stock} Liters Stock',
+                    style: const TextStyle(
                       fontSize: 14,
                     ),
                   ),

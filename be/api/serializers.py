@@ -175,8 +175,8 @@ class ReviewListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = ['id', 'user', 'star', 'description', 'created_at']
-
+        fields = ['id', 'product', 'user', 'star', 'description', 'created_at', 'status']
+        read_only_fields = ['user', 'created_at', 'status']
 
 import json  # Make sure this is at the top of the file
 

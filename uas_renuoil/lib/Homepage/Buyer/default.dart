@@ -27,7 +27,9 @@ class Product {
   final double pricePerLiter;
   final String description;
   final String? picture;
-  final String category;
+  final String category; // CO, MO, or IO (based on Django choices)
+  final int stock;
+  final int sold;
 
   Product({
     required this.id,
@@ -37,6 +39,8 @@ class Product {
     required this.description,
     this.picture,
     required this.category,
+    required this.stock,
+    required this.sold,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -48,9 +52,12 @@ class Product {
       description: json['description'],
       picture: json['picture'],
       category: json['category'],
+      stock: json['stock'] ?? 0,
+      sold: json['sold'] ?? 0,
     );
   }
 }
+
 
 class BuyerHomePage extends StatefulWidget {
   const BuyerHomePage({super.key});
