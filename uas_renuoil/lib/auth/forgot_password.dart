@@ -1,9 +1,7 @@
+// forgot_password.dart
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-
-import '../auth/create_new_password.dart'; // adjust path if needed
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -34,36 +32,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     try {
       final email = _emailController.text.trim();
-      final url = Uri.parse('http://192.168.156.40:8000/api/request-reset-code/');
-
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'email': email}),
-      );
+      await Supabase.instance.client.auth.resetPasswordForEmail(email);
 
       if (!mounted) return;
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final resetCode = data['reset_code'] ?? '';
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CreateNewPasswordScreen(
-              email: email,
-              resetCode: resetCode,
-            ),
-          ),
-        );
-      } else {
-        final data = json.decode(response.body);
-        _showErrorMessage(data['error'] ?? 'Failed to send reset code');
-      }
+      _showSuccessMessage(
+          'A password reset link has been sent to your email address. Please check your inbox (and spam folder).');
+      // Optionally navigate the user to a "check your email" screen
+    } on AuthException catch (error) {
+      if (!mounted) return;
+      _showErrorMessage(error.message);
     } catch (e) {
       if (!mounted) return;
-      _showErrorMessage('An error occurred. Please try again.');
+      _showErrorMessage('An unexpected error occurred. Please try again.');
     } finally {
       if (mounted) {
         setState(() {
@@ -71,6 +52,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         });
       }
     }
+  }
+
+  void _showSuccessMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 
   void _showErrorMessage(String message) {
@@ -108,7 +99,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       onTap: () => Navigator.pop(context),
                       child: Row(
                         children: [
-                          const Icon(Symbols.arrow_back_ios, color: Colors.white, size: 20),
+                          const Icon(Symbols.arrow_back_ios,
+                              color: Colors.white, size: 20),
                           const SizedBox(width: 8),
                           const Text(
                             'Back to login',
@@ -134,35 +126,36 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         fontFamily: 'Poppins',
                         shadows: [
                           Shadow(
-                            color: Colors.black26,
-                            offset: Offset(2, 2),
-                            blurRadius: 4,
-                          ),
+                              color: Colors.black26,
+                              offset: Offset(2, 2),
+                              blurRadius: 4),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(height: 40),
                   Center(
-                    child: Container(
+                    child: SizedBox(
                       width: 120,
                       height: 120,
-                      decoration: BoxDecoration(
-                        color: Color(0xFFF7E4A5),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 10,
-                            offset: Offset(0, 4),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Color(0xFFF7E4A5),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 10,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.lock_reset,
+                            size: 60,
+                            color: Colors.black,
                           ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.lock_reset,
-                          size: 60,
-                          color: Colors.black,
                         ),
                       ),
                     ),
@@ -204,10 +197,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
                         hintText: 'Enter your email',
-                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-                        prefixIcon: const Icon(Icons.email, color: Colors.white),
+                        hintStyle:
+                            TextStyle(color: Colors.white.withOpacity(0.7)),
+                        prefixIcon:
+                            const Icon(Icons.email, color: Colors.white),
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 16),
                       ),
                     ),
                   ),

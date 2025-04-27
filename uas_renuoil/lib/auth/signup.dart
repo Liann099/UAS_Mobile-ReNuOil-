@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants.dart';
+import 'supabase_auth.dart'; // Import your AuthService
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -20,9 +20,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _acceptTerms = false;
-
-  final String signupUrl = '$baseUrl/auth/users/';
-  final String loginUrl = '$baseUrl/auth/jwt/create/';
+  bool _isLoading = false;
+  final AuthService _authService = AuthService(); // Instantiate AuthService
   final storage = const FlutterSecureStorage(); // Secure storage for token
 
   @override
@@ -34,13 +33,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
-  Future<void> _signUp() async {
-    final username = _usernameController.text.trim();
+  Future<void> _signUpWithSupabase() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
 
-    if (username.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+    if (_usernameController.text.trim().isEmpty ||
+        email.isEmpty ||
+        password.isEmpty ||
+        confirmPassword.isEmpty) {
       _showError('Please fill in all fields');
       return;
     }
@@ -61,65 +62,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
 
     if (!_acceptTerms) {
-      _showError('Please accept the terms and conditions');
+      _showError('Please accept the terms and privacy policy');
       return;
     }
 
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
-      final response = await http.post(
-        Uri.parse(signupUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'username': username,
-          'email': email,
-          'password': password,
-          're_password': confirmPassword,
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        // Automatically login
-        await _loginAfterSignUp(email, password);
+      final AuthResponse res = await _authService.signUpWithEmailPassword(email, password);
+      if (res.user != null) {
+        _showSuccessDialog();
       } else {
-        final responseBody = jsonDecode(response.body);
-        String errorMessage = 'Registration failed';
-        if (responseBody is Map && responseBody.containsKey('email')) {
-          errorMessage = responseBody['email'][0];
-        } else if (responseBody is Map && responseBody.containsKey('username')) {
-          errorMessage = responseBody['username'][0];
-        }
-        _showError(errorMessage);
-        print("Signup Response: ${response.statusCode}");
-        print("Signup Body: ${response.body}");
+        _showError('Sign up failed. Please try again.');
       }
-    } catch (e) {
-      _showError('Error connecting to server: ${e.toString()}');
-    }
-  }
-
-  Future<void> _loginAfterSignUp(String email, String password) async {
-    try {
-      final response = await http.post(
-        Uri.parse(loginUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        await storage.write(key: 'access', value: data['access']);
-        await storage.write(key: 'refresh', value: data['refresh']);
-
-        _showSuccessDialog(); // Login successful, continue
-      } else {
-        _showError('Login after signup failed');
-        print("Login Error: ${response.statusCode} - ${response.body}");
-      }
-    } catch (e) {
-      _showError('Login Error: ${e.toString()}');
+    } on AuthException catch (error) {
+      _showError(error.message);
+    } catch (error) {
+      _showError('An unexpected error occurred: ${error.toString()}');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -145,10 +110,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/address-input');
+                Navigator.pushReplacementNamed(context, '/home'); // Navigate to home after signup
               },
               child: const Text(
-                "Lanjut",
+                "Lanjut ke Beranda",
                 style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600),
               ),
             ),
@@ -279,16 +244,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             borderRadius: BorderRadius.circular(30)),
                         elevation: 4,
                       ),
-                      onPressed: _signUp,
-                      child: const Text(
-                        "Sign Up",
-                        style: TextStyle(
-                          color: Color(0xFF775873),
-                          fontWeight: FontWeight.w900,
-                          fontSize: 18,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
+                      onPressed: _isLoading ? null : _signUpWithSupabase,
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFF775873),
+                              ),
+                            )
+                          : const Text(
+                              "Sign Up",
+                              style: TextStyle(
+                                color: Color(0xFF775873),
+                                fontWeight: FontWeight.w900,
+                                fontSize: 18,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 20),

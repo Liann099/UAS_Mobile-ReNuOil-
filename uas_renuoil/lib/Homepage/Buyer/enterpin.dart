@@ -10,7 +10,7 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +22,8 @@ class MyApp extends StatelessWidget {
 }
 
 class CheckoutWrapper extends StatefulWidget {
+  const CheckoutWrapper({super.key});
+
   @override
   _CheckoutWrapperState createState() => _CheckoutWrapperState();
 }
@@ -252,11 +254,11 @@ class PasscodeScreen extends StatefulWidget {
   final bool showError;
 
   const PasscodeScreen({
-    Key? key,
+    super.key,
     this.onPinVerified,
     this.onCancel,
     this.showError = false,
-  }) : super(key: key);
+  });
 
   @override
   _PasscodeScreenState createState() => _PasscodeScreenState();

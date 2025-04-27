@@ -38,8 +38,11 @@ dependencies:
   flutter_secure_storage: ^8.0.0
   intl: ^0.18.1  
   local_auth: ^2.3.0
+  
+
 
   google_sign_in: ^6.1.4
+  supabase_flutter: ^2.8.4
   flutter_bloc: ^8.0.0
   logger: ^2.0.1
   provider: ^6.0.5

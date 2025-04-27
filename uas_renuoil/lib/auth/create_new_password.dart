@@ -1,27 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../login.dart'; // adjust path if needed
 
 class CreateNewPasswordScreen extends StatefulWidget {
-  final String email;
-  final String resetCode;
+  // In a real implementation, you'd likely receive a token via a deep link
+  final String? token;
 
   const CreateNewPasswordScreen({
     super.key,
-    required this.email,
-    required this.resetCode,
+    this.token,
   });
 
   @override
-  State<CreateNewPasswordScreen> createState() => _CreateNewPasswordScreenState();
+  State<CreateNewPasswordScreen> createState() =>
+      _CreateNewPasswordScreenState();
 }
 
 class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   bool _isLoading = false;
 
   @override
@@ -45,29 +45,27 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
       return;
     }
 
+    if (widget.token == null || widget.token!.isEmpty) {
+      _showErrorMessage('Invalid reset link.');
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final url = Uri.parse('http://192.168.156.40:8000/api/reset-password/');
-
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'email': widget.email,
-          'reset_code': widget.resetCode,
-          'new_password': newPassword,
-        }),
+      final response = await Supabase.instance.client.auth.updateUser(
+        UserAttributes(password: newPassword),
       );
 
       if (!mounted) return;
 
-      if (response.statusCode == 200) {
+      if (response.user != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Password reset successful!'),
+            content: Text(
+                'Password reset successful! You can now log in with your new password.'),
             backgroundColor: Colors.green,
           ),
         );
@@ -76,12 +74,15 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
           MaterialPageRoute(builder: (context) => const LoginScreen()),
         );
       } else {
-        final data = json.decode(response.body);
-        _showErrorMessage(data['error'] ?? 'Failed to reset password');
+        _showErrorMessage(
+            'Failed to reset password. The reset link might be invalid or expired.');
       }
+    } on AuthException catch (error) {
+      if (!mounted) return;
+      _showErrorMessage(error.message);
     } catch (e) {
       if (!mounted) return;
-      _showErrorMessage('An error occurred. Please try again.');
+      _showErrorMessage('An unexpected error occurred. Please try again.');
     } finally {
       if (mounted) {
         setState(() {
@@ -126,7 +127,8 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                       onTap: () => Navigator.pop(context),
                       child: Row(
                         children: [
-                          const Icon(Symbols.arrow_back_ios, color: Colors.white, size: 20),
+                          const Icon(Symbols.arrow_back_ios,
+                              color: Colors.white, size: 20),
                           const SizedBox(width: 8),
                           const Text(
                             'Back',
@@ -152,10 +154,9 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                         fontFamily: 'Poppins',
                         shadows: [
                           Shadow(
-                            color: Colors.black26,
-                            offset: Offset(2, 2),
-                            blurRadius: 4,
-                          ),
+                              color: Colors.black26,
+                              offset: Offset(2, 2),
+                              blurRadius: 4),
                         ],
                       ),
                     ),
@@ -184,10 +185,12 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
                         hintText: 'Enter new password',
-                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                        hintStyle:
+                            TextStyle(color: Colors.white.withOpacity(0.7)),
                         prefixIcon: const Icon(Icons.lock, color: Colors.white),
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 16),
                       ),
                     ),
                   ),
@@ -215,10 +218,13 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
                         hintText: 'Confirm new password',
-                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-                        prefixIcon: const Icon(Icons.lock_outline, color: Colors.white),
+                        hintStyle:
+                            TextStyle(color: Colors.white.withOpacity(0.7)),
+                        prefixIcon:
+                            const Icon(Icons.lock_outline, color: Colors.white),
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 16),
                       ),
                     ),
                   ),

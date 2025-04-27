@@ -1,13 +1,22 @@
+// login.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/auth/supabase_auth.dart';
+import 'package:flutter_application_1/auth/supabase_authgate.dart';
 import 'package:flutter_application_1/constants.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../home.dart'; // Assuming you have a HomePage
+import '../auth/signup.dart'; // Assuming you'll have a SignUpPage
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_application_1/home.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://rfcmujgkjfsspfxwlhds.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmY211amdramZzc3BmeHdsaGRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3Njk2MDYsImV4cCI6MjA2MTM0NTYwNn0.88gHZ6d8waIN0lrGYrJrvpHUQnqbP0sSwVhZVLzfruQ',
+  );
+
   runApp(const MyApp());
 }
 
@@ -18,7 +27,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: LoginScreen(),
+      title: 'Supabase Auth Demo',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const AuthGate(),
     );
   }
 }
@@ -27,19 +40,16 @@ class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final storage = FlutterSecureStorage();
+  final storage = const FlutterSecureStorage();
   bool _obscureText = true;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
-  bool _isGoogleLoading = false;
-
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final AuthService _authService = AuthService(); // Instantiate AuthService
 
   void _togglePasswordVisibility() {
     setState(() {
@@ -47,166 +57,39 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  Future<void> _login() async {
+  Future<void> _signInWithSupabase() async {
     setState(() {
       _isLoading = true;
     });
-
-    final url = Uri.parse('http://192.168.156.40:8000/auth/jwt/create/');
-
     try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': _emailController.text,
-          'password': _passwordController.text,
-        }),
+      final AuthResponse res = await _authService.signInWithEmailPassword(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
       );
-
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        final accessToken = responseData['access'];
-        final refreshToken = responseData['refresh'];
-
-        // Store tokens securely
-        await storage.write(key: 'access_token', value: accessToken);
-        await storage.write(key: 'refresh_token', value: refreshToken);
-
-        // Get user info after successful login
-        // Removed _fetchUserInfo call since Firebase handles user info
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login successful!')),
-        );
-
-        // Navigate to homepage
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => HomePage()),
-        );
-      } else {
-        final errorData = jsonDecode(response.body);
-        String errorMessage = 'Login failed';
-        if (errorData.containsKey('detail')) {
-          errorMessage = errorData['detail'];
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
+      if (res.session != null && mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
         );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
+    } on AuthException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message)),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('An unexpected error occurred')),
+        );
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  // Function to handle Google sign-in authentication with Firebase
-  Future<void> _handleGoogleSignIn() async {
-    setState(() {
-      _isGoogleLoading = true;
-    });
-
-    try {
-      // Trigger Google sign-in
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-
-      if (googleUser == null) {
+      if (mounted) {
         setState(() {
-          _isGoogleLoading = false;
+          _isLoading = false;
         });
-        return; // User canceled the sign-in
       }
-
-      // Get the Google authentication details
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
-      // Create a new credential
-      final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      // Sign in with Firebase using the credential
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
-      final User? user = userCredential.user;
-
-      if (user != null) {
-        // Store user info in secure storage after successful login
-        await storage.write(key: 'user_id', value: user.uid);
-        await storage.write(key: 'user_email', value: user.email ?? '');
-
-        // Get Firebase ID token for the backend
-        final idToken = await user.getIdToken();
-
-        // Ensure we only pass non-nullable ID token
-        if (idToken != null) {
-          // Send the ID token to your backend to authenticate
-          await _authenticateWithBackend(idToken);
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Google login successful!')),
-        );
-
-        // Navigate to homepage
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => HomePage()),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Google login failed')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error with Google login: ${e.toString()}')),
-      );
-    } finally {
-      setState(() {
-        _isGoogleLoading = false;
-      });
-    }
-  }
-
-  // Function to authenticate the Firebase ID token with your backend
-  Future<void> _authenticateWithBackend(String idToken) async {
-    final url = Uri.parse('http://192.168.156.40:8000/auth/google/');
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'id_token': idToken}),
-      );
-
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        final accessToken = responseData['access'];
-        final refreshToken = responseData['refresh'];
-
-        // Store tokens securely
-        await storage.write(key: 'access_token', value: accessToken);
-        await storage.write(key: 'refresh_token', value: refreshToken);
-      } else {
-        final errorData = jsonDecode(response.body);
-        String errorMessage = 'Google login failed';
-        if (errorData.containsKey('detail')) {
-          errorMessage = errorData['detail'];
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error with backend authentication: ${e.toString()}')),
-      );
     }
   }
 
@@ -267,7 +150,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.email, color: Colors.white),
+                        prefixIcon:
+                            const Icon(Icons.email, color: Colors.white),
                         hintText: "savetheworld@gmail.com",
                         hintStyle: const TextStyle(color: Colors.white70),
                         filled: true,
@@ -283,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscureText: _obscureText,
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.lock, color: Colors.white),
+                        prefixIcon: const Icon(Icons.lock, color: Colors.white),
                         hintText: "Password",
                         hintStyle: const TextStyle(color: Colors.white70),
                         filled: true,
@@ -326,9 +210,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30)),
                         ),
-                        onPressed: _isLoading ? null : _login,
+                        onPressed: _isLoading ? null : _signInWithSupabase,
                         child: _isLoading
-                            ? SizedBox(
+                            ? const SizedBox(
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
@@ -347,35 +231,21 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Center(
-                      child: Text("Or login with",
+                    Center(
+                        child: InkWell(
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const SignUpScreen())),
+                      child: const Text("Sign Up",
                           style: TextStyle(color: Colors.white)),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        buildSocialIcon(
-                            "assets/icons/google.png", _handleGoogleSignIn),
-                      ],
-                    ),
+                    )),
                   ],
                 ),
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget buildSocialIcon(String imagePath, VoidCallback? onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: CircleAvatar(
-        radius: 30,
-        backgroundColor: Colors.white,
-        child: Image.asset(imagePath, height: 25, width: 25),
       ),
     );
   }
