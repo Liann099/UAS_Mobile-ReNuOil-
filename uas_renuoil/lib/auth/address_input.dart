@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/generated/assets.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+import '../constants.dart';
 
 class AddressInputScreen extends StatefulWidget {
   const AddressInputScreen({super.key});
@@ -18,16 +21,85 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
   final List<String> _countries = [
     'Indonesia',
     'Singapore',
-    'Malaysia',
-    'Thailand',
-    'Vietnam',
-    'Philippines',
-    'United States',
-    'United Kingdom',
-    'Australia',
-    'Japan',
-    'South Korea',
   ];
+
+  final storage = const FlutterSecureStorage();
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserData();
+  }
+
+  Future<void> fetchUserData() async {
+    try {
+      String? token = await storage.read(key: 'access_token');
+      if (token == null) throw Exception('No access token found');
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/auth/profile/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _selectedCountry = data['country'];
+          _cityController.text = data['city'] ?? '';
+          _addressController.text = data['address'] ?? '';
+          _zipController.text = data['zip_code'] ?? '';
+        });
+      } else {
+        throw Exception('Failed to fetch user data: ${response.body}');
+      }
+    } catch (e) {
+      print('Error fetching user data: $e');
+    }
+  }
+
+  Future<void> saveUserAddress() async {
+    try {
+      String? token = await storage.read(key: 'access_token');
+      if (token == null) throw Exception('No access token found');
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/api/auth/profile/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'country': _selectedCountry?.toLowerCase(),
+          'city': _cityController.text,
+          'address': _addressController.text,
+          'zip_code': _zipController.text,
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        Navigator.pushNamed(context, '/how-did-you-know');
+      } else {
+        print('Error saving data: ${response.body}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to save data'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Exception saving address: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Something went wrong'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   void _showCountryPicker() {
     showModalBottomSheet(
@@ -44,7 +116,6 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header with title and close button
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -56,30 +127,23 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
-                      icon: const Icon(
-                        Icons.close,
-                        size: 24,
-                        color: Colors.black,
-                      ),
+                      icon: const Icon(Icons.close,
+                          size: 24, color: Colors.black),
                       onPressed: () => Navigator.pop(context),
                     ),
                     const Text(
                       'Country/Region',
                       style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Poppins',
-                      ),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Poppins'),
                     ),
-                    const SizedBox(width: 48), // For balance
+                    const SizedBox(width: 48),
                   ],
                 ),
               ),
-
-              // Country list with radio buttons
               Flexible(
                 child: ListView.builder(
-                  shrinkWrap: true,
                   itemCount: _countries.length,
                   itemBuilder: (context, index) {
                     final country = _countries[index];
@@ -92,9 +156,7 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
                         title: Text(
                           country,
                           style: const TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 16,
-                          ),
+                              fontFamily: 'Poppins', fontSize: 16),
                         ),
                         trailing: Radio<String>(
                           value: country,
@@ -141,23 +203,16 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 30.0),
             child: ListView(
               children: [
-                // Back button and logo
                 Padding(
                   padding: const EdgeInsets.only(top: 20.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Back button
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
-                        child: const Icon(
-                          Icons.arrow_back_ios,
-                          color: Colors.white,
-                          size: 24,
-                        ),
+                        child: const Icon(Icons.arrow_back_ios,
+                            color: Colors.white, size: 24),
                       ),
-
-                      // Logo
                       Container(
                         width: 60,
                         height: 60,
@@ -167,7 +222,7 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
                         ),
                         child: ClipOval(
                           child: Image.asset(
-                            'assets/images/mascot.png', // Replace with your actual logo asset
+                            'assets/images/mascot.png',
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -175,10 +230,7 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 60),
-
-                // Title
                 const Text(
                   'Enter your address',
                   style: TextStyle(
@@ -195,17 +247,14 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 40),
-
-                // Country/Region dropdown
                 GestureDetector(
                   onTap: _showCountryPicker,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     height: 56,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF8D503A).withOpacity(0.7), // Brown
+                      color: const Color(0xFF8D503A).withOpacity(0.7),
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Row(
@@ -219,86 +268,20 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
                             fontFamily: 'Poppins',
                           ),
                         ),
-                        const Icon(
-                          Icons.keyboard_arrow_down,
-                          color: Colors.white,
-                        ),
+                        const Icon(Icons.keyboard_arrow_down,
+                            color: Colors.white),
                       ],
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
-                // City input
-                Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8D503A).withOpacity(0.7), // Brown
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: TextField(
-                    controller: _cityController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'City',
-                      hintStyle:
-                          TextStyle(color: Colors.white.withOpacity(0.7)),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 16),
-                    ),
-                  ),
-                ),
-
+                buildTextField(_cityController, 'City'),
                 const SizedBox(height: 20),
-
-                // Address input
-                Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8D503A).withOpacity(0.7), // Brown
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: TextField(
-                    controller: _addressController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'Address',
-                      hintStyle:
-                          TextStyle(color: Colors.white.withOpacity(0.7)),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 16),
-                    ),
-                  ),
-                ),
-
+                buildTextField(_addressController, 'Address'),
                 const SizedBox(height: 20),
-
-                // ZIP code input
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade500
-                        .withOpacity(0.7), // Grey for ZIP code
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: TextField(
-                    controller: _zipController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'ZIP code',
-                      hintStyle:
-                          TextStyle(color: Colors.white.withOpacity(0.7)),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 16),
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-
+                buildTextField(_zipController, 'ZIP code',
+                    keyboardType: TextInputType.number),
                 const SizedBox(height: 40),
-
-                // Save button
                 Center(
                   child: Column(
                     children: [
@@ -306,16 +289,12 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
-                            // Implement save functionality
                             if (_selectedCountry != null &&
                                 _cityController.text.isNotEmpty &&
                                 _addressController.text.isNotEmpty &&
                                 _zipController.text.isNotEmpty) {
-                              // Save address and navigate
-                              Navigator.pop(context);
-                              Navigator.pushNamed(context, '/buyer-or-seller');
+                              saveUserAddress();
                             } else {
-                              // Show error
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('Please fill in all fields'),
@@ -344,10 +323,7 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 8),
-
-                      // Extra info text
                       Text(
                         'You can change it later*',
                         style: TextStyle(
@@ -359,12 +335,32 @@ class _AddressInputScreenState extends State<AddressInputScreen> {
                     ],
                   ),
                 ),
-
-                const SizedBox(
-                    height: 80), // Extra space at bottom for scrolling
+                const SizedBox(height: 80),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildTextField(TextEditingController controller, String hint,
+      {TextInputType keyboardType = TextInputType.text}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF8D503A).withOpacity(0.7),
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: TextField(
+        controller: controller,
+        style: const TextStyle(color: Colors.white),
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+          border: InputBorder.none,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         ),
       ),
     );

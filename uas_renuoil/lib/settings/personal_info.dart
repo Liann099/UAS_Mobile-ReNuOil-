@@ -106,37 +106,57 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     }
   }
 
-  void _showEditDialog(String key) {
+ void _showEditDialog(String key) {
     final controller = TextEditingController(text: personalInfo[key] ?? '');
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Edit $key'),
-        backgroundColor: Colors.black, // <- Warna latar belakang hitam
+        backgroundColor: Colors.white, // Background putih biasa
+        title: Text(
+          'Edit $key',
+          style: const TextStyle(color: Colors.black), // Title teks hitam
+        ),
         content: TextField(
           controller: controller,
+          style: const TextStyle(color: Colors.black), // Inputan teks hitam
           decoration: InputDecoration(
             labelText: key,
-            border: OutlineInputBorder(),
+            labelStyle: const TextStyle(color: Colors.black), // Label hitam
+            border: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black), // Border hitam
+            ),
+            enabledBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black), // Border enabled
+            ),
+            focusedBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black), // Border saat fokus
+            ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.black), // Tombol Cancel hitam
+            ),
           ),
           TextButton(
             onPressed: () {
               updateProfile(key, controller.text);
               Navigator.pop(context);
             },
-            child: const Text('Save'),
+            child: const Text(
+              'Save',
+              style: TextStyle(color: Colors.black), // Tombol Save hitam
+            ),
           ),
         ],
       ),
     );
   }
+
 
   Widget _buildInfoSection(String title, String value) {
     return Padding(

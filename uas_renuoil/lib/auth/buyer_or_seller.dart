@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/generated/assets.dart';
+import 'package:flutter_application_1/Homepage/Buyer/default.dart';
+import 'package:flutter_application_1/Seller/seller.dart';
 
 class BuyerOrSellerScreen extends StatelessWidget {
   const BuyerOrSellerScreen({Key? key}) : super(key: key);
@@ -11,7 +13,8 @@ class BuyerOrSellerScreen extends StatelessWidget {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage(Assets.imagesGroup306), // Use the same wave background image
+            image: AssetImage(
+                Assets.imagesGroup306), // Use the same wave background image
             fit: BoxFit.cover,
           ),
           color: Color(0xFFFFB35A), // Orange background color
@@ -105,7 +108,11 @@ class BuyerOrSellerScreen extends StatelessWidget {
                         // Handle buy option
                         print('Selected: Buy');
                         // Navigate to next screen or update user type
-                        Navigator.pushNamed(context, '/how-did-you-know');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => BuyerHomePage()),
+                        );
                       },
                     ),
 
@@ -117,8 +124,11 @@ class BuyerOrSellerScreen extends StatelessWidget {
                       onTap: () {
                         // Handle sell option
                         print('Selected: Sell');
-                        Navigator.pushNamed(context, '/seller-inquiry');
-                        // Navigate to next screen or update user type
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => SellerPage()),
+                        );
                       },
                     ),
                   ],
@@ -135,11 +145,11 @@ class BuyerOrSellerScreen extends StatelessWidget {
   }
 
   Widget _buildOptionButton(
-      BuildContext context, {
-        required String title,
-        required IconData icon,
-        required VoidCallback onTap,
-      }) {
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(

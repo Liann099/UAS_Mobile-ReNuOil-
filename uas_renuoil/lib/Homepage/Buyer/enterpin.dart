@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:local_auth/local_auth.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,7 +21,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-
 class CheckoutWrapper extends StatefulWidget {
   @override
   _CheckoutWrapperState createState() => _CheckoutWrapperState();
@@ -29,22 +29,136 @@ class CheckoutWrapper extends StatefulWidget {
 class _CheckoutWrapperState extends State<CheckoutWrapper> {
   final storage = FlutterSecureStorage();
   String? _userPasscode;
+  late final LocalAuthentication _localAuth;
+  bool _isAuthenticating = false;
+  bool _supportState = false;
+  List<BiometricType> _availableBiometrics = [];
 
   @override
   void initState() {
     super.initState();
+    _localAuth = LocalAuthentication();
+    _checkDeviceSupport();
+    _getAvailableBiometrics();
     _fetchUserPasscode();
   }
 
-  Future<void> _fetchUserPasscode() async {
-    // In a real app, you would fetch this from your backend
-    // For demo purposes, we'll simulate fetching the passcode
-    await Future.delayed(Duration(seconds: 1));
+  Future<void> _checkDeviceSupport() async {
+    bool isSupported = await _localAuth.isDeviceSupported();
     setState(() {
-      // _userPasscode = "123456"; // Default passcode for demo
+      _supportState = isSupported;
     });
   }
 
+  Future<void> _getAvailableBiometrics() async {
+    final List<BiometricType> fetchedBiometrics =
+        await _localAuth.getAvailableBiometrics();
+    if (mounted) {
+      setState(() {
+        _availableBiometrics = fetchedBiometrics;
+      });
+    }
+  }
+
+  Future<void> _fetchUserPasscode() async {
+    await Future.delayed(Duration(seconds: 1));
+    setState(() {
+      _userPasscode = "123456"; // Default passcode for demo
+    });
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Authentication Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _useBiometricAuth() async {
+    await _getAvailableBiometrics();
+
+    if (!_supportState) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content:
+                Text('This device does not support biometric authentication')));
+      }
+      return;
+    }
+
+    if (_availableBiometrics.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('No biometrics available on this device')),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isAuthenticating = true;
+    });
+
+    try {
+      final bool didAuthenticate = await _localAuth.authenticate(
+        localizedReason: 'Please authenticate to continue',
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: true,
+        ),
+      );
+
+      if (mounted) {
+        if (didAuthenticate) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text("Fingerprint verified! Proceeding...")),
+          );
+          Navigator.of(context).pop(); // Close the passcode screen
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Authentication failed')),
+          );
+        }
+      }
+    } on PlatformException catch (e) {
+      if (mounted) {
+        if (e.code == 'NotEnrolled') {
+          _showErrorDialog(
+              "No biometrics enrolled. Please set up fingerprint or face recognition in your device settings.");
+        } else if (e.code == 'LockedOut' || e.code == 'PermanentlyLockedOut') {
+          _showErrorDialog(
+              "Too many attempts. Biometric authentication is locked. Please use your passcode.");
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Authentication error: ${e.message}')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAuthenticating = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,14 +188,11 @@ class _CheckoutWrapperState extends State<CheckoutWrapper> {
         builder: (context) => PasscodeScreen(
           onPinVerified: (pin) {
             if (_userPasscode != null && pin == _userPasscode) {
-              // Passcode matches, proceed with checkout
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text("Passcode verified! Proceeding...")),
               );
-              // Here you would typically navigate to checkout confirmation
               Navigator.pop(context);
             } else {
-              // Show the screen again with error message
               _showPinEntryScreen(showError: true);
             }
           },
@@ -91,6 +202,7 @@ class _CheckoutWrapperState extends State<CheckoutWrapper> {
             );
             Navigator.pop(context);
           },
+          onBiometricAuth: _useBiometricAuth,
           showError: showError,
         ),
         fullscreenDialog: true,
@@ -103,28 +215,34 @@ class PasscodeScreen extends StatefulWidget {
   final Function(String)? onPinVerified;
   final VoidCallback? onCancel;
   final bool showError;
+  final VoidCallback? onBiometricAuth;
 
   const PasscodeScreen({
     Key? key,
     this.onPinVerified,
     this.onCancel,
+    this.onBiometricAuth,
     this.showError = false,
   }) : super(key: key);
 
   @override
   _PasscodeScreenState createState() => _PasscodeScreenState();
 }
+
 class _PasscodeScreenState extends State<PasscodeScreen> {
   String _passcode = '';
   final FocusNode _focusNode = FocusNode();
   final TextEditingController _controller = TextEditingController();
+  bool _keyboardVisible = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Request focus after the first frame is built
-      FocusScope.of(context).requestFocus(_focusNode);
+      _focusNode.requestFocus();
+      setState(() {
+        _keyboardVisible = true;
+      });
     });
   }
 
@@ -158,16 +276,48 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
     }
   }
 
+  void _toggleKeyboard() {
+    if (_keyboardVisible) {
+      _focusNode.unfocus();
+    } else {
+      _focusNode.requestFocus();
+    }
+    setState(() {
+      _keyboardVisible = !_keyboardVisible;
+    });
+  }
+
+  void _showFingerprintInfoDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Fingerprint Authentication'),
+        content: const Text(
+          'Tap the fingerprint icon to authenticate using your fingerprint. '
+          'Make sure your finger is clean and properly placed on the sensor.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(true);
+              if (widget.onBiometricAuth != null) {
+                widget.onBiometricAuth!();
+              }
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        // This will request focus when tapping anywhere on the screen
-        FocusScope.of(context).requestFocus(_focusNode);
-      },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFFFD358),
-        body: LayoutBuilder(
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFD358),
+      body: GestureDetector(
+        onTap: _toggleKeyboard,
+        child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16.10),
@@ -180,8 +330,6 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 30),
-
-                      // Back button
                       TextButton.icon(
                         onPressed: () {
                           if (widget.onCancel != null) {
@@ -201,10 +349,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                       ),
-
                       const SizedBox(height: 70),
-
-                      // Title and subtitle
                       const Center(
                         child: Text(
                           'Enter Passcode',
@@ -222,8 +367,6 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                           style: TextStyle(fontSize: 12, color: Colors.black87),
                         ),
                       ),
-
-                      // Error message if showError is true
                       if (widget.showError)
                         const Center(
                           child: Padding(
@@ -234,16 +377,10 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                             ),
                           ),
                         ),
-
                       const SizedBox(height: 40),
-
-                      // Passcode circles with GestureDetector
-                      Center(
-                        child: GestureDetector(
-                          onTap: () {
-                            // Explicitly request focus when tapping the circles
-                            FocusScope.of(context).requestFocus(_focusNode);
-                          },
+                      GestureDetector(
+                        onTap: _toggleKeyboard,
+                        child: Center(
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: List.generate(6, (index) {
@@ -280,10 +417,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 40),
-
-                      // Fingerprint option
                       const Center(
                         child: Text(
                           'Or Fingerprint',
@@ -297,13 +431,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                       const SizedBox(height: 16),
                       Center(
                         child: GestureDetector(
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text(
-                                      'Fingerprint authentication requested')),
-                            );
-                          },
+                          onTap: widget.onBiometricAuth,
                           child: Container(
                             width: 50,
                             height: 50,
@@ -315,10 +443,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                           ),
                         ),
                       ),
-
                       const Spacer(),
-
-                      // Confirm button
                       Padding(
                         padding: EdgeInsets.only(
                           bottom: MediaQuery.of(context).viewInsets.bottom > 0
@@ -357,8 +482,6 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                           ),
                         ),
                       ),
-
-                      // Hidden text field for keyboard input
                       Opacity(
                         opacity: 0,
                         child: TextField(

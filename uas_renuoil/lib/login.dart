@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'constants.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_application_1/Seller/seller.dart';
 
 import 'package:flutter_application_1/controller/google_login_cubit.dart';
 import 'package:flutter_application_1/home.dart';
@@ -86,6 +87,9 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Login successful!')),
         );
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => SellerPage()),
+        );
 
         // Navigate to home screen (replace with your navigation logic)
         // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomeScreen()));
@@ -112,7 +116,6 @@ class _LoginScreenState extends State<LoginScreen> {
       });
     }
   }
-
 
   // Function to handle Google sign-in authentication with backend
   Future<void> _handleGoogleSignIn(GoogleSignInAccount account) async {
@@ -163,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // Navigate to homepage
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => HomePage()),
+          MaterialPageRoute(builder: (context) => SellerPage()),
         );
       } else {
         final errorData = jsonDecode(response.body);

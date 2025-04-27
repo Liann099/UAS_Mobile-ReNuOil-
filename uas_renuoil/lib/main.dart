@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/maps/location_map.dart';
 import 'package:flutter_application_1/controller/google_login_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'firebase_options.dart';
 // Auth
 import 'package:flutter_application_1/auth/address_input.dart';
 import 'package:flutter_application_1/auth/buyer_or_seller.dart';
@@ -78,9 +81,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: 'Poppins'),
-      home: const RouteButtonsScreen(),
+      // home: const AuthChecker(),
+      home: const RouteButtonsScreen(), // Changed from SellerPage to AuthChecker
       routes: {
-        '/buttons': (context) => const RouteButtonsScreen(),
         '/home': (context) => HomePage(),
         '/balanceseller': (context) => RnoPayApp(),
 
@@ -133,6 +136,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
+
 class RouteButtonsScreen extends StatelessWidget {
   const RouteButtonsScreen({super.key});
 
@@ -170,24 +174,23 @@ class RouteButtonsScreen extends StatelessWidget {
       '/add-payout-method': 'Add Payout Method',
       '/payout-setup': 'Payout Setup',
 
+      '/location-map': 'Live Location Map',
+
       // Shortcut to test your Buyer homepage
       '/buyer-home': 'Buyer Homepage',
-      '/balanceseller': "balanceseller",
-      '/buyer-balance': 'buyer-balance',
+      '/buyer-default': 'Buyer Default',
 
       // seller homepage
       '/seller': 'Seller Homepage',
       '/pickup': 'Pickup Page',
       '/seller-withdraw': 'Seller Withdraw',
       '/qr-seller': 'QR Seller',
-
-      '/location-map': 'Live Location Map',
     };
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Navigation Test'),
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.deepPurpleAccent,
         foregroundColor: Colors.white,
       ),
       body: ListView.separated(
@@ -198,7 +201,7 @@ class RouteButtonsScreen extends StatelessWidget {
           final entry = routes.entries.elementAt(index);
           return ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
+              backgroundColor: Colors.deepPurpleAccent,
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
             onPressed: () => Navigator.pushNamed(context, entry.key),
@@ -210,5 +213,60 @@ class RouteButtonsScreen extends StatelessWidget {
         },
       ),
     );
+  }
+}
+
+
+class AuthChecker extends StatefulWidget {
+  const AuthChecker({super.key});
+
+  @override
+  State<AuthChecker> createState() => _AuthCheckerState();
+}
+
+class _AuthCheckerState extends State<AuthChecker> {
+  final storage = FlutterSecureStorage(); // <-- ini WAJIB
+  bool? _isLoggedIn; // null artinya masih loading
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    try {
+      String? token = await storage.read(
+          key: 'access_token'); // Ensure you are checking the correct token
+      if (token != null) {
+        print("Access Token: $token"); // Print the access token if it exists
+      }
+      setState(() {
+        _isLoggedIn =
+            token != null; // Update login status based on token presence
+      });
+    } catch (e) {
+      // Handle error (e.g., log it, show a message)
+      print("Error reading auth token: $e");
+      setState(() {
+        _isLoggedIn = false; // Default to not logged in on error
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoggedIn == null) {
+      // Masih loading, kasih loading screen dulu
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    } else if (_isLoggedIn == true) {
+      return LoginScreen();
+
+      // return const SellerPage();
+    } else {
+      return LoginScreen();
+    }
   }
 }
