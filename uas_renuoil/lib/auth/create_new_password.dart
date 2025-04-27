@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import '../login.dart'; // <-- Update this to your actual login screen path
+import '../login.dart'; // adjust path if needed
 
 class CreateNewPasswordScreen extends StatefulWidget {
   final String email;
@@ -15,17 +16,13 @@ class CreateNewPasswordScreen extends StatefulWidget {
   });
 
   @override
-  State<CreateNewPasswordScreen> createState() =>
-      _CreateNewPasswordScreenState();
+  State<CreateNewPasswordScreen> createState() => _CreateNewPasswordScreenState();
 }
 
 class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
-  bool _passwordVisible = false;
-  bool _confirmPasswordVisible = false;
 
   @override
   void dispose() {
@@ -35,27 +32,16 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
   }
 
   Future<void> _resetPassword() async {
-    if (_passwordController.text.isEmpty ||
-        _confirmPasswordController.text.isEmpty) {
-      _showErrorMessage('Please fill in both fields');
+    final newPassword = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    if (newPassword.isEmpty || confirmPassword.isEmpty) {
+      _showErrorMessage('Please fill in all fields');
       return;
     }
 
-    if (_passwordController.text != _confirmPasswordController.text) {
+    if (newPassword != confirmPassword) {
       _showErrorMessage('Passwords do not match');
-      return;
-    }
-
-    // Check if email or resetCode is empty
-    if (widget.email.isEmpty) {
-      _showErrorMessage(
-          'Email is missing. Please try again from the forgot password screen.');
-      return;
-    }
-
-    if (widget.resetCode.isEmpty) {
-      _showErrorMessage(
-          'Reset code is missing. Please try again from the forgot password screen.');
       return;
     }
 
@@ -64,79 +50,34 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
     });
 
     try {
-      // Create request payload
-      final Map<String, dynamic> requestData = {
-        // Try both field naming conventions since we're not sure which one the backend expects
-        'uid': widget.email,
-        'email': widget.email,
-        'token': widget.resetCode,
-        'code': widget.resetCode,
-        'reset_code': widget.resetCode,
-        'new_password': _passwordController.text,
-        'password': _passwordController.text,
-        're_new_password': _confirmPasswordController.text,
-        'confirm_password': _confirmPasswordController.text,
-      };
+      final url = Uri.parse('http://192.168.156.40:8000/api/reset-password/');
 
-      // API endpoint URL
-      final url = Uri.parse(
-          'http://192.168.156.40:8000/auth/users/reset_password_confirm/');
-
-      // Send request with all possible field combinations
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(requestData),
+        body: json.encode({
+          'email': widget.email,
+          'reset_code': widget.resetCode,
+          'new_password': newPassword,
+        }),
       );
 
       if (!mounted) return;
 
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        // Success!
+      if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Password successfully reset!'),
+            content: Text('Password reset successful!'),
             backgroundColor: Colors.green,
           ),
         );
-
-        Navigator.pushAndRemoveUntil(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LoginScreen()),
-          (route) => false,
         );
       } else {
-        // Try to extract error message from response
-        String errorMsg = 'Failed to reset password.';
-        try {
-          final data = jsonDecode(response.body);
-          if (data is Map) {
-            // Check various possible error formats
-            if (data.containsKey('detail')) {
-              errorMsg = data['detail'];
-            } else if (data.containsKey('non_field_errors')) {
-              errorMsg = data['non_field_errors'][0].toString();
-            } else if (data.containsKey('error')) {
-              errorMsg = data['error'];
-            } else {
-              // If there's any key with an error message, use that
-              String combinedError = '';
-              data.forEach((key, value) {
-                String errorText =
-                    value is List ? value.join(', ') : value.toString();
-                combinedError += '$key: $errorText\n';
-              });
-
-              if (combinedError.isNotEmpty) {
-                errorMsg = combinedError;
-              }
-            }
-          }
-        } catch (e) {
-          // If we can't parse the error message, just use the default
-        }
-
-        _showErrorMessage(errorMsg);
+        final data = json.decode(response.body);
+        _showErrorMessage(data['error'] ?? 'Failed to reset password');
       }
     } catch (e) {
       if (!mounted) return;
@@ -185,8 +126,7 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                       onTap: () => Navigator.pop(context),
                       child: Row(
                         children: [
-                          const Icon(Icons.arrow_back_ios,
-                              color: Colors.white, size: 20),
+                          const Icon(Symbols.arrow_back_ios, color: Colors.white, size: 20),
                           const SizedBox(width: 8),
                           const Text(
                             'Back',
@@ -205,7 +145,6 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                   const Center(
                     child: Text(
                       'Create New Password',
-                      textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 36,
@@ -218,31 +157,6 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                             blurRadius: 4,
                           ),
                         ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  Center(
-                    child: Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF7E4A5),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.lock_outline,
-                          size: 60,
-                          color: Colors.black,
-                        ),
                       ),
                     ),
                   ),
@@ -266,33 +180,18 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                     ),
                     child: TextField(
                       controller: _passwordController,
-                      obscureText: !_passwordVisible,
+                      obscureText: true,
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
                         hintText: 'Enter new password',
-                        hintStyle:
-                            TextStyle(color: Colors.white.withOpacity(0.7)),
+                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
                         prefixIcon: const Icon(Icons.lock, color: Colors.white),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _passwordVisible
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                            color: Colors.white,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _passwordVisible = !_passwordVisible;
-                            });
-                          },
-                        ),
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 16),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   const Padding(
                     padding: EdgeInsets.only(left: 8.0, bottom: 8.0),
                     child: Text(
@@ -312,30 +211,14 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                     ),
                     child: TextField(
                       controller: _confirmPasswordController,
-                      obscureText: !_confirmPasswordVisible,
+                      obscureText: true,
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
                         hintText: 'Confirm new password',
-                        hintStyle:
-                            TextStyle(color: Colors.white.withOpacity(0.7)),
-                        prefixIcon: const Icon(Icons.lock, color: Colors.white),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _confirmPasswordVisible
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                            color: Colors.white,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _confirmPasswordVisible =
-                                  !_confirmPasswordVisible;
-                            });
-                          },
-                        ),
+                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                        prefixIcon: const Icon(Icons.lock_outline, color: Colors.white),
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 16),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                       ),
                     ),
                   ),

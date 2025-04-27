@@ -33,9 +33,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     });
 
     try {
-      // Replace with your API URL
-      final url = Uri.parse('http://192.168.156.40:8000/api/forgot-password/');
       final email = _emailController.text.trim();
+      final url = Uri.parse('http://192.168.156.40:8000/api/request-reset-code/');
 
       final response = await http.post(
         url,
@@ -43,14 +42,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         body: json.encode({'email': email}),
       );
 
-      if (!mounted) return; // mounted check after await
+      if (!mounted) return;
 
       if (response.statusCode == 200) {
-        // Parse response to get reset code
         final data = json.decode(response.body);
-        final resetCode = data['reset_code'] ?? '';  // Extract reset code from response
-        
-        // Success, move to next page with required parameters
+        final resetCode = data['reset_code'] ?? '';
+
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -65,7 +62,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         _showErrorMessage(data['error'] ?? 'Failed to send reset code');
       }
     } catch (e) {
-      if (!mounted) return; // mounted check again
+      if (!mounted) return;
       _showErrorMessage('An error occurred. Please try again.');
     } finally {
       if (mounted) {
@@ -126,9 +123,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 40),
-
                   const Center(
                     child: Text(
                       'Forgot Password?',
@@ -147,9 +142,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 40),
-
                   Center(
                     child: Container(
                       width: 120,
@@ -174,9 +167,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 40),
-
                   const Center(
                     child: Text(
                       'Please Enter Your Email Address\nTo Receive a Verification Code',
@@ -189,9 +180,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 40),
-
                   const Padding(
                     padding: EdgeInsets.only(left: 8.0, bottom: 8.0),
                     child: Text(
@@ -204,7 +193,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                     ),
                   ),
-
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.3),
@@ -223,9 +211,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 40),
-
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -256,7 +242,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             ),
                     ),
                   ),
-
                   const SizedBox(height: 100),
                 ],
               ),

@@ -30,6 +30,9 @@ urlpatterns = [
     
     
     path('forgot-password/', forgot_password), 
+    path('forgot-password/', ForgotPasswordView.as_view(), name='forgot-password'),
+    path('api/request-reset-code/', request_reset_code, name='request_reset_code'),
+    path('api/reset-password/', reset_password, name='reset_password'),   
     
 
     

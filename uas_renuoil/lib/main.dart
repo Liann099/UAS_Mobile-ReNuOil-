@@ -101,13 +101,13 @@ class MyApp extends StatelessWidget {
         '/forgot-password': (context) => ForgotPasswordScreen(),
         '/verify-email': (context) => 
             VerifyEmailScreen(email: 'email@example.com'),
-        '/create-new-password': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as Map<String, String>;
-          final email = args['email']!;
-          final resetCode = args['resetCode']!;
+        // '/create-new-password': (context) {
+        //   final args = ModalRoute.of(context)!.settings.arguments as Map<String, String>;
+        //   final email = args['email']!;
+        //   final resetCode = args['resetCode']!;
           
-          return CreateNewPasswordScreen(email: email, resetCode: resetCode);
-        },
+        //   return CreateNewPasswordScreen(email: email, resetCode: resetCode);
+        // },
         '/address-input': (context) => AddressInputScreen(),
         '/buyer-or-seller': (context) => BuyerOrSellerScreen(),
         '/how-did-you-know': (context) => HowDidYouKnowScreen(),

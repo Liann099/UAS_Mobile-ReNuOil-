@@ -538,3 +538,101 @@ def forgot_password(request):
         return Response({'message': 'Reset code sent successfully'}, status=status.HTTP_200_OK)
     except User.DoesNotExist:
         return Response({'error': 'Email not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+User = get_user_model()
+
+class ForgotPasswordView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+
+        if not email:
+            return Response({'error': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'User with this email does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Generate random 6-digit code
+        reset_code = get_random_string(length=6, allowed_chars='0123456789')
+
+        # Save code in cache (valid for 10 minutes)
+        cache.set(f'reset_code_{email}', reset_code, timeout=600)
+
+        # Send email
+        send_mail(
+            subject='Password Reset Code',
+            message=f'Your password reset code is: {reset_code}',
+            from_email='geraldjulian09@gmail.com',  # Change to your sender email
+            recipient_list=[email],
+            fail_silently=False,
+        )
+
+        return Response({'detail': 'Reset code sent successfully.'}, status=status.HTTP_200_OK)
+
+class VerifyResetCodeView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        code = request.data.get('code')
+
+        if not email or not code:
+            return Response({'error': 'Email and code are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        saved_code = cache.get(f'reset_code_{email}')
+
+        if saved_code is None:
+            return Response({'error': 'Reset code expired or not found.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if saved_code != code:
+            return Response({'error': 'Invalid reset code.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Code is correct
+        return Response({'detail': 'Reset code verified. You can now reset your password.'}, status=status.HTTP_200_OK)
+
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+@csrf_exempt
+def request_reset_code(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        email = data.get('email')
+
+        try:
+            user = User.objects.get(email=email)
+            reset_code = str(random.randint(100000, 999999))  # 6 digit code
+            user.profile.reset_code = reset_code  # Save to your Profile model or User if you have reset_code field
+            user.profile.save()
+
+            # send email
+            send_mail(
+                'Your Reset Code',
+                f'Your reset code is {reset_code}',
+                'no-reply@yourdomain.com',
+                [email],
+                fail_silently=False,
+            )
+
+            return JsonResponse({'message': 'Reset code sent!'})
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User with this email does not exist'}, status=404)
+
+@csrf_exempt
+def reset_password(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        email = data.get('email')
+        reset_code = data.get('reset_code')
+        new_password = data.get('new_password')
+
+        try:
+            user = User.objects.get(email=email)
+            if user.profile.reset_code == reset_code:
+                user.set_password(new_password)
+                user.save()
+                return JsonResponse({'message': 'Password reset successful!'})
+            else:
+                return JsonResponse({'error': 'Invalid reset code'}, status=400)
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
