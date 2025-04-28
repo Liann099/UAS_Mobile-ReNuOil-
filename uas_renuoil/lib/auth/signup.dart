@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../constants.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -11,6 +12,8 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+  final storage = FlutterSecureStorage(); // <-- ini WAJIB
+
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -22,6 +25,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _acceptTerms = false;
 
   final String signupUrl = '$baseUrl/auth/users/';
+  final String loginUrl = '$baseUrl/auth/jwt/create/';
 
   @override
   void dispose() {
@@ -38,7 +42,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
 
-    // Validation
     if (username.isEmpty ||
         email.isEmpty ||
         password.isEmpty ||
@@ -75,17 +78,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
           'username': username,
           'email': email,
           'password': password,
-          're_password': confirmPassword, // Tambahkan ini
+          're_password': confirmPassword,
         }),
       );
 
       if (response.statusCode == 201) {
-        _showSuccessDialog();
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
-            Navigator.pushNamed(context, '/address-input');
-          }
-        });
+        // Setelah signup berhasil, langsung login
+        await _loginAfterSignup(email, password);
       } else {
         final responseBody = jsonDecode(response.body);
         String errorMessage = 'Registration failed';
@@ -101,6 +100,47 @@ class _SignUpScreenState extends State<SignUpScreen> {
       }
     } catch (e) {
       _showError('Error connecting to server: ${e.toString()}');
+    }
+  }
+
+  Future<void> _loginAfterSignup(String email, String password) async {
+    try {
+      final response = await http.post(
+        Uri.parse(loginUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final responseBody = jsonDecode(response.body);
+        final accessToken = responseBody['access'];
+        final refreshToken = responseBody['refresh'];
+
+        // Print token ke console
+        print('Access Token: $accessToken');
+        print('Refresh Token: $refreshToken');
+        // Simpan token ke secure storage
+        await storage.write(key: 'access_token', value: accessToken);
+        await storage.write(key: 'refresh_token', value: refreshToken);
+
+        
+        // Show success
+        _showSuccessDialog();
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.pushNamed(context, '/address-input');
+          }
+        });
+      } else {
+        _showError('Login after signup failed.');
+        print("Login Response: ${response.statusCode}");
+        print("Login Body: ${response.body}");
+      }
+    } catch (e) {
+      _showError('Error connecting to server (login): ${e.toString()}');
     }
   }
 

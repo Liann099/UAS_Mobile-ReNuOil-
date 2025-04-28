@@ -45,7 +45,6 @@ final List<ReNuOilLocation> renuoilMachineLocations = [
       name: 'Beachwalk Shopping Center Bali',
       location: LatLng(-8.7090, 115.1694)),
 ];
-
 String _pickupLocationText = 'Fetching Location...';
 
 class PickupPage extends StatefulWidget {
@@ -65,6 +64,26 @@ class _PickupPageState extends State<PickupPage> {
   String? profilePictureUrl;
   final Map<String, TextEditingController> controllers = {};
   final Map<String, bool> isEditing = {};
+
+  // Tambahkan fungsi ini supaya bisa reuse ambil address dari LatLng
+  Future<String> _getAddressFromCoordinates(LatLng latlng) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        latlng.latitude,
+        latlng.longitude,
+      );
+      if (placemarks.isNotEmpty) {
+        final Placemark place = placemarks.first;
+        final address =
+            '${place.street}, ${place.locality}, ${place.administrativeArea}, ${place.country}';
+        return address;
+      } else {
+        return 'Location found';
+      }
+    } catch (e) {
+      return 'Could not determine address.';
+    }
+  }
 
   Future<void> _fetchCurrentLocation() async {
     bool serviceEnabled;
@@ -91,17 +110,13 @@ class _PickupPageState extends State<PickupPage> {
     final Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
 
-    List<Placemark> placemarks = await placemarkFromCoordinates(
-      position.latitude,
-      position.longitude,
-    );
+    final LatLng latlng = LatLng(position.latitude, position.longitude);
 
-    Placemark place = placemarks[0];
+    final String address = await _getAddressFromCoordinates(latlng);
 
     setState(() {
-      _pickupLocationText =
-          "${place.name}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
-      _currentLocation = LatLng(position.latitude, position.longitude);
+      _pickupLocationText = address;
+      _currentLocation = latlng;
     });
 
     _findNearestMachine();

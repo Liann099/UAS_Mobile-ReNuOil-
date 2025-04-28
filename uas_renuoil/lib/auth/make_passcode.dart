@@ -4,6 +4,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants.dart';
+import 'package:flutter_application_1/auth/buyer_or_seller.dart';
+import 'package:flutter_application_1/generated/assets.dart';
+import 'package:local_auth/local_auth.dart';
 
 class MakePasscodeScreen extends StatefulWidget {
   const MakePasscodeScreen({super.key});
@@ -13,6 +16,9 @@ class MakePasscodeScreen extends StatefulWidget {
 }
 
 class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
+  late final LocalAuthentication auth;
+  bool _supportState = false;
+  List<BiometricType> _availableBiometrics = [];
   final List<TextEditingController> _controllers = List.generate(
     6,
     (index) => TextEditingController(),
@@ -23,11 +29,20 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
   );
   String _passcode = '';
   bool _isLoading = false;
+  bool _passcodeSaved = false;
   final _storage = const FlutterSecureStorage();
 
   @override
   void initState() {
     super.initState();
+    auth = LocalAuthentication();
+    auth.isDeviceSupported().then(
+          (bool isSupported) => setState(() {
+            _supportState = isSupported;
+          }),
+        );
+    _getAvailableBiometrics();
+
     for (int i = 0; i < 6; i++) {
       _controllers[i].addListener(() {
         _updatePasscode();
@@ -53,6 +68,116 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
     });
   }
 
+  Future<void> _getAvailableBiometrics() async {
+    final List<BiometricType> fetchedBiometrics =
+        await auth.getAvailableBiometrics();
+    if (mounted) {
+      setState(() {
+        _availableBiometrics = fetchedBiometrics;
+      });
+    }
+  }
+
+  Future<void> _showBiometricConfirmation() async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Enable Biometric Authentication'),
+          content: const Text(
+              'Do you want to enable biometric authentication for faster access?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text(
+                'Not Now',
+                style: TextStyle(
+                    color: Colors.orange), // Set button text color to white
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                'Enable',
+                style: TextStyle(
+                    color: Colors.orange), // Set button text color to white
+              ),
+            )
+          ],
+        );
+      },
+    ).then((value) {
+      if (value == true) {
+        _useBiometricAuth();
+      } else {
+        _showCongratulationsDialog();
+      }
+    });
+  }
+
+  void _useBiometricAuth() async {
+    if (!_passcodeSaved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please save your passcode first')),
+      );
+      return;
+    }
+
+    await _getAvailableBiometrics();
+
+    if (!_supportState) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text(
+                  'This device does not support biometric authentication')),
+        );
+      }
+      return;
+    }
+
+    if (_availableBiometrics.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('No biometrics available on this device')),
+        );
+      }
+      return;
+    }
+
+    try {
+      final bool didAuthenticate = await auth.authenticate(
+        localizedReason: 'Please authenticate to enable biometric login',
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: true,
+        ),
+      );
+
+      if (mounted) {
+        if (didAuthenticate) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Biometric authentication saved successfully')),
+          );
+          _showCongratulationsDialog();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Authentication failed')),
+          );
+        }
+      }
+    } on PlatformException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Authentication error: ${e.message}')),
+        );
+      }
+    }
+  }
+
   Future<void> _savePasscode() async {
     if (_passcode.length != 6 || _isLoading) return;
 
@@ -74,7 +199,12 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
       );
 
       if (response.statusCode == 200) {
-        _showCongratulationsDialog();
+        setState(() => _passcodeSaved = true);
+        if (_supportState && _availableBiometrics.isNotEmpty) {
+          _showBiometricConfirmation();
+        } else {
+          _showCongratulationsDialog();
+        }
       } else {
         throw Exception('Failed to update passcode: ${response.body}');
       }
@@ -90,15 +220,6 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
     }
   }
 
-  void _useFaceID() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Face ID authentication initiated'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-
   void _showCongratulationsDialog() {
     showDialog(
       context: context,
@@ -107,7 +228,11 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
         return CongratulationsDialog(
           onContinue: () {
             Navigator.of(context).pop();
-            Navigator.pushNamed(context, '/');
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const BuyerOrSellerScreen()),
+            );
           },
         );
       },
@@ -121,10 +246,11 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/group306.png'),
+            image: AssetImage(
+                Assets.imagesGroup306), // Use the same wave background image
             fit: BoxFit.cover,
           ),
-          color: Color(0xFFFFB35A),
+          color: Color(0xFFFFB35A), // Orange background color
         ),
         child: SafeArea(
           child: Padding(
@@ -199,26 +325,43 @@ class _MakePasscodeScreenState extends State<MakePasscodeScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 80),
-                const Center(
-                  child: Text(
-                    'Or Face ID',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF333333),
-                      fontFamily: 'Poppins',
+                const SizedBox(height: 90),
+                if (_passcodeSaved) // Only show biometric option after passcode is saved
+                  GestureDetector(
+                    onTap: _useBiometricAuth,
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Or Use Biometric Authentication',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Container(
+                          padding: const EdgeInsets.all(15),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.3),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.fingerprint,
+                            size: 60,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                GestureDetector(
-                  onTap: _useFaceID,
-                  child: Center(
-                    child: Image.asset('assets/images/face_id.png', height: 50),
-                  ),
-                ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 150),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 40.0),
                   child: SizedBox(

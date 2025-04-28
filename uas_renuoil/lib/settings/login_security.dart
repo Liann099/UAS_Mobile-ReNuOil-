@@ -1,10 +1,104 @@
 import 'package:flutter/material.dart';
+import '../constants.dart';
+import '../login.dart';
+
 import 'package:flutter_application_1/generated/assets.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:flutter_application_1/auth/forgot_password.dart';
+import 'package:flutter_application_1/auth/create_new_password.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LoginSecurityScreen extends StatelessWidget {
   const LoginSecurityScreen({super.key});
+
+  Future<void> deactivateAccount(BuildContext context) async {
+    final storage = FlutterSecureStorage(); // <-- ini WAJIB
+
+    try {
+      String? token = await storage.read(key: 'access_token');
+      if (token == null) throw Exception('No access token found');
+
+      final response = await http.patch(
+        Uri.parse('$baseUrl/api/auth/deactivate-account/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+      print('Response status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        // Successfully deactivated account
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Account Deactivated'),
+              content:
+                  const Text('Your account has been deactivated successfully.'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Close the dialog
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              LoginScreen()), // Navigate to LoginScreen
+                    );
+                  },
+                  child: const Text('OK'),
+                )
+              ],
+            );
+          },
+        );
+      } else {
+        // Error deactivating account
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Error'),
+              content: const Text(
+                  'There was an issue deactivating your account. Please try again later.'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Close the dialog
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    } catch (e) {
+      print('Error: $e');
+      // Handle error
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: const Text(
+                'There was an issue with the request. Please try again later.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close the dialog
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +183,7 @@ class LoginSecurityScreen extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  const ForgotPasswordScreen(),
+                                  const CreateNewPasswordScreen(),
                             ),
                           );
                         },
@@ -224,7 +318,7 @@ class LoginSecurityScreen extends StatelessWidget {
                       ),
                       TextButton(
                         onPressed: () {
-                          // Account deactivation action
+                          deactivateAccount(context);
                         },
                         child: const Text(
                           'Deactivate',
