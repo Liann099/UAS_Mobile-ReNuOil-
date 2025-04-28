@@ -41,4 +41,5 @@ class Assets {
   static const String imagesIndustrialOil = 'images/industrial_oil.png';
   static const String imagesMotorOil = 'assets/images/motor_oil.png';
   static const String imagesProductMilk = 'assets/images/product_milk.png';
+  static const String imagesTruckDelivery = 'assets/images/truck_delivery.png';
 }

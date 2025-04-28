@@ -1,0 +1,12 @@
+django>=5.1.1
+djangorestframework
+djoser
+djangorestframework-simplejwt
+django-cors-headers
+dj-database-url
+gunicorn
+whitenoise
+python-dateutil
+Pillow
+psycopg2-binary
+python-decouple

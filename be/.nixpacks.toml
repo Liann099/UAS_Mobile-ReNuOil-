@@ -1,0 +1,14 @@
+[phases.setup]
+nixPkgs = [
+  "python311",
+  "python311Packages.pip",
+  "gcc",
+  "libjpeg",
+  "zlib"
+]
+
+[phases.install]
+cmds = ["pip install -r requirements.txt"]
+
+[start]
+cmd = "gunicorn be:application --bind 0.0.0.0:8000"
