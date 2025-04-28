@@ -11,21 +11,56 @@ from rest_framework.response import Response
 from rest_framework import status
 import json
 
+
+#Some sign in handler
+from rest_framework import permissions
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from .authentication import CustomJWTAuthentication
+from rest_framework.exceptions import ValidationError
+
+#Google SIgn in/login
+from rest_framework_simplejwt.tokens import RefreshToken
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+from django.contrib.auth import get_user_model
+
+#Forgot password
+import random
+from django.core.mail import send_mail
+from django.core.cache import cache 
+
+
+# Google Sign-In Imports
+from google.oauth2 import id_token
+from google.auth.transport import requests
+from django.conf import settings
+from django.contrib.auth import authenticate, login
+from django.shortcuts import get_object_or_404
+
+
 from .models import (
     CustomUser, UserProfile, Transaction, OilSale, Promotion,
-    BankAccount, PickUpOrder, TopUp, Withdraw, TransactionHistory, CheckoutHistory, UserPromoUsage, Product, OrderItem
+    BankAccount, PickUpOrder, TopUp, Withdraw, TransactionHistory, CheckoutHistory, UserPromoUsage, Product, OrderItem, Location
 )
 from .serializers import (
     UserSerializer, UserProfileSerializer, TransactionSerializer, OilSaleSerializer,
     PromotionSerializer, BankAccountSerializer, PickUpOrderSerializer, TopUpSerializer,
-    WithdrawSerializer, TransactionHistorySerializer, RankingSerializer, CheckoutHistorySerializer, ProductSerializer,PromotionWithStatusSerializer, SingleProductCheckoutSerializer
+    WithdrawSerializer, TransactionHistorySerializer, RankingSerializer, CheckoutHistorySerializer, ProductSerializer,PromotionWithStatusSerializer, SingleProductCheckoutSerializer, DeactivateAccountSerializer  
 )
+from rest_framework import serializers
 
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
+from rest_framework import permissions, generics
+from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth.models import User
 
 User = get_user_model()
 
@@ -78,6 +113,27 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
     
+
+from rest_framework import permissions, status
+from rest_framework.response import Response
+from rest_framework import generics
+
+class DeactivateAccountView(generics.UpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = DeactivateAccountSerializer  # Add this line
+
+    def get_object(self):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        user.is_active = False
+        user.save()
+
+        return Response(
+            {"message": "Your account has been deactivated."},
+            status=status.HTTP_200_OK,
+        )
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
@@ -799,3 +855,158 @@ def custom_exception_handler(exc, context):
             'status_code': response.status_code
         }
     return response
+
+
+
+
+
+
+##Location Maps
+
+class LocationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Location
+        fields = ('id', 'name', 'latitude', 'longitude')  # Include latitude and longitude fields
+
+# API view to get all locations
+class LocationView(APIView):
+    def get(self, request):
+        locations = Location.objects.all()  # Fetch all locations from the database
+        serializer = LocationSerializer(locations, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+# Google Sign-In View (Added here)
+class GoogleSignInView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        token = request.data.get('idToken')
+        if not token:
+            return Response({'error': 'Google ID token not provided.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Specify the CLIENT_ID of your Flutter app (obtained from Firebase or Google Cloud)
+            CLIENT_ID = settings.GOOGLE_SIGN_IN_CLIENT_ID
+            if not CLIENT_ID:
+                return Response({'error': 'Google Sign-In Client ID not configured in Django settings.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            idinfo = id_token.verify_oauth2_token(token, requests.Request(), CLIENT_ID)
+
+            if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+                raise ValueError('Wrong issuer.')
+
+            email = idinfo.get('email')
+            name = idinfo.get('name')
+            # You can also get 'given_name', 'family_name', and 'picture' if needed
+
+            if not email:
+                return Response({'error': 'Email not found in Google ID token.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                user = CustomUser.objects.get(email=email)
+            except CustomUser.DoesNotExist:
+                # Create a new user
+                username = email.split('@')[0]  # Use the part before '@' as a default username
+                user = CustomUser.objects.create_user(email=email, username=username, first_name=name)
+                UserProfile.objects.create(user=user) # Create a user profile if you use it
+
+            # Log the user in (you might need to adjust this based on your authentication mechanism)
+            request.session['user_id'] = user.id
+            # Or, if you are using Django Rest Framework with token-based authentication:
+            # from rest_framework.authtoken.models import Token
+            # token, created = Token.objects.get_or_create(user=user)
+            # return Response({'token': token.key, 'user': UserSerializer(user).data}, status=status.HTTP_200_OK)
+
+            return Response({'message': 'Google sign-in successful.', 'user': UserSerializer(user).data}, status=status.HTTP_200_OK)
+
+        except ValueError as e:
+            return Response({'error': f'Invalid Google ID token: {e}'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': f'Something went wrong during Google sign-in: {e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    
+        
+class LogoutView(APIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    authentication_classes = [JWTAuthentication]
+
+
+    def post(self, request):
+
+        try:
+
+            token = request.auth
+
+            BlacklistedToken.objects.create(token=token)
+
+            return Response(status=205)  # HTTP 205 Reset Content
+
+        except Exception as e:
+
+            return Response({'error': str(e)}, status=400)
+
+
+class LogoutView(APIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    authentication_classes = [CustomJWTAuthentication]
+   
+   
+   
+    
+class GoogleLoginView(APIView):
+    def post(self, request):
+        token = request.data.get("id_token")
+        try:
+            idinfo = id_token.verify_oauth2_token(token, google_requests.Request())
+            email = idinfo['email']
+            name = idinfo.get('name')
+
+            User = get_user_model()
+            user, _ = User.objects.get_or_create(email=email, defaults={'name': name})
+
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            })
+        except Exception as e:
+            return Response({'detail': str(e)}, status=400)
+
+
+
+
+
+
+
+User = get_user_model()
+
+class SendResetCodeView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        code = random.randint(100000, 999999)
+        cache.set(f'reset_code_{email}', code, timeout=300)  # 5 minutes
+
+        send_mail(
+            'Password Reset Code',
+            f'Your verification code is: {code}',
+            'noreply@yourapp.com',
+            [email],
+            fail_silently=False,
+        )
+
+        return Response({"message": "Reset code sent"}, status=status.HTTP_200_OK)
+
+
+

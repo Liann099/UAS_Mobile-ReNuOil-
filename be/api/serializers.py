@@ -264,3 +264,10 @@ class TrackerSerializer(serializers.ModelSerializer):
         model = Tracker
         fields = '__all__'
         read_only_fields = ['user']
+
+
+from rest_framework import serializers
+
+class DeactivateAccountSerializer(serializers.Serializer):
+    # You can add fields if needed, but for deactivation, you might not need any.
+    pass

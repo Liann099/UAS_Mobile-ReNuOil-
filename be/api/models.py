@@ -584,3 +584,13 @@ class Tracker(models.Model):
 
     def __str__(self):
         return f"{self.product_name} - {self.user.email}"
+    
+
+class Location(models.Model):
+    name = models.CharField(max_length=100)
+    latitude = models.FloatField()  # Store latitude
+    longitude = models.FloatField()  # Store longitude
+
+    def __str__(self):
+        return self.name
+    

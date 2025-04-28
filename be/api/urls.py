@@ -13,6 +13,7 @@ urlpatterns = [
     # Auth & User
     path('auth/user/', UserDetailView.as_view(), name='user-detail'),
     path('auth/profile/', UserProfileView.as_view(), name='user-profile'),
+    path('auth/deactivate-account/', DeactivateAccountView.as_view(), name='deactivate-account'),
 
     # Transactions & Related
     path('transactions/', TransactionListView.as_view(), name='transactions'),
@@ -63,4 +64,13 @@ urlpatterns = [
     path('product/add/', ProductCreateView.as_view(), name='add_product_api'),
     path('product/<int:id>/edit/', ProductUpdateView.as_view(), name='product_update'),  # edit promo
 
+
+    path('locations/', LocationView.as_view(), name='location-list'),
+    
+    path('auth/google/', GoogleSignInView.as_view(), name='google-signin'),
+    path('auth/google/', GoogleLoginView.as_view(), name='google-login'),
+    path('logout/', LogoutView.as_view(), name='logout'),
+    
+    
+   path('auth/send-reset-code/', SendResetCodeView.as_view()),
 ]
