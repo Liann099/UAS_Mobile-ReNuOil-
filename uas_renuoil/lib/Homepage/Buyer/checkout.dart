@@ -6,9 +6,11 @@ import 'package:http/http.dart' as http;
 import '../../constants.dart';
 import 'package:flutter_application_1/Homepage/Buyer/default.dart';
 import 'package:flutter_application_1/Homepage/Buyer/track2.dart';
+import 'package:flutter_application_1/Homepage/Buyer/enterpin.dart';
 
 import 'package:flutter_application_1/Homepage/Buyer/detail.dart';
 import 'package:flutter_application_1/Homepage/Buyer/enterpin.dart';
+import 'package:local_auth/local_auth.dart';
 
 class _PaymentOption extends StatelessWidget {
   final IconData icon;
@@ -95,6 +97,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
   bool isLoading = false;
   bool _isLoading = true;
   String? _enteredPasscode;
+
+  late final LocalAuthentication _localAuth;
+  bool _isAuthenticating = false;
+  bool _supportState = false;
+  List<BiometricType> _availableBiometrics = [];
+  bool _initialized = false;
 
   List<BankAccount> _bankAccounts = [];
   bool _isLoadingBanks = true;
@@ -210,6 +218,99 @@ class _CheckoutPageState extends State<CheckoutPage> {
     }
   }
 
+  Future<void> _checkDeviceSupport() async {
+    bool isSupported = await _localAuth.isDeviceSupported();
+    setState(() {
+      _supportState = isSupported;
+    });
+  }
+
+  Future<void> _getAvailableBiometrics() async {
+    final List<BiometricType> fetchedBiometrics =
+        await _localAuth.getAvailableBiometrics();
+    if (mounted) {
+      setState(() {
+        _availableBiometrics = fetchedBiometrics;
+      });
+    }
+  }
+
+  Future<void> _showBiometricConfirmation() async {
+    if (!_supportState || _availableBiometrics.isEmpty) {
+      // If device doesn't support biometrics or no biometrics available,
+      // just show the pin entry screen directly
+      _showPinEntryScreen();
+      return;
+    }
+
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Enable Biometric Authentication'),
+        content: const Text(
+            'Do you want to enable biometric authentication for faster access?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text(
+              'Not Now',
+              style: TextStyle(color: Colors.orange),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text(
+              'Enable',
+              style: TextStyle(color: Colors.orange),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      await _useBiometricAuth();
+    } else {
+      // If user chooses "Not Now", show the pin entry screen
+      _showPinEntryScreen();
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Authentication Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool> _useBiometricAuth() async {
+    final LocalAuthentication localAuth = LocalAuthentication();
+    bool authenticated = false;
+
+    try {
+      authenticated = await localAuth.authenticate(
+        localizedReason: 'Please authenticate to continue',
+        options: const AuthenticationOptions(
+          biometricOnly: true,
+        ),
+      );
+    } catch (e) {
+      print('Error during biometric authentication: $e');
+    }
+
+    return authenticated;
+  }
+
   void _showPaymentSelectionPopup() {
     showModalBottomSheet(
       context: context,
@@ -252,7 +353,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       : _bankAccounts.isEmpty
                           ? const Padding(
                               padding: EdgeInsets.symmetric(vertical: 16),
-                              child: Text('No bank accounts found'),
+                              child: Text(' No bank accounts found'),
                             )
                           : Column(
                               children: _bankAccounts
@@ -286,9 +387,65 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       ),
                       onPressed: isLoading
                           ? null
-                          : () {
-                              Navigator.pop(context); // Close payment selection
-                              _showPinEntryScreen(); // Show PIN entry screen
+                          : () async {
+                              // Start loading state
+                              setState(() {
+                                isLoading = true;
+                              });
+
+                              // Show the dialog to ask for biometric authentication
+                              final result = await showDialog<bool>(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (context) => AlertDialog(
+                                  title: const Text(
+                                      'Enable Biometric Authentication'),
+                                  content: const Text(
+                                      'Do you want to enable biometric authentication for faster access?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(false),
+                                      child: const Text(
+                                        'Not Now',
+                                        style: TextStyle(color: Colors.orange),
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(true),
+                                      child: const Text(
+                                        'Enable',
+                                        style: TextStyle(color: Colors.orange),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+
+                              if (result == true) {
+                                // If user chooses to enable, attempt biometric authentication
+                                bool authenticated = await _useBiometricAuth();
+
+                                if (authenticated) {
+                                  // If authentication is successful, close payment selection
+                                  Navigator.pop(
+                                      context); // Close payment selection
+                                  // Proceed with checkout
+                                  _processCheckout();
+                                } else {
+                                  // If authentication fails or is canceled, show PIN entry screen
+                                  _showPinEntryScreen();
+                                }
+                              } else {
+                                // If user chooses "Not Now", show the PIN entry screen directly
+                                _showPinEntryScreen();
+                              }
+
+                              // Stop loading state
+                              setState(() {
+                                isLoading = false;
+                              });
                             },
                       child: isLoading
                           ? const CircularProgressIndicator()

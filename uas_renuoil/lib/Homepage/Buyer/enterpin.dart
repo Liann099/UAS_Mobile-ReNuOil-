@@ -33,14 +33,26 @@ class _CheckoutWrapperState extends State<CheckoutWrapper> {
   bool _isAuthenticating = false;
   bool _supportState = false;
   List<BiometricType> _availableBiometrics = [];
+  bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
     _localAuth = LocalAuthentication();
-    _checkDeviceSupport();
-    _getAvailableBiometrics();
-    _fetchUserPasscode();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    await _checkDeviceSupport();
+    await _getAvailableBiometrics();
+    await _fetchUserPasscode();
+
+    if (mounted) {
+      setState(() {
+        _initialized = true;
+      });
+      await _showBiometricConfirmation();
+    }
   }
 
   Future<void> _checkDeviceSupport() async {
@@ -63,8 +75,50 @@ class _CheckoutWrapperState extends State<CheckoutWrapper> {
   Future<void> _fetchUserPasscode() async {
     await Future.delayed(Duration(seconds: 1));
     setState(() {
-      _userPasscode = "123456"; // Default passcode for demo
+      // _userPasscode = "123456"; // Default passcode for demo
     });
+  }
+
+  Future<void> _showBiometricConfirmation() async {
+    if (!_supportState || _availableBiometrics.isEmpty) {
+      // If device doesn't support biometrics or no biometrics available,
+      // just show the pin entry screen directly
+      _showPinEntryScreen();
+      return;
+    }
+
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Enable Biometric Authentication'),
+        content: const Text(
+            'Do you want to enable biometric authentication for faster access?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text(
+              'Not Now',
+              style: TextStyle(color: Colors.orange),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text(
+              'Enable',
+              style: TextStyle(color: Colors.orange),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      await _useBiometricAuth();
+    } else {
+      // If user chooses "Not Now", show the pin entry screen
+      _showPinEntryScreen();
+    }
   }
 
   void _showErrorDialog(String message) {
@@ -92,6 +146,7 @@ class _CheckoutWrapperState extends State<CheckoutWrapper> {
             content:
                 Text('This device does not support biometric authentication')));
       }
+      _showPinEntryScreen();
       return;
     }
 
@@ -102,6 +157,7 @@ class _CheckoutWrapperState extends State<CheckoutWrapper> {
               content: Text('No biometrics available on this device')),
         );
       }
+      _showPinEntryScreen();
       return;
     }
 
@@ -114,7 +170,7 @@ class _CheckoutWrapperState extends State<CheckoutWrapper> {
         localizedReason: 'Please authenticate to continue',
         options: const AuthenticationOptions(
           stickyAuth: true,
-          biometricOnly: true,
+          biometricOnly: false,
         ),
       );
 
@@ -129,6 +185,7 @@ class _CheckoutWrapperState extends State<CheckoutWrapper> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Authentication failed')),
           );
+          _showPinEntryScreen();
         }
       }
     } on PlatformException catch (e) {
@@ -145,12 +202,14 @@ class _CheckoutWrapperState extends State<CheckoutWrapper> {
           );
         }
       }
+      _showPinEntryScreen();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: ${e.toString()}')),
         );
       }
+      _showPinEntryScreen();
     } finally {
       if (mounted) {
         setState(() {
@@ -162,6 +221,14 @@ class _CheckoutWrapperState extends State<CheckoutWrapper> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_initialized) {
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: Text("Checkout Demo")),
       body: Center(
@@ -207,7 +274,10 @@ class _CheckoutWrapperState extends State<CheckoutWrapper> {
         ),
         fullscreenDialog: true,
       ),
-    );
+    ).then((_) {
+      // Call biometric authentication after the PasscodeScreen is shown
+      _useBiometricAuth();
+    });
   }
 }
 
@@ -243,6 +313,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
       setState(() {
         _keyboardVisible = true;
       });
+      // Remove the call to widget.onBiometricAuth here
     });
   }
 
@@ -349,7 +420,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                       ),
-                      const SizedBox(height: 70),
+                      const SizedBox(height: 120),
                       const Center(
                         child: Text(
                           'Enter Passcode',
@@ -417,32 +488,32 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 40),
-                      const Center(
-                        child: Text(
-                          'Or Fingerprint',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Center(
-                        child: GestureDetector(
-                          onTap: widget.onBiometricAuth,
-                          child: Container(
-                            width: 50,
-                            height: 50,
-                            child: Icon(
-                              Icons.fingerprint,
-                              size: 40,
-                              color: Colors.black.withOpacity(0.7),
-                            ),
-                          ),
-                        ),
-                      ),
+                      // const SizedBox(height: 40),
+                      // const Center(
+                      //   child: Text(
+                      //     'Or Fingerprint',
+                      //     style: TextStyle(
+                      //       fontSize: 16,
+                      //       fontWeight: FontWeight.bold,
+                      //       color: Colors.black,
+                      //     ),
+                      //   ),
+                      // ),
+                      // const SizedBox(height: 16),
+                      // Center(
+                      //   child: GestureDetector(
+                      //     onTap: widget.onBiometricAuth,
+                      //     child: Container(
+                      //       width: 50,
+                      //       height: 50,
+                      //       child: Icon(
+                      //         Icons.fingerprint,
+                      //         size: 40,
+                      //         color: Colors.black.withOpacity(0.7),
+                      //       ),
+                      //     ),
+                      //   ),
+                      // ),
                       const Spacer(),
                       Padding(
                         padding: EdgeInsets.only(
@@ -470,7 +541,7 @@ class _PasscodeScreenState extends State<PasscodeScreen> {
                               disabledForegroundColor: Colors.grey,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
-                              ),
+                              ), // This was the missing closing parenthesis
                             ),
                             child: const Text(
                               'Confirm',

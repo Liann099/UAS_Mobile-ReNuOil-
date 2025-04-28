@@ -82,7 +82,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: 'Poppins'),
       // home: const AuthChecker(),
-      home: const RouteButtonsScreen(), // Changed from SellerPage to AuthChecker
+      home:  LoginScreen(), // Changed from SellerPage to AuthChecker
       routes: {
         '/home': (context) => HomePage(),
         '/balanceseller': (context) => RnoPayApp(),

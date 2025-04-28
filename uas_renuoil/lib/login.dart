@@ -99,6 +99,8 @@ class _LoginScreenState extends State<LoginScreen> {
         String errorMessage = 'Login failed';
         if (errorData.containsKey('detail')) {
           errorMessage = errorData['detail'];
+          print('Status Code: ${response.statusCode}');
+          print('Response Body: ${response.body}');
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
