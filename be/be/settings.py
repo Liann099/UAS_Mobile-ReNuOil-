@@ -195,9 +195,14 @@ DJOSER = {
 }
 
 # Email settings (development)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Prints emails to console
-DEFAULT_FROM_EMAIL = 'noreply@yourdomain.com'  # Sender email in console output
-SERVER_EMAIL = 'noreply@yourdomain.com'  # For admin/error emails
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'celinemasko@gmail.com'
+EMAIL_HOST_PASSWORD = 'kmvv jpoi luan rfcb'
+DEFAULT_FROM_EMAIL = 'celinemasko@gmail.com'
+
 
 # Or for production:
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

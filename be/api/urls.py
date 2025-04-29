@@ -72,6 +72,7 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     
     
-   path('auth/send-reset-code/', SendResetCodeView.as_view()),
+   path('request-password-reset/', RequestPasswordResetOTP.as_view(), name='request-password-reset'),
+    path('verify-otp-reset-password/', VerifyOTPAndResetPassword.as_view(), name='verify-otp-reset-password'),
    
 ]

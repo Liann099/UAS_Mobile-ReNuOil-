@@ -107,9 +107,8 @@ class MyApp extends StatelessWidget {
         '/delete-account': (context) => DeleteAccountPage(),
         '/payment-methods': (context) => PaymentMethodsScreen(),
         '/forgot-password': (context) => ForgotPasswordScreen(),
-        '/verify-email': (context) =>
-            VerifyEmailScreen(email: 'email@example.com'),
-        '/create-new-password': (context) => CreateNewPasswordScreen(),
+        // '/verify-email': (context) =>  CreateNewPasswordScreen(),
+        // '/create-new-password': (context) => CreateNewPasswordScreen(),
         '/address-input': (context) => AddressInputScreen(),
         '/buyer-or-seller': (context) => BuyerOrSellerScreen(),
         '/how-did-you-know': (context) => HowDidYouKnowScreen(),

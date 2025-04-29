@@ -40,6 +40,8 @@ from django.conf import settings
 from django.contrib.auth import authenticate, login
 from django.shortcuts import get_object_or_404
 
+from .models import *
+
 
 from .models import (
     CustomUser, UserProfile, Transaction, OilSale, Promotion,
@@ -988,35 +990,53 @@ class GoogleLoginView(APIView):
 
 
 
-
-
-
-
-User = get_user_model()
-
-class SendResetCodeView(APIView):
+class RequestPasswordResetOTP(APIView):
     def post(self, request):
         email = request.data.get('email')
-        if not email:
-            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             user = User.objects.get(email=email)
+            otp_entry = VerificationCode.objects.create(user=user)
+
+            # Send OTP via email
+            send_mail(
+                subject="Your Password Reset OTP",
+                message=f"Your OTP code is {otp_entry.otp_code}",
+                from_email="celinemasko@gmail.com",
+                recipient_list=[email],
+            )
+
+            return Response({"message": "OTP sent to your email"}, status=status.HTTP_200_OK)
+
         except User.DoesNotExist:
-            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "User with this email does not exist"}, status=status.HTTP_404_NOT_FOUND)
 
-        code = random.randint(100000, 999999)
-        cache.set(f'reset_code_{email}', code, timeout=300)  # 5 minutes
+class VerifyOTPAndResetPassword(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        otp = request.data.get('otp')
+        new_password = request.data.get('new_password')
 
-        send_mail(
-            'Password Reset Code',
-            f'Your verification code is: {code}',
-            'noreply@yourapp.com',
-            [email],
-            fail_silently=False,
-        )
+        try:
+            user = User.objects.get(email=email)
+            otp_entry = VerificationCode.objects.filter(user=user, otp_code=otp).last()
 
-        return Response({"message": "Reset code sent"}, status=status.HTTP_200_OK)
+            if not otp_entry:
+                return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
 
+            if otp_entry.is_expired():
+                return Response({"error": "OTP expired"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Set new password
+            user.set_password(new_password)
+            user.save()
+
+            # Clean up OTP
+            otp_entry.delete()
+
+            return Response({"message": "Password reset successfully"}, status=status.HTTP_200_OK)
+
+        except User.DoesNotExist:
+            return Response({"error": "User with this email does not exist"}, status=status.HTTP_404_NOT_FOUND)
 
 

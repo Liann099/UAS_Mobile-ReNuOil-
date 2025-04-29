@@ -45,6 +45,7 @@ dependencies:
   geolocator: ^11.0.0
   supabase_flutter: ^2.8.4
   mailer: ^6.4.1  # Latest version as of 2024
+  flutter_dotenv: ^5.1.0  # for environment variables
 
   google_sign_in: ^6.1.4
   flutter_bloc: ^8.0.0

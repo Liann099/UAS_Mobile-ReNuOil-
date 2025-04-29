@@ -156,14 +156,20 @@ from django.utils import timezone
 from django.conf import settings
 
 class VerificationCode(models.Model):
-    email = models.EmailField()
-    code = models.CharField(max_length=6)
-    created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField()
+    email = models.EmailField(blank=True, null=True)
+    otp_code = models.CharField(max_length=4, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    expires_at = models.DateTimeField(blank=True, null=True)
     is_used = models.BooleanField(default=False)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, blank=True, null=True)
 
-    def is_valid(self):
-        return not self.is_used and timezone.now() < self.expires_at
+    def is_expired(self):
+        return timezone.now() > self.created_at + timezone.timedelta(minutes=10)  # OTP valid for 10 mins
+
+    def save(self, *args, **kwargs):
+        if not self.otp_code:
+            self.otp_code = str(random.randint(1000, 9999))
+        super().save(*args, **kwargs)
     
 
 class Withdraw(models.Model):
