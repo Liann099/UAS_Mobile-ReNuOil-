@@ -81,8 +81,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: 'Poppins'),
-      // home: const AuthChecker(),
-      home:  LoginScreen(), // Changed from SellerPage to AuthChecker
+      home: const AuthChecker(),
+      // home:  LoginScreen(), // Changed from SellerPage to AuthChecker
       routes: {
         '/home': (context) => HomePage(),
         '/balanceseller': (context) => RnoPayApp(),

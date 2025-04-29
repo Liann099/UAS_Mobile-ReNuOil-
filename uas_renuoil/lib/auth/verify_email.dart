@@ -15,15 +15,10 @@ class VerifyEmailScreen extends StatefulWidget {
 }
 
 class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
-  final List<TextEditingController> _codeControllers = List.generate(
-      4,
-          (_) => TextEditingController()
-  );
+  final List<TextEditingController> _codeControllers =
+      List.generate(4, (_) => TextEditingController());
 
-  final List<FocusNode> _focusNodes = List.generate(
-      4,
-          (_) => FocusNode()
-  );
+  final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
 
   bool _isLoading = false;
 
@@ -123,7 +118,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
           ),
           SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -134,7 +129,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       onTap: () => Navigator.pop(context),
                       child: Row(
                         children: [
-                          const Icon(Symbols.arrow_back_ios, color: Colors.white, size: 20),
+                          const Icon(Symbols.arrow_back_ios,
+                              color: Colors.white, size: 20),
                           const SizedBox(width: 8),
                           Text(
                             'Back to login',
@@ -149,9 +145,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       ),
                     ),
                   ),
-            
+
                   const SizedBox(height: 40),
-            
+
                   // Title
                   const Center(
                     child: Text(
@@ -171,9 +167,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       ),
                     ),
                   ),
-            
+
                   const SizedBox(height: 40),
-            
+
                   // Email icon in circle
                   Center(
                     child: Container(
@@ -199,9 +195,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       ),
                     ),
                   ),
-            
+
                   const SizedBox(height: 60),
-            
+
                   // Description text
                   const Center(
                     child: Text(
@@ -215,15 +211,15 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       ),
                     ),
                   ),
-            
+
                   const SizedBox(height: 40),
-            
+
                   // Code input boxes
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: List.generate(
                       4,
-                          (index) => SizedBox(
+                      (index) => SizedBox(
                         width: 70,
                         height: 70,
                         child: Container(
@@ -266,9 +262,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       ),
                     ),
                   ),
-            
+
                   const SizedBox(height: 30),
-            
+
                   // Resend code button
                   Center(
                     child: TextButton(
@@ -285,9 +281,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       ),
                     ),
                   ),
-            
+
                   const SizedBox(height: 30),
-            
+
                   // Verify button
                   SizedBox(
                     width: double.infinity,
@@ -304,21 +300,22 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       ),
                       child: _isLoading
                           ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(),
-                      )
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(),
+                            )
                           : const Text(
-                        'Verify',
-                        style: TextStyle(
-                          fontSize: 24,
-                          color: Color(0xFF775873),
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
+                              'Verify',
+                              style: TextStyle(
+                                fontSize: 24,
+                                color: Color(0xFF775873),
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
                     ),
                   ),
+                  const SizedBox(height: 30),
                 ],
               ),
             ),

@@ -73,4 +73,5 @@ urlpatterns = [
     
     
    path('auth/send-reset-code/', SendResetCodeView.as_view()),
+   
 ]

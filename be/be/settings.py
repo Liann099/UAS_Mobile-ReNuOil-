@@ -173,8 +173,13 @@ REST_FRAMEWORK = {
 
 # Djoser settings
 DJOSER = {
+    "EMAIL": {
+        "password_reset": "api.emails.CustomPasswordResetEmail",
+    },
     'LOGIN_FIELD': 'email',
-    'USER_CREATE_PASSWORD_RETYPE': True,
+    'USER_CREATE_PASSWORD_RETYPE': True,  # Require password re-type on registration
+    'PASSWORD_RESET_CONFIRM_RETYPE': True,  # Require password re-type on reset
+    'SEND_ACTIVATION_EMAIL': False,  # Disable activation email (optional)
     'SERIALIZERS': {
         'user_create': 'api.serializers.UserCreateSerializer',
         'user': 'api.serializers.UserSerializer',
@@ -183,5 +188,21 @@ DJOSER = {
     'PERMISSIONS': {
         'user': ['rest_framework.permissions.IsAuthenticated'],
         'user_list': ['rest_framework.permissions.IsAdminUser'],
-    }
+    },
+    'PASSWORD_RESET_CONFIRM_URL': 'auth/users/reset_password_confirm/{uid}/{token}',  # Reset URL
+    'ACTIVATION_URL': 'auth/users/activate/{uid}/{token}',  # Only if using activation
+    'USERNAME_RESET_CONFIRM_URL': 'auth/users/reset_username_confirm/{uid}/{token}',  # Only if using username reset
 }
+
+# Email settings (development)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Prints emails to console
+DEFAULT_FROM_EMAIL = 'noreply@yourdomain.com'  # Sender email in console output
+SERVER_EMAIL = 'noreply@yourdomain.com'  # For admin/error emails
+
+# Or for production:
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'your-smtp-host'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'your-email@example.com'
+# EMAIL_HOST_PASSWORD = 'your-email-password'

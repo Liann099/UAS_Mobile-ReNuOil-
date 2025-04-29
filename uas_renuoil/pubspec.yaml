@@ -43,6 +43,8 @@ dependencies:
   geocoding: ^3.0.0
   local_auth: ^2.3.0
   geolocator: ^11.0.0
+  supabase_flutter: ^2.8.4
+  mailer: ^6.4.1  # Latest version as of 2024
 
   google_sign_in: ^6.1.4
   flutter_bloc: ^8.0.0

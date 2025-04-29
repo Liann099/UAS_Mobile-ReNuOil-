@@ -161,11 +161,13 @@ class _RankingListPageState extends State<RankingListPage> {
                                   height: 80,
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(Icons.person, size: 40);
+                                    return const Icon(Icons.person,
+                                        size: 40, color: Colors.white);
                                   },
                                 ),
                               )
-                            : const Icon(Icons.person, size: 40),
+                            : const Icon(Icons.person,
+                                size: 40, color: Colors.white),
                       ),
 
                       const SizedBox(width: 16),

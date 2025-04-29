@@ -78,6 +78,16 @@ def update_passcode(request):
     return Response({"message": "Passcode updated successfully."}, status=status.HTTP_200_OK)
 
 
+# your_app/emails.py
+from djoser.email import PasswordResetEmail
+
+class CustomPasswordResetEmail(PasswordResetEmail):
+    def get_context_data(self):
+        context = super().get_context_data()
+        # Set the 'From' email to the user's email
+        context["from_email"] = self.context.get("user").email
+        return context
+    
 #sementara
 class PublicPromotionListView(generics.ListAPIView):
     queryset = Promotion.objects.all()
